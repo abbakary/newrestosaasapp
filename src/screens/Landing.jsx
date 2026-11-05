@@ -1,707 +1,336 @@
 import React, { useState, useContext } from 'react';
-import { USERS, PACKAGES, fmt } from '../data';
-import { Ctx } from '../store';
-import { Sheet, LanguageToggle } from '../components/ui';
+import { USERS, fmt } from '../data';
+import { Install, Sheet } from '../components/ui';
+import { SaaS } from '../saasStore';
+import { MODULE_CATALOG, limitTxt } from '../data_saas';
 
-export function Landing({ go, onDirectRole, onSelectPackage }) {
-  const { S, lang, t } = useContext(Ctx) || {};
-  const isSw = (lang || 'sw') === 'sw';
-  const [showPersonas, setShowPersonas] = useState(false);
-  const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' | 'annual'
+const FEATURES = [
+  ['📱', 'QR ordering & customer portal',    'Every restaurant gets its own branded ordering site, created automatically. Guests scan, order and pay from their phone.'],
+  ['🧑‍🍳', 'Waiter app with commissions',     'Take orders at the table on a phone or tablet. Track each waiter\'s sales and commission in real time.'],
+  ['🍳', 'Kitchen display (KDS)',             'Orders flow straight to the kitchen screen with timers, 86-ing and ready alerts.'],
+  ['📦', 'Stock, recipes & purchasing',       'Sales deplete ingredients through recipes. Raise purchase orders, receive goods and see what is left, live.'],
+  ['🏭', 'Central kitchen & production',      'Mix raw materials into finished goods with bills of materials, batches and costing.'],
+  ['💲', 'Accounting with VAT',               'Sales, expenses, P&L and VAT ready for your accountant — no double entry.'],
+  ['👤', 'HR & payroll',                       'Staff records, shifts, attendance and payroll in the same system as sales.'],
+  ['🌍', 'Multi-site head office',            'See every branch side by side: revenue, food cost and performance for the owner.'],
+];
 
-  const packages = S.packages || PACKAGES;
+const STEPS = [
+  ['1', 'Register',       'Create your account with our 6-step wizard in about 3 minutes.'],
+  ['2', 'Choose a package', 'Start a free trial or pay with M-Pesa, Mixx by Yas, Airtel Money or bank.'],
+  ['3', 'Set up',         'Add your menu, tables and staff. Your customer portal is live instantly.'],
+  ['4', 'Go live',        'Take orders, run the kitchen and watch your numbers from any device.'],
+];
 
-  const handleStartWithPackage = (pkgId) => {
-    if (onSelectPackage) onSelectPackage(pkgId);
+const FAQ = [
+  ['Do I need to pay to start?',             'No. Every package starts with a free trial and no card is needed. You only pay when you decide to continue.'],
+  ['How do I pay for my subscription?',      'Pay with M-Pesa, Mixx by Yas (Tigo Pesa), Airtel Money, bank transfer or card. Submit your transaction reference inside the app and our team confirms it and activates your account.'],
+  ['Can I change my package later?',         'Yes. Upgrade or downgrade any time from Subscription & Billing. Yearly billing gives you 2 months free.'],
+  ['Does it work on a phone?',               'RestoERP installs as an app on Android and iPhone and works on tablets and computers too.'],
+  ['Is my data separate from other restaurants?', 'Yes. Each business is its own tenant with its own users, menu, stock and reports.'],
+  ['What happens if I stop paying?',         'You get reminders and a grace period first. After that the account is suspended. Nothing is deleted, and it is restored as soon as payment is confirmed.'],
+];
+
+const ROLES = [
+  ['🏢', 'Owner / HQ',    'Group P&L, sites, subscription'],
+  ['👔', 'Manager',        'Daily analytics, approvals, staff'],
+  ['🧑‍🍳', 'Waiter',      'Tablet ordering, tips, commission'],
+  ['🍳', 'Chef',           'Kitchen tickets and prep'],
+  ['💳', 'Cashier',        'Bills, split pay, cash-up'],
+  ['📦', 'Storekeeper',    'Receiving, transfers, stock count'],
+  ['🏭', 'Production',     'Recipes, batches, costing'],
+  ['📱', 'Customers',      'QR menu, order, track, pay'],
+];
+
+const ROLE_ICON = { customer: '🍽️', waiter: '🧑‍🍳', chef: '🍳', production: '🏭', cashier: '💳', storekeeper: '📦', manager: '👔' };
+
+export function Landing({ go, onDirectRole }) {
+  const { SS } = useContext(SaaS);
+  const [cycle, setCycle]   = useState('monthly');
+  const [demo,  setDemo]    = useState(false);
+  const [faq,   setFaq]     = useState(-1);
+  const [menu,  setMenu]    = useState(false);
+
+  const plans = SS.plans.filter(p => p.active);
+  const open  = SS.settings.registrationOpen;
+
+  const scroll = id => {
+    setMenu(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const start = planId => {
+    try { sessionStorage.setItem('resto_plan_pick', JSON.stringify({ plan: planId, cycle })); } catch { /* ignore */ }
     go('auth:register');
   };
 
+  const admins    = ['superadmin', 'billing', 'support']
+    .map(r => SS.admins.find(a => a.role === r && a.active))
+    .filter(Boolean);
+  const adminSess = a => ({ id: a.id, role: 'superadmin', platformRole: a.role, name: a.name, title: a.title, ph: a.ph, pw: a.pw });
+
   return (
-    <div style={{ background: '#090d16', color: '#f8fafc', minHeight: '100vh', fontFamily: 'inherit' }}>
-      {/* ── Top Navigation Bar ── */}
-      <header style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-        background: 'rgba(15, 23, 42, 0.88)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        padding: '0 24px',
-        height: 64,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 38,
-            height: 38,
-            borderRadius: 10,
-            background: 'linear-gradient(135deg, #10b981, #059669)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 22,
-            boxShadow: '0 2px 10px rgba(16,185,129,0.35)'
-          }}>
-            🍽️
+    <div className="lp">
+      {/* ── NAV ── */}
+      <header className="lp-nav">
+        <div className="lp-wrap lp-nav-in">
+          <div className="lp-logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <span>🍽️</span> {SS.settings.platformName}
           </div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 18, color: '#fff', letterSpacing: -0.3 }}>
-              RestoERP <span style={{ color: '#10b981' }}>Cloud</span>
-            </div>
-            <div style={{ fontSize: 10, color: '#94a3b8', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-              {isSw ? 'Usimamizi wa Migahawa na Baa' : 'Hospitality & Restaurant SaaS'}
-            </div>
+          <nav className={menu ? 'open' : ''}>
+            <button onClick={() => scroll('features')}>Features</button>
+            <button onClick={() => scroll('modules')}>Modules</button>
+            <button onClick={() => scroll('pricing')}>Pricing</button>
+            <button onClick={() => scroll('faq')}>FAQ</button>
+            <button className="lp-only-m" onClick={() => go('auth:login')}>Log in</button>
+          </nav>
+          <div className="lp-nav-cta">
+            <button className="lp-btn ghost sm lp-hide-m" onClick={() => go('auth:login')}>Log in</button>
+            {open && <button className="lp-btn sm" onClick={() => start('')}>Start free trial</button>}
+            <button className="lp-burger" onClick={() => setMenu(!menu)} aria-label="Menu">☰</button>
           </div>
-        </div>
-
-        {/* Desktop Quick Nav Links */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 20 }} className="landing-nav">
-          <a href="#features" style={{ color: '#cbd5e1', fontSize: 13, textDecoration: 'none', fontWeight: 500 }}>
-            {isSw ? 'Sifa za Mfumo' : 'Features'}
-          </a>
-          <a href="#pricing" style={{ color: '#cbd5e1', fontSize: 13, textDecoration: 'none', fontWeight: 500 }}>
-            {isSw ? 'Vifurushi vya Bei' : 'Pricing Plans'}
-          </a>
-          <button
-            onClick={() => setShowPersonas(true)}
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              color: '#38bdf8',
-              border: '1px solid rgba(56,189,248,0.3)',
-              borderRadius: 8,
-              padding: '6px 12px',
-              fontSize: 12.5,
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            {isSw ? '⚡ Watumiaji wa Mfano' : '⚡ Live Personas'}
-          </button>
-        </nav>
-
-        {/* Right Action Buttons with Language Toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <LanguageToggle isLight={true} />
-
-          <button
-            onClick={() => go('auth:login')}
-            style={{
-              background: 'transparent',
-              color: '#f8fafc',
-              border: '1px solid #334155',
-              borderRadius: 10,
-              padding: '8px 16px',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            {isSw ? 'Ingia Kazini' : 'Staff Sign In'}
-          </button>
-
-          <button
-            onClick={() => go('auth:register')}
-            style={{
-              background: 'linear-gradient(135deg, #10b981, #059669)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 10,
-              padding: '8px 18px',
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 2px 10px rgba(16,185,129,0.3)'
-            }}
-          >
-            {isSw ? 'Jaribu Bure' : 'Start Free Trial'}
-          </button>
         </div>
       </header>
 
-      {/* ── Hero Section ── */}
-      <section style={{
-        padding: '60px 24px 40px',
-        maxWidth: 1200,
-        margin: '0 auto',
-        textAlign: 'center',
-        position: 'relative'
-      }}>
-        {/* Glow backdrop */}
-        <div style={{
-          position: 'absolute',
-          top: -20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '70%',
-          height: 300,
-          background: 'radial-gradient(ellipse at center, rgba(16, 185, 129, 0.15), transparent 70%)',
-          pointerEvents: 'none',
-          zIndex: 0
-        }} />
-
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            background: 'rgba(16, 185, 129, 0.12)',
-            border: '1px solid rgba(16, 185, 129, 0.35)',
-            color: '#34d399',
-            padding: '6px 16px',
-            borderRadius: 99,
-            fontSize: 12.5,
-            fontWeight: 700,
-            marginBottom: 20
-          }}>
-            <span>🔥</span> {isSw ? 'Mfumo Mahiri wa Kisasa wa Kidijitali kwa Migahawa na Baa' : 'Next-Generation Multi-Tenant Cloud ERP for Hospitality'}
+      {/* ── HERO ── */}
+      <section className="lp-hero">
+        <div className="lp-wrap lp-hero-in">
+          <div>
+            <span className="lp-eyebrow">Cloud ERP for restaurants · Made in Tanzania</span>
+            <h1>Run your whole restaurant from <em>one platform</em></h1>
+            <p>Orders, kitchen, stock, production, accounting and staff — all connected. Your customers get a branded ordering site the moment you sign up.</p>
+            <div className="lp-cta">
+              {open
+                ? <button className="lp-btn big" onClick={() => start('')}>Start your free trial</button>
+                : <button className="lp-btn big" disabled>Sign-ups paused</button>}
+              <button className="lp-btn ghost big" onClick={() => setDemo(true)}>▶ Try the live demo</button>
+            </div>
+            <ul className="lp-trust">
+              <li>✓ Free trial, no card</li>
+              <li>✓ M-Pesa · Mixx · Airtel Money</li>
+              <li>✓ Works on phone &amp; tablet</li>
+            </ul>
           </div>
 
-          <h1 style={{
-            fontSize: 'clamp(32px, 5vw, 56px)',
-            fontWeight: 900,
-            lineHeight: 1.15,
-            color: '#fff',
-            margin: '0 auto 18px',
-            maxWidth: 920,
-            letterSpacing: -1
-          }}>
-            {isSw ? 'Mfumo Moja Mahiri wa Kuendesha Mgahawa, Baa na Matawi Yako Yote.' : 'One Unified Cloud Platform for Restaurants, Bars & Multi-Branch Chains.'}
-          </h1>
-
-          <p style={{
-            fontSize: 'clamp(15px, 2vw, 18px)',
-            color: '#94a3b8',
-            maxWidth: 780,
-            margin: '0 auto 32px',
-            lineHeight: 1.6
-          }}>
-            {isSw ? 'Kuagiza mezani kwa QR, mauzo na risiti za kaunta (POS), skrini ya jikoni (KDS), udhibiti wa stoo ya vinywaji na makreti, maandalizi ya jikoni, na taarifa sahihi za faida na hasara (P&L).' : 'Power table QR ordering, lightning POS cashier settlements, real-time Kitchen Displays, dual-stock inventory, Central Kitchen sub-recipe BOMs, double-entry accounting, and multi-tenant provider administration.'}
-          </p>
-
-          {/* Primary CTA Buttons Strip */}
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 14,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 40
-          }}>
-            <button
-              onClick={() => go('auth:register')}
-              style={{
-                background: 'linear-gradient(135deg, #10b981, #059669)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 12,
-                padding: '16px 32px',
-                fontSize: 16,
-                fontWeight: 800,
-                cursor: 'pointer',
-                boxShadow: '0 6px 20px rgba(16,185,129,0.35)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                transition: 'all .15s'
-              }}
-            >
-              <span>🚀</span> {isSw ? 'Anza Jaribio la Siku 14 Bure' : 'Start 14-Day Free Trial (Wizard)'}
-            </button>
-
-            <button
-              onClick={() => {
-                const superAdminUser = (S.users || USERS).find(u => u.role === 'superadmin') || USERS[0];
-                if (onDirectRole) onDirectRole(superAdminUser);
-                else go('superadmin');
-              }}
-              style={{
-                background: 'linear-gradient(135deg, rgba(124,58,237,0.25), rgba(79,70,229,0.25))',
-                color: '#c4b5fd',
-                border: '1.5px solid rgba(124,58,237,0.5)',
-                borderRadius: 12,
-                padding: '16px 28px',
-                fontSize: 15,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8
-              }}
-            >
-              <span>👑</span> SuperAdmin Provider Console
-            </button>
-
-            <button
-              onClick={() => setShowPersonas(true)}
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                color: '#f8fafc',
-                border: '1px solid #334155',
-                borderRadius: 12,
-                padding: '16px 24px',
-                fontSize: 15,
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8
-              }}
-            >
-              <span>⚡</span> Explore Live Personas
-            </button>
-          </div>
-
-          {/* Social Proof / Metrics Row */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 16,
-            maxWidth: 960,
-            margin: '0 auto',
-            padding: '20px 24px',
-            background: 'rgba(30, 41, 59, 0.5)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: 16
-          }}>
-            <div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: '#10b981' }}>120+</div>
-              <div style={{ fontSize: 12, color: '#94a3b8' }}>Active Dining Venues</div>
+          {/* Mock dashboard */}
+          <div className="lp-mock" aria-hidden="true">
+            <div className="lp-mock-top"><i /><i /><i /><span>Safari Grill · Today</span></div>
+            <div className="lp-mock-kpis">
+              {[['Sales', 'TSh 1.84M'], ['Orders', '48'], ['Food cost', '29%']].map(([a, b]) => (
+                <div key={a}><small>{a}</small><b>{b}</b></div>
+              ))}
             </div>
-            <div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: '#38bdf8' }}>99.99%</div>
-              <div style={{ fontSize: 12, color: '#94a3b8' }}>High Availability SLA</div>
+            <div className="lp-mock-chart">
+              {[40, 62, 48, 80, 66, 92, 74].map((h, i) => <i key={i} style={{ height: h + '%' }} />)}
             </div>
-            <div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: '#c084fc' }}>TSh 1.4B+</div>
-              <div style={{ fontSize: 12, color: '#94a3b8' }}>Transactions Processed</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: '#fbbf24' }}>Zero</div>
-              <div style={{ fontSize: 12, color: '#94a3b8' }}>Proprietary Hardware Lock</div>
+            <div className="lp-mock-rows">
+              {[['#1042 · Table 5', 'Cooking', '#f59e0b'], ['#1043 · Delivery', 'Ready', '#16a34a'], ['#1044 · Table 2', 'New', '#2563eb']].map(([a, b, c]) => (
+                <div key={a}><span>{a}</span><u style={{ background: c + '22', color: c }}>{b}</u></div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Feature Highlights Grid ── */}
-      <section id="features" style={{ padding: '60px 24px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ color: '#10b981', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>
-            Full-Stack Hospitality Architecture
-          </div>
-          <h2 style={{ fontSize: 32, fontWeight: 900, color: '#fff', margin: '8px 0' }}>
-            Built from the Ground Up for Modern Food & Beverage
-          </h2>
-          <p style={{ color: '#94a3b8', fontSize: 15, maxWidth: 640, margin: '0 auto' }}>
-            Eliminate fragmented tools. RestoERP unites front-of-house dining with kitchen execution, warehouse supply chains, and executive accounting.
-          </p>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: 20
-        }}>
-          {[
-            {
-              icon: '🍽️',
-              title: 'Smart POS & Table QR Mobile Ordering',
-              desc: 'Interactive visual floor plan, table scanning, customer mobile checkout, waiter links with automated commission calculation, and daily cashier drawer balancing.',
-              color: '#e67e22'
-            },
-            {
-              icon: '👨‍🍳',
-              title: 'Multi-Station Kitchen Display (KDS)',
-              desc: 'Eliminate thermal paper jams. Station routing (Grill, Fry, Bar, Pastry), live cooking timers, visual ticket stages, and instant auto-86 menu stock depletion sync.',
-              color: '#8e44ad'
-            },
-            {
-              icon: '📦',
-              title: 'Dual-Stock & Crate Deposit Ledger',
-              desc: 'Dual tracking between Main Store and selling bars. Direct pack multipliers for beer/soda without recipe hassle, plus empty crate & returnable bottle deposit ledger.',
-              color: '#2980b9'
-            },
-            {
-              icon: '🏭',
-              title: 'Central Kitchen & BOM Manufacturing',
-              desc: 'Standardized Bill of Materials (BOM) sub-recipes, batch manufacturing work orders, temperature safety logging, and inter-branch refrigerated requisitions.',
-              color: '#16a085'
-            },
-            {
-              icon: '💲',
-              title: 'Double-Entry Accounting & Boss P&L',
-              desc: 'Tanzanian VAT and service charge taxation, automated journal entries, real-time Boss P&L statement, supplier AP payables, and operating expense analytics.',
-              color: '#1C7A4B'
-            },
-            {
-              icon: '👑',
-              title: 'Multi-Tenant SaaS Provider Engine',
-              desc: 'System provider control console with one-click tenant creation, custom subdomains, subscription tiers, automated M-Pesa billing, and instant workspace impersonation.',
-              color: '#7c3aed'
-            }
-          ].map((feat, i) => (
-            <div
-              key={i}
-              style={{
-                background: '#131b2e',
-                border: '1px solid #1e293b',
-                borderRadius: 16,
-                padding: 24,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-                transition: 'all .2s'
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = feat.color;
-                e.currentTarget.style.transform = 'translateY(-3px)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = '#1e293b';
-                e.currentTarget.style.transform = 'none';
-              }}
-            >
-              <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: feat.color + '20',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 24,
-                border: `1px solid ${feat.color}40`
-              }}>
-                {feat.icon}
-              </div>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#f8fafc' }}>{feat.title}</h3>
-              <p style={{ margin: 0, fontSize: 13.5, color: '#94a3b8', lineHeight: 1.6 }}>{feat.desc}</p>
-            </div>
+      {/* ── STATS STRIP ── */}
+      <section className="lp-strip">
+        <div className="lp-wrap">
+          {[['10', 'connected modules'], ['3', 'order types: dine-in, takeaway, delivery'], ['10 min', 'from sign-up to first order'], ['24/7', 'cloud access on any device']].map(([a, b]) => (
+            <div key={b}><b>{a}</b><span>{b}</span></div>
           ))}
         </div>
       </section>
 
-      {/* ── Interactive SaaS Packages & Pricing ── */}
-      <section id="pricing" style={{ padding: '60px 24px', background: '#0c1322', borderTop: '1px solid #1e293b', borderBottom: '1px solid #1e293b' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 36 }}>
-            <div style={{ color: '#10b981', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>
-              Transparent Subscription Pricing
-            </div>
-            <h2 style={{ fontSize: 32, fontWeight: 900, color: '#fff', margin: '8px 0' }}>
-              Simple, Predictable Packages for Every Stage
-            </h2>
-            <p style={{ color: '#94a3b8', fontSize: 15, maxWidth: 600, margin: '0 auto 20px' }}>
-              All packages include a 14-day free trial. Scale seamlessly from a single food truck to a national multi-branch franchise.
-            </p>
+      {/* ── FEATURES ── */}
+      <section id="features" className="lp-sec">
+        <div className="lp-wrap">
+          <div className="lp-head">
+            <span className="lp-eyebrow dark">Everything in one place</span>
+            <h2>Built for how restaurants really work</h2>
+            <p>Stop juggling a POS, spreadsheets and notebooks. One order engine powers every screen.</p>
+          </div>
+          <div className="lp-feat">
+            {FEATURES.map(([ic, t, d]) => (
+              <div key={t} className="lp-card">
+                <div className="lp-ic">{ic}</div>
+                <h3>{t}</h3>
+                <p>{d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            {/* Billing Cycle Toggle */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 12,
-              background: '#1e293b',
-              padding: '6px 14px',
-              borderRadius: 99,
-              border: '1px solid #334155'
-            }}>
-              <span style={{ fontSize: 13, fontWeight: billingCycle === 'monthly' ? 700 : 400, color: billingCycle === 'monthly' ? '#fff' : '#94a3b8' }}>
-                Monthly Billing
-              </span>
-              <button
-                type="button"
-                onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'annual' : 'monthly')}
-                style={{
-                  width: 44,
-                  height: 24,
-                  borderRadius: 99,
-                  background: billingCycle === 'annual' ? '#10b981' : '#475569',
-                  border: 'none',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  transition: 'all .2s'
-                }}
-              >
-                <div style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
-                  background: '#fff',
-                  position: 'absolute',
-                  top: 3,
-                  left: billingCycle === 'annual' ? 23 : 3,
-                  transition: 'all .2s'
-                }} />
-              </button>
-              <span style={{ fontSize: 13, fontWeight: billingCycle === 'annual' ? 700 : 400, color: billingCycle === 'annual' ? '#10b981' : '#94a3b8' }}>
-                Annual Billing <span style={{ background: '#10b98125', color: '#34d399', padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 800 }}>20% OFF</span>
-              </span>
+      {/* ── MODULES / ROLES ── */}
+      <section id="modules" className="lp-sec alt">
+        <div className="lp-wrap">
+          <div className="lp-head">
+            <span className="lp-eyebrow dark">A screen for every role</span>
+            <h2>Owner, manager, waiter, chef, cashier, storekeeper</h2>
+            <p>Each team member signs in and sees only the tools they need.</p>
+          </div>
+          <div className="lp-roles">
+            {ROLES.map(([ic, t, d]) => (
+              <div key={t}><span>{ic}</span><b>{t}</b><small>{d}</small></div>
+            ))}
+          </div>
+          <div className="lp-mods">
+            {MODULE_CATALOG.map(m => <span key={m.id}>{m.icon} {m.label}</span>)}
+          </div>
+        </div>
+      </section>
+
+      {/* ── STEPS ── */}
+      <section className="lp-sec">
+        <div className="lp-wrap">
+          <div className="lp-head"><h2>Up and running in four steps</h2></div>
+          <div className="lp-steps">
+            {STEPS.map(([n, t, d]) => (
+              <div key={n}><i>{n}</i><h3>{t}</h3><p>{d}</p></div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ── */}
+      <section id="pricing" className="lp-sec alt">
+        <div className="lp-wrap">
+          <div className="lp-head">
+            <span className="lp-eyebrow dark">Simple pricing</span>
+            <h2>Pick a package that fits your business</h2>
+            <p>Prices in Tanzanian shillings, excluding {SS.settings.vatPct}% VAT. Every package starts with a free trial.</p>
+            <div className="lp-toggle">
+              <button className={cycle === 'monthly' ? 'on' : ''} onClick={() => setCycle('monthly')}>Monthly</button>
+              <button className={cycle === 'yearly'  ? 'on' : ''} onClick={() => setCycle('yearly')}>Yearly <em>2 months free</em></button>
             </div>
           </div>
 
-          {/* Pricing Cards Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: 24,
-            alignItems: 'stretch'
-          }}>
-            {packages.map(p => {
-              const price = billingCycle === 'annual' ? p.priceAnnual : p.priceMonthly;
-
-              return (
-                <div
-                  key={p.id}
-                  style={{
-                    background: '#131b2e',
-                    border: p.popular ? `2px solid ${p.color}` : '1px solid #1e293b',
-                    borderRadius: 20,
-                    padding: 28,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    boxShadow: p.popular ? '0 10px 30px rgba(16,185,129,0.15)' : 'none'
-                  }}
-                >
-                  {p.popular && (
-                    <div style={{
-                      position: 'absolute',
-                      top: -12,
-                      right: 28,
-                      background: p.color,
-                      color: '#fff',
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: '4px 12px',
-                      borderRadius: 99,
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.5
-                    }}>
-                      Most Popular Tier
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                    <div style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
-                      background: p.color + '20',
-                      color: p.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 24,
-                      border: `1px solid ${p.color}40`
-                    }}>
-                      {p.icon || '📦'}
-                    </div>
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#f8fafc' }}>{p.name}</h3>
-                      <p style={{ margin: '2px 0 0', fontSize: 12, color: '#94a3b8' }}>{p.tagline}</p>
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div style={{ margin: '18px 0 14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                      <span style={{ fontSize: 32, fontWeight: 900, color: '#fff' }}>{fmt(price)}</span>
-                      <span style={{ fontSize: 14, color: '#94a3b8' }}>/{billingCycle === 'annual' ? 'year' : 'month'}</span>
-                    </div>
-                    <div style={{ fontSize: 12, color: '#10b981', marginTop: 4 }}>
-                      {billingCycle === 'annual' ? 'Billed annually · Includes 2 months free' : 'Billed monthly · Cancel anytime'}
-                    </div>
-                  </div>
-
-                  {/* Scale summary */}
-                  <div style={{
-                    background: '#090d16',
-                    borderRadius: 10,
-                    padding: '10px 14px',
-                    fontSize: 12,
-                    color: '#cbd5e1',
-                    marginBottom: 18,
-                    display: 'flex',
-                    justifyContent: 'space-between'
-                  }}>
-                    <span>🏬 {p.limits?.branches >= 999 ? 'Unlimited' : p.limits?.branches} Branch</span>
-                    <span>🪑 {p.limits?.tables >= 999 ? 'Unlimited' : p.limits?.tables} Tables</span>
-                    <span>👤 {p.limits?.staffUsers >= 999 ? 'Unlimited' : p.limits?.staffUsers} Staff</span>
-                  </div>
-
-                  {/* Features list */}
-                  <div style={{ flex: 1, borderTop: '1px solid #1e293b', paddingTop: 16 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 10 }}>
-                      What's Included:
-                    </div>
-                    <ul style={{ paddingLeft: 18, margin: 0, fontSize: 13, color: '#cbd5e1', lineHeight: 1.8 }}>
-                      {p.features?.map((f, i) => (
-                        <li key={i}>{f}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <button
-                    onClick={() => handleStartWithPackage(p.id)}
-                    style={{
-                      marginTop: 24,
-                      background: p.popular ? 'linear-gradient(135deg, #10b981, #059669)' : '#1e293b',
-                      color: '#fff',
-                      border: p.popular ? 'none' : '1px solid #334155',
-                      borderRadius: 12,
-                      padding: 14,
-                      fontWeight: 800,
-                      fontSize: 14,
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      boxShadow: p.popular ? '0 4px 14px rgba(16,185,129,0.3)' : 'none',
-                      transition: 'all .15s'
-                    }}
-                  >
-                    Select {p.name.split(' ')[0]} & Register ›
-                  </button>
+          <div className="lp-plans">
+            {plans.map(p => (
+              <div key={p.id} className={'lp-plan' + (p.popular ? ' pop' : '')}>
+                {p.popular && <span className="lp-pop">Most popular</span>}
+                <h3>{p.name}</h3>
+                <p className="lp-tag">{p.tag}</p>
+                <div className="lp-amt">
+                  {fmt(cycle === 'yearly' ? p.priceY : p.priceM)}
+                  <small>/{cycle === 'yearly' ? 'year' : 'month'}</small>
                 </div>
-              );
-            })}
+                <ul>
+                  {p.features.map(f => <li key={f}>{f}</li>)}
+                  <li>{p.modules.length} of {MODULE_CATALOG.length} modules</li>
+                  <li>{p.trialDays}-day free trial</li>
+                </ul>
+                <button
+                  className={'lp-btn' + (p.popular ? '' : ' ghost')}
+                  disabled={!open}
+                  onClick={() => start(p.id)}
+                >
+                  {open ? 'Start free trial' : 'Sign-ups paused'}
+                </button>
+              </div>
+            ))}
           </div>
+
+          <p className="lp-center">
+            Need more than {limitTxt((plans[plans.length - 2] || plans[0] || {}).outlets ?? 5)} outlets?{' '}
+            <a href={'tel:' + SS.settings.supportPhone}>Call {SS.settings.supportPhone}</a> for a custom quote.
+          </p>
         </div>
       </section>
 
-      {/* ── Testimonials & Proof ── */}
-      <section style={{ padding: '60px 24px', maxWidth: 1080, margin: '0 auto', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginBottom: 30 }}>
-          Trusted by Premier Hospitality Groups
-        </h2>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-          {[
-            {
-              quote: "RestoERP replaced 4 disparate systems for us. Managing Masaki flagship, Oysterbay kiosk, and our Central Kitchen from one dashboard changed our profitability.",
-              author: "David Kimani",
-              role: "Owner, Safari Grill & Lounge Group"
-            },
-            {
-              quote: "The dual-stock beer and direct link drinks tracking solved 100% of our bar inventory variances. Our storekeeper and bartenders are perfectly in sync.",
-              author: "Sarah Mollel",
-              role: "General Manager, Serengeti Steakhouse"
-            },
-            {
-              quote: "As a SaaS provider, onboarding new restaurant tenants takes under 60 seconds with instant subdomains and automated M-Pesa subscription renewals.",
-              author: "Amina Mwamba",
-              role: "Lead Systems Architect, RestoERP Cloud"
-            }
-          ].map((t, i) => (
-            <div key={i} style={{ background: '#131b2e', border: '1px solid #1e293b', borderRadius: 14, padding: 22, textAlign: 'left' }}>
-              <div style={{ color: '#f59e0b', fontSize: 16, marginBottom: 8 }}>★★★★★</div>
-              <p style={{ fontSize: 13.5, color: '#cbd5e1', lineHeight: 1.6, margin: '0 0 14px' }}>
-                "{t.quote}"
-              </p>
-              <div>
-                <strong style={{ color: '#fff', fontSize: 13, display: 'block' }}>{t.author}</strong>
-                <small style={{ color: '#94a3b8', fontSize: 11 }}>{t.role}</small>
-              </div>
+      {/* ── FAQ ── */}
+      <section id="faq" className="lp-sec">
+        <div className="lp-wrap lp-faq">
+          <div className="lp-head"><h2>Questions, answered</h2></div>
+          {FAQ.map(([q, a], i) => (
+            <div key={q} className={'lp-q' + (faq === i ? ' on' : '')}>
+              <button onClick={() => setFaq(faq === i ? -1 : i)}>
+                {q}<span>{faq === i ? '−' : '+'}</span>
+              </button>
+              {faq === i && <p>{a}</p>}
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Bottom Call to Action ── */}
-      <section style={{
-        background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(124,58,237,0.2))',
-        borderTop: '1px solid #1e293b',
-        padding: '50px 24px',
-        textAlign: 'center'
-      }}>
-        <div style={{ maxWidth: 680, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 30, fontWeight: 900, color: '#fff', margin: '0 0 10px' }}>
-            Ready to Modernize Your Restaurant Operations?
-          </h2>
-          <p style={{ color: '#cbd5e1', fontSize: 15, margin: '0 0 24px' }}>
-            Get started in 60 seconds with our interactive onboarding wizard. Full 14-day free trial with sample menus and recipes included.
-          </p>
-
-          <button
-            onClick={() => go('auth:register')}
-            style={{
-              background: 'linear-gradient(135deg, #10b981, #059669)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 12,
-              padding: '16px 36px',
-              fontSize: 16,
-              fontWeight: 800,
-              cursor: 'pointer',
-              boxShadow: '0 6px 24px rgba(16,185,129,0.4)'
-            }}
-          >
-            🚀 Launch Your Restaurant Cloud ERP Now
-          </button>
+      {/* ── CTA BAND ── */}
+      <section className="lp-band">
+        <div className="lp-wrap">
+          <h2>Ready to put your restaurant on autopilot?</h2>
+          <p>Create your account in minutes. No card, no contract.</p>
+          <div className="lp-cta" style={{ justifyContent: 'center' }}>
+            {open && <button className="lp-btn big light" onClick={() => start('')}>Create my account</button>}
+            <button className="lp-btn ghost big light" onClick={() => setDemo(true)}>Explore the demo</button>
+          </div>
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer style={{
-        background: '#090d16',
-        borderTop: '1px solid #1e293b',
-        padding: '30px 24px',
-        textAlign: 'center',
-        fontSize: 12,
-        color: '#64748b'
-      }}>
-        <div>© 2026 RestoERP Cloud Technologies Ltd. All rights reserved.</div>
-        <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center', gap: 16 }}>
-          <span>Multi-Tenant Hospitality SaaS</span> ·
-          <span>Vodacom M-Pesa & Tigo Pesa Connected</span> ·
-          <span style={{ color: '#10b981' }}>System Status: Normal (100% Operational)</span>
+      {/* ── FOOTER ── */}
+      <footer className="lp-foot">
+        <div className="lp-wrap lp-foot-in">
+          <div>
+            <div className="lp-logo light"><span>🍽️</span> {SS.settings.platformName}</div>
+            <p>The restaurant ERP &amp; SaaS platform.<br />A product of FJB's Softtech Limited.</p>
+          </div>
+          <div>
+            <b>Contact</b>
+            <a href={'tel:' + SS.settings.supportPhone}>📞 {SS.settings.supportPhone}</a>
+            <a href={'mailto:' + SS.settings.supportEmail}>✉️ {SS.settings.supportEmail}</a>
+          </div>
+          <div>
+            <b>Access</b>
+            <button onClick={() => go('auth:login')}>Log in</button>
+            {open && <button onClick={() => start('')}>Register your restaurant</button>}
+            <button onClick={() => setDemo(true)}>Live demo</button>
+            <Install cls="lp-foot-install" />
+          </div>
+        </div>
+        <div className="lp-wrap lp-copy">
+          © {new Date().getFullYear()} FJB's Softtech Limited. All rights reserved.
         </div>
       </footer>
 
-      {/* ── Sheet: Live Persona / Role Switcher ── */}
-      {showPersonas && (
-        <Sheet title="Select SRS Persona or SuperAdmin" onClose={() => setShowPersonas(false)}>
-          <div style={{ display: 'grid', gap: 8 }}>
-            <p style={{ margin: '0 0 6px', fontSize: 13, color: 'var(--mut)' }}>
-              Instant role launch without typing phone numbers or passwords:
-            </p>
-
-            <div className="roles-list-grid">
-              {(S.users || USERS).map(u => (
-                <button
-                  key={u.id}
-                  className="role-select-card"
-                  onClick={() => {
-                    setShowPersonas(false);
-                    if (onDirectRole) onDirectRole(u);
-                    else go(u.role);
-                  }}
-                  style={{
-                    background: u.role === 'superadmin' ? 'rgba(124,58,237,0.1)' : 'var(--card)',
-                    border: u.role === 'superadmin' ? '1.5px solid #7c3aed' : '1px solid var(--line)'
-                  }}
-                >
-                  <div className="role-icon">
-                    {u.role === 'superadmin' ? '👑' : u.role === 'customer' ? '🍽️' : u.role === 'waiter' ? '🧑‍🍳' : u.role === 'chef' ? '🍳' : u.role === 'production' ? '🏭' : u.role === 'cashier' ? '💳' : u.role === 'storekeeper' ? '📦' : u.role === 'manager' ? '👔' : '🏢'}
-                  </div>
-                  <div style={{ textAlign: 'left', flex: 1 }}>
-                    <div style={{ fontWeight: 700, color: u.role === 'superadmin' ? '#7c3aed' : 'var(--tx)' }}>
-                      {u.name}
-                      {u.role === 'superadmin' && (
-                        <span style={{ marginLeft: 6, fontSize: 10, background: '#7c3aed', color: '#fff', padding: '1px 6px', borderRadius: 99, fontWeight: 800 }}>
-                          SYSTEM PROVIDER
-                        </span>
-                      )}
-                    </div>
-                    <small style={{ color: 'var(--mut)' }}>{u.title} ({u.role})</small>
-                  </div>
-                  <span style={{ color: u.role === 'superadmin' ? '#7c3aed' : 'var(--g)', fontSize: 13, fontWeight: 700 }}>
-                    Launch ▸
-                  </span>
-                </button>
-              ))}
-            </div>
+      {/* ── DEMO SHEET ── */}
+      {demo && (
+        <Sheet
+          title="Live demo — choose a role"
+          subtitle="Instant access, no password. Demo data is saved only in this browser."
+          onClose={() => setDemo(false)}
+          maxWidth={620}
+        >
+          <div className="roles-list-grid">
+            {admins.map(a => (
+              <button
+                key={a.id}
+                className="role-select-card"
+                onClick={() => { setDemo(false); onDirectRole(adminSess(a)); }}
+              >
+                <div className="role-icon">🛡️</div>
+                <div style={{ textAlign: 'left', flex: 1 }}>
+                  <div style={{ fontWeight: 600 }}>{a.name}</div>
+                  <small style={{ color: 'var(--mut)' }}>
+                    {a.role === 'superadmin' ? 'Platform Super Admin — manages all tenants & payments'
+                      : a.role === 'billing'    ? 'Platform billing officer'
+                      : 'Platform support agent'}
+                  </small>
+                </div>
+                <span style={{ color: 'var(--g)', fontSize: 13, fontWeight: 600 }}>Launch ▸</span>
+              </button>
+            ))}
+            {USERS.map(u => (
+              <button
+                key={u.id}
+                className="role-select-card"
+                onClick={() => { setDemo(false); onDirectRole(u); }}
+              >
+                <div className="role-icon">{ROLE_ICON[u.role] || '🏢'}</div>
+                <div style={{ textAlign: 'left', flex: 1 }}>
+                  <div style={{ fontWeight: 600 }}>{u.name}</div>
+                  <small style={{ color: 'var(--mut)' }}>{u.title} ({u.role})</small>
+                </div>
+                <span style={{ color: 'var(--g)', fontSize: 13, fontWeight: 600 }}>Launch ▸</span>
+              </button>
+            ))}
           </div>
         </Sheet>
       )}

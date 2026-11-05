@@ -11,21 +11,24 @@ import { HQ } from './screens/HQ';
 import { Production } from './screens/Production';
 import Accounting from './screens/Accounting';
 import HR from './screens/HR';
-import SuperAdmin from './screens/SuperAdmin';
+import { SuperAdmin } from './screens/SuperAdmin';
+import TenantBilling from './screens/TenantBilling';
 import { Ctx } from './store';
+import { SaaS } from './saasStore';
 import { USERS, WAITERS } from './data';
 import { LanguageToggle } from './components/ui';
 
 /* ── Module launcher shown after login for manager/owner roles ── */
 const MODULES = [
-  { id: 'pos',        label: 'Point of Sale',   labelSw: 'Mauzo ya Kaunta (POS)',   icon: '🍽️',  color: '#e67e22', roles: ['cashier','waiter','manager','owner'] },
-  { id: 'kitchen',    label: 'Kitchen Display',  labelSw: 'Skrini ya Jikoni (KDS)',  icon: '👨‍🍳',  color: '#8e44ad', roles: ['chef','manager','owner'] },
-  { id: 'inventory',  label: 'Inventory',        labelSw: 'Stoo na Mzigo',          icon: '📦',  color: '#2980b9', roles: ['storekeeper','manager','owner'] },
-  { id: 'production', label: 'Production',       labelSw: 'Uzalishaji Jikoni',      icon: '🏭',  color: '#16a085', roles: ['production','manager','owner'] },
-  { id: 'accounting', label: 'Accounting',       labelSw: 'Uhasibu na Fedha',       icon: '💲',  color: '#1C7A4B', roles: ['manager','owner'] },
-  { id: 'hr',         label: 'Human Resources',  labelSw: 'Wafanyakazi (HR)',       icon: '👤',  color: '#875A7B', roles: ['manager','owner'] },
-  { id: 'manager',    label: 'Manager Controls', labelSw: 'Usimamizi wa Meneja',    icon: '📊',  color: '#c0392b', roles: ['manager','owner'] },
-  { id: 'hq',         label: 'HQ / Multi-Branch',labelSw: 'Makao Makuu (HQ)',       icon: '🌍',  color: '#2c3e50', roles: ['owner'] },
+  { id: 'pos',          label: 'Point of Sale',     labelSw: 'Mauzo ya Kaunta (POS)',   icon: '🍽️',  color: '#e67e22', roles: ['cashier','waiter','manager','owner'] },
+  { id: 'kitchen',      label: 'Kitchen Display',   labelSw: 'Skrini ya Jikoni (KDS)',  icon: '👨‍🍳',  color: '#8e44ad', roles: ['chef','manager','owner'] },
+  { id: 'inventory',    label: 'Inventory',          labelSw: 'Stoo na Mzigo',          icon: '📦',  color: '#2980b9', roles: ['storekeeper','manager','owner'] },
+  { id: 'production',   label: 'Production',         labelSw: 'Uzalishaji Jikoni',      icon: '🏭',  color: '#16a085', roles: ['production','manager','owner'] },
+  { id: 'accounting',   label: 'Accounting',         labelSw: 'Uhasibu na Fedha',       icon: '💲',  color: '#1C7A4B', roles: ['manager','owner'] },
+  { id: 'hr',           label: 'Human Resources',    labelSw: 'Wafanyakazi (HR)',       icon: '👤',  color: '#875A7B', roles: ['manager','owner'] },
+  { id: 'manager',      label: 'Manager Controls',   labelSw: 'Usimamizi wa Meneja',    icon: '📊',  color: '#c0392b', roles: ['manager','owner'] },
+  { id: 'hq',           label: 'HQ / Multi-Branch',  labelSw: 'Makao Makuu (HQ)',       icon: '🌍',  color: '#2c3e50', roles: ['owner'] },
+  { id: 'subscription', label: 'Subscription',       labelSw: 'Usajili & Malipo',       icon: '💳',  color: '#0E5A47', roles: ['owner'] },
 ];
 
 function ModuleLauncher({ sess, onLaunch, onOut, tenant, onOpenSuperAdmin }) {
@@ -145,6 +148,7 @@ function ModuleLauncher({ sess, onLaunch, onOut, tenant, onOpenSuperAdmin }) {
 
 export default function App() {
   const { S, A } = useContext(Ctx);
+  const { SS }   = useContext(SaaS);
 
   const [v, setV] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('resto_v')) || 'land'; }
@@ -198,7 +202,12 @@ export default function App() {
 
   const done = user => {
     setSess(user);
-    setV(user.role);
+    // Platform admins go to superadmin console regardless of v
+    if (user.role === 'superadmin') {
+      setV('superadmin');
+    } else {
+      setV(user.role);
+    }
     setActiveModule(null);
   };
 
@@ -230,15 +239,18 @@ export default function App() {
     setActiveModule(null);
   };
 
-  // SuperAdmin enters a specific tenant
+  // SuperAdmin enters a specific tenant (from SaaS store)
   const handleSuperAdminImpersonate = (tenant) => {
-    A.setActiveTenant(tenant.id);
+    // tenant here is a SaaS tenant object {id, name, ownerName, phone, ...}
     setImpersonatedTenant(tenant);
     const virtualOwner = {
       id: 'impersonated_' + tenant.id,
       role: 'owner',
-      name: tenant.adminName || 'Tenant Owner',
-      originalSuperAdmin: sess || { id: 'u_super', role: 'superadmin', name: 'Amina Mwamba' }
+      name: tenant.ownerName || tenant.adminName || 'Tenant Owner',
+      ph: tenant.phone,
+      tenantId: tenant.id,
+      tenantName: tenant.name,
+      originalSuperAdmin: sess,
     };
     setSess(virtualOwner);
     setV('owner');
@@ -246,9 +258,9 @@ export default function App() {
   };
 
   const exitImpersonation = () => {
-    const orig = sess?.originalSuperAdmin || { id: 'u_super', role: 'superadmin', name: 'Amina Mwamba (System Provider)' };
+    const orig = sess?.originalSuperAdmin || SS.admins.find(a => a.role === 'superadmin') || { id: 'adm1', role: 'superadmin', platformRole: 'superadmin', name: 'Platform Owner', title: 'Super Admin' };
     setImpersonatedTenant(null);
-    setSess(orig);
+    setSess({ ...orig, role: 'superadmin', platformRole: orig.platformRole || orig.role });
     setV('superadmin');
     setActiveModule(null);
   };
@@ -380,6 +392,9 @@ export default function App() {
 
   /* ── MANAGER / OWNER — Module Launcher ── */
   if (v === 'manager' || v === 'owner') {
+    if (activeModule === 'subscription') {
+      return renderWithBanner(<TenantBilling sess={sess} out={exitModule} />);
+    }
     if (activeModule === 'accounting') {
       return renderWithBanner(<Accounting sess={sess} out={exitModule} />);
     }

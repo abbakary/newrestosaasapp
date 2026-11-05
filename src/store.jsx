@@ -1794,6 +1794,17 @@ export function Store({ children }) {
       }] : s.waiters
     })),
 
+    // Upsert a user (create if not exists, replace if exists by id or phone)
+    upsertUser: u => setS(s => {
+      const exists = (s.users || []).some(x => x.id === u.id || x.ph === u.ph);
+      return {
+        ...s,
+        users: exists
+          ? (s.users || []).map(x => (x.id === u.id || x.ph === u.ph) ? { ...x, ...u } : x)
+          : [...(s.users || []), u],
+      };
+    }),
+
     // SaaS Platform & Tenant Provisioning Actions
     createTenant: (tenantData, actor = 'System Provider') => setS(s => {
       const id = tenantData.id || 'tenant_' + Date.now();
