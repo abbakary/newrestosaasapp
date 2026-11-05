@@ -99,7 +99,7 @@ export function Menu({ cart, setCart, hero, isPosMode = false, onPlaced = null, 
 
     // Daily Operations Business Rule: Block order placement on occupied tables
     if (!isOnline && !isTakeaway && isTableOccupied(assignedTable)) {
-      setOrderSuccessToast(`❌ Cannot seat: Table ${assignedTable} is currently OCCUPIED by active diners. Please select an available table.`);
+      setOrderSuccessToast(isSw ? `❌ Haiwezekani: Meza ${assignedTable} ina wageni tayari. Tafadhali chagua meza iliyo wazi.` : `❌ Cannot seat: Table ${assignedTable} is currently OCCUPIED by active diners. Please select an available table.`);
       setShowSlideSelector(true);
       setTimeout(() => setOrderSuccessToast(''), 5500);
       return;
@@ -110,22 +110,22 @@ export function Menu({ cart, setCart, hero, isPosMode = false, onPlaced = null, 
 
     A.place({
       src: assignedSrc,
-      orderType: isOnline ? 'Online Order' : isTakeaway ? 'Takeaway' : 'Dine In',
+      orderType: isOnline ? (isSw ? 'Oda ya Mtandaoni' : 'Online Order') : isTakeaway ? (isSw ? 'Pakiti' : 'Takeaway') : (isSw ? 'Kula Hapa' : 'Dine In'),
       tb: assignedTable,
       guests: tableCount,
       wid: isOnline ? 'w2' : 'w1',
       it: cart,
       pm: paymentMethod === 'ewallet' ? 'momo' : paymentMethod === 'card' ? 'card' : 'cash',
       cust: 'cust_' + Date.now().toString(36),
-      by: customerName || 'Judith Rodriguez',
+      by: customerName || (isSw ? 'Mgeni' : 'Judith Rodriguez'),
       discountPct: discountPercent,
       online: isOnline
-    }, sess?.name || 'Cashier / POS');
+    }, sess?.name || (isSw ? 'Keshia / POS' : 'Cashier / POS'));
 
     setTimeout(() => {
       setCart([]);
       setIsCheckingOut(false);
-      setOrderSuccessToast(`✓ Order confirmed for ${customerName} (${assignedTable})! Ticket sent to kitchen queue.`);
+      setOrderSuccessToast(isSw ? `✓ Oda imethibitishwa kwa ${customerName} (${assignedTable})! Imetumwa jikoni.` : `✓ Order confirmed for ${customerName} (${assignedTable})! Ticket sent to kitchen queue.`);
       setTimeout(() => setOrderSuccessToast(''), 4500);
       if (onPlaced) onPlaced();
     }, 400);
@@ -319,7 +319,7 @@ export function Menu({ cart, setCart, hero, isPosMode = false, onPlaced = null, 
                     className="pos-item-thumb"
                     loading="lazy"
                   />
-                  {is86 && <span className="sold-out-badge">86'D / SOLD OUT</span>}
+                  {is86 && <span className="sold-out-badge">{isSw ? 'IMEISHA / SOLD OUT' : "86'D / SOLD OUT"}</span>}
                   {m.needsReview && (
                     <span
                       style={{
@@ -336,9 +336,9 @@ export function Menu({ cart, setCart, hero, isPosMode = false, onPlaced = null, 
                         zIndex: 2,
                         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                       }}
-                      title="Item added on-site, awaiting manager stock cost review"
+                      title={isSw ? 'Imeongezwa haraka, inasubiri mapitio ya meneja' : 'Item added on-site, awaiting manager stock cost review'}
                     >
-                      ⚠️ Needs Review
+                      ⚠️ {isSw ? 'Inasubiri Mapitio' : 'Needs Review'}
                     </span>
                   )}
                   {m.packMultiplier && m.packMultiplier > 1 && (
@@ -356,9 +356,9 @@ export function Menu({ cart, setCart, hero, isPosMode = false, onPlaced = null, 
                         zIndex: 2,
                         backdropFilter: 'blur(4px)'
                       }}
-                      title={`Direct link: deducts ${m.packMultiplier} bottles from bar fridge`}
+                      title={isSw ? `Inapunguza chupa ${m.packMultiplier} kwenye friji ya baa` : `Direct link: deducts ${m.packMultiplier} bottles from bar fridge`}
                     >
-                      📦 {m.packMultiplier}x Pack
+                      📦 {m.packMultiplier}x {isSw ? 'Pakiti' : 'Pack'}
                     </span>
                   )}
                   <span

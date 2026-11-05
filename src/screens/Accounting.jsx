@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   INVOICES, BILLS, PAYMENTS, BANK_ACCOUNTS, CUSTOMERS, VENDORS,
   GENERAL_LEDGER, TRIAL_BALANCE, BALANCE_SHEET, PROFIT_LOSS,
@@ -8,6 +8,7 @@ import {
 import {
   InvoiceForm, BillForm, PaymentForm, PartnerForm, JournalEntryForm, DocDetail
 } from '../components/AccountingForms';
+import { Ctx } from '../store';
 
 /* ── Theme ── */
 const G = '#1C7A4B', GBG = '#f0faf4', GD = '#145a36';
@@ -16,15 +17,36 @@ const fmtN = n => { const v = Math.round(n || 0); if (!v) return '0.00'; return 
 const numColor = n => n < 0 ? '#c0392b' : n > 0 ? '#16a34a' : '#374151';
 
 /* ── Badge ── */
-const BADGE = { open:['#fef3c7','#92400e','Unpaid'], paid:['#d1fae5','#065f46','Paid'], draft:['#f3f4f6','#6b7280','Draft'], posted:['#dbeafe','#1e40af','Posted'], done:['#d1fae5','#065f46','Done'], approved:['#d1fae5','#065f46','Approved'], refused:['#fee2e2','#991b1b','Refused'] };
-function Badge({ s }) { const [bg,c,l] = BADGE[s] || ['#f3f4f6','#6b7280',s]; return <span style={{background:bg,color:c,borderRadius:20,padding:'2px 10px',fontSize:11,fontWeight:600}}>{l}</span>; }
+function Badge({ s }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
+  const BADGE = {
+    open: ['#fef3c7','#92400e', isSw ? 'Haijalipwa' : 'Unpaid'],
+    paid: ['#d1fae5','#065f46', isSw ? 'Imelipwa' : 'Paid'],
+    draft: ['#f3f4f6','#6b7280', isSw ? 'Rasimu' : 'Draft'],
+    posted: ['#dbeafe','#1e40af', isSw ? 'Imethibitishwa' : 'Posted'],
+    done: ['#d1fae5','#065f46', isSw ? 'Imekamilika' : 'Done'],
+    approved: ['#d1fae5','#065f46', isSw ? 'Imeidhinishwa' : 'Approved'],
+    refused: ['#fee2e2','#991b1b', isSw ? 'Imekataliwa' : 'Refused']
+  };
+  const [bg,c,l] = BADGE[s] || ['#f3f4f6','#6b7280',s];
+  return <span style={{background:bg,color:c,borderRadius:20,padding:'2px 10px',fontSize:11,fontWeight:600}}>{l}</span>;
+}
 
 /* ── Report banner ── */
-const Banner = () => (
-  <div style={{background:'#fffbeb',borderBottom:'1px solid #fcd34d',padding:'9px 24px',fontSize:12,color:'#92400e',textAlign:'center'}}>
-    There are <span style={{color:G,fontWeight:600,cursor:'pointer',textDecoration:'underline'}}>unposted Journal Entries</span> prior or included in this period.
-  </div>
-);
+const Banner = () => {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
+  return (
+    <div style={{background:'#fffbeb',borderBottom:'1px solid #fcd34d',padding:'9px 24px',fontSize:12,color:'#92400e',textAlign:'center'}}>
+      {isSw ? (
+        <>Kuna <span style={{color:G,fontWeight:600,cursor:'pointer',textDecoration:'underline'}}>Maingizo ya Jarida ambayo hayajathibitishwa</span> kabla au ndani ya kipindi hiki.</>
+      ) : (
+        <>There are <span style={{color:G,fontWeight:600,cursor:'pointer',textDecoration:'underline'}}>unposted Journal Entries</span> prior or included in this period.</>
+      )}
+    </div>
+  );
+};
 
 /* ── Report top bar ── */
 function RBar({ title, btns=[] }) {
@@ -39,10 +61,13 @@ function RBar({ title, btns=[] }) {
 }
 
 /* ── Toolbar ── */
-function Toolbar({ title, onNew, newLabel='New', extra=[] }) {
+function Toolbar({ title, onNew, newLabel, extra=[] }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
+  const lbl = newLabel || (isSw ? 'Mpya' : 'New');
   return (
     <div style={{borderBottom:'1px solid #e5e7eb',background:'#fff',display:'flex',alignItems:'center',gap:8,padding:'8px 20px'}}>
-      {onNew && <button onClick={onNew} style={{background:G,color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontWeight:600,fontSize:13}}>+ {newLabel}</button>}
+      {onNew && <button onClick={onNew} style={{background:G,color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontWeight:600,fontSize:13}}>+ {lbl}</button>}
       {extra.map((b,i)=><button key={i} style={{background:'#fff',color:'#374151',border:'1px solid #d1d5db',borderRadius:5,padding:'5px 12px',cursor:'pointer',fontSize:12,fontWeight:600}}>{b}</button>)}
       <span style={{fontWeight:700,fontSize:15,color:'#111827',marginLeft:4}}>{title}</span>
     </div>
@@ -50,14 +75,16 @@ function Toolbar({ title, onNew, newLabel='New', extra=[] }) {
 }
 
 /* ── Search bar ── */
-function SBar({ v, sv, ph='Search...' }) {
+function SBar({ v, sv, ph }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   return (
     <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 20px',background:'#f9fafb',borderBottom:'1px solid #e5e7eb'}}>
       <div style={{display:'flex',alignItems:'center',background:'#fff',border:'1px solid #d1d5db',borderRadius:20,padding:'5px 14px',gap:6,flex:1,maxWidth:400}}>
         <span style={{color:'#9ca3af'}}>🔍</span>
-        <input value={v} onChange={e=>sv(e.target.value)} placeholder={ph} style={{border:'none',outline:'none',fontSize:13,flex:1,background:'transparent'}}/>
+        <input value={v} onChange={e=>sv(e.target.value)} placeholder={ph || (isSw ? 'Tafuta...' : 'Search...')} style={{border:'none',outline:'none',fontSize:13,flex:1,background:'transparent'}}/>
       </div>
-      <button style={{background:G,color:'#fff',border:'none',borderRadius:20,padding:'5px 12px',fontSize:12,cursor:'pointer'}}>⭐ Favorites</button>
+      <button style={{background:G,color:'#fff',border:'none',borderRadius:20,padding:'5px 12px',fontSize:12,cursor:'pointer'}}>{isSw ? '⭐ Vipendwa' : '⭐ Favorites'}</button>
       <span style={{fontSize:12,color:'#6b7280'}}>1-5 / 5</span>
     </div>
   );
@@ -65,6 +92,8 @@ function SBar({ v, sv, ph='Search...' }) {
 
 /* ── Generic Table ── */
 function GT({ cols, rows, onRow }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   return (
     <div style={{overflowX:'auto'}}>
       <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
@@ -87,7 +116,7 @@ function GT({ cols, rows, onRow }) {
               ))}
             </tr>
           ))}
-          {!rows.length && <tr><td colSpan={cols.length+1} style={{padding:40,textAlign:'center',color:'#9ca3af'}}>No records found.</td></tr>}
+          {!rows.length && <tr><td colSpan={cols.length+1} style={{padding:40,textAlign:'center',color:'#9ca3af'}}>{isSw ? 'Hakuna rekodi zilizopatikana.' : 'No records found.'}</td></tr>}
         </tbody>
       </table>
     </div>
@@ -133,24 +162,26 @@ function NavDropdown({ items, anchorEl, active, go, onClose }) {
 }
 
 function Nav({ active, go, out }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [open, setOpen] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const timeoutRef = React.useRef(null);
 
   const M = [
-    {k:'dashboard',l:'Dashboard'},
-    {k:'customers',l:'Customers',sub:[{k:'cust_invoices',l:'Invoices'},{k:'cust_payments',l:'Payments'},{k:'cust_list',l:'Customers'}]},
-    {k:'vendors',l:'Vendors',sub:[{k:'vend_bills',l:'Bills'},{k:'vend_payments',l:'Vendor Payments'},{k:'vend_list',l:'Vendors'}]},
-    {k:'accounting',l:'Accounting',sub:[{k:'journal_entries',l:'Journal Entries'},{k:'chart_of_accounts',l:'Chart of Accounts'},{k:'bank',l:'Bank & Cash'}]},
-    {k:'review',l:'Review',sub:[{k:'journal_entries',l:'Journal Items'},{k:'bank',l:'Bank Reconciliation'}]},
-    {k:'reporting',l:'Reporting',sub:[
-      {k:'rpt_balance_sheet',l:'Balance Sheet'},{k:'rpt_pl',l:'Profit and Loss'},
-      {k:'rpt_cashflow',l:'Cash Flow Statement'},{k:'rpt_trial_balance',l:'Trial Balance'},
-      {k:'rpt_general_ledger',l:'General Ledger'},{k:'rpt_partner_ledger',l:'Partner Ledger'},
-      {k:'rpt_aged_receivable',l:'Aged Receivable'},{k:'rpt_aged_payable',l:'Aged Payable'},
-      {k:'rpt_tax',l:'Tax Report'},
+    {k:'dashboard',l:isSw?'Dashibodi':'Dashboard'},
+    {k:'customers',l:isSw?'Wateja':'Customers',sub:[{k:'cust_invoices',l:isSw?'Ankara':'Invoices'},{k:'cust_payments',l:isSw?'Malipo':'Payments'},{k:'cust_list',l:isSw?'Wateja':'Customers'}]},
+    {k:'vendors',l:isSw?'Wasambazaji':'Vendors',sub:[{k:'vend_bills',l:isSw?'Bili':'Bills'},{k:'vend_payments',l:isSw?'Malipo ya Wasambazaji':'Vendor Payments'},{k:'vend_list',l:isSw?'Wasambazaji':'Vendors'}]},
+    {k:'accounting',l:isSw?'Uhasibu':'Accounting',sub:[{k:'journal_entries',l:isSw?'Maingizo ya Jarida':'Journal Entries'},{k:'chart_of_accounts',l:isSw?'Orodha ya Akaunti':'Chart of Accounts'},{k:'bank',l:isSw?'Benki na Taslimu':'Bank & Cash'}]},
+    {k:'review',l:isSw?'Ukaguzi':'Review',sub:[{k:'journal_entries',l:isSw?'Vipengele vya Jarida':'Journal Items'},{k:'bank',l:isSw?'Upatanishi wa Benki':'Bank Reconciliation'}]},
+    {k:'reporting',l:isSw?'Ripoti':'Reporting',sub:[
+      {k:'rpt_balance_sheet',l:isSw?'Mizania (Balance Sheet)':'Balance Sheet'},{k:'rpt_pl',l:isSw?'Faida na Hasara (P&L)':'Profit and Loss'},
+      {k:'rpt_cashflow',l:isSw?'Mtiririko wa Fedha':'Cash Flow Statement'},{k:'rpt_trial_balance',l:isSw?'Urari wa Majaribio':'Trial Balance'},
+      {k:'rpt_general_ledger',l:isSw?'Leja Kuu':'General Ledger'},{k:'rpt_partner_ledger',l:isSw?'Leja ya Washirika':'Partner Ledger'},
+      {k:'rpt_aged_receivable',l:isSw?'Madeni ya Muda Mrefu':'Aged Receivable'},{k:'rpt_aged_payable',l:isSw?'Malipo ya Muda Mrefu':'Aged Payable'},
+      {k:'rpt_tax',l:isSw?'Ripoti ya Kodi':'Tax Report'},
     ]},
-    {k:'configuration',l:'Configuration',sub:[{k:'chart_of_accounts',l:'Chart of Accounts'},{k:'journal_entries',l:'Journals'}]},
+    {k:'configuration',l:isSw?'Mipangilio':'Configuration',sub:[{k:'chart_of_accounts',l:isSw?'Orodha ya Akaunti':'Chart of Accounts'},{k:'journal_entries',l:isSw?'Majarida':'Journals'}]},
   ];
 
   const handleEnter = (e, mk) => {
@@ -170,7 +201,7 @@ function Nav({ active, go, out }) {
       <nav style={{background:G,color:'#fff',display:'flex',alignItems:'center',minHeight:48,zIndex:1000,flexShrink:0}}>
         <div style={{display:'flex',alignItems:'center',gap:8,padding:'0 16px',borderRight:'1px solid rgba(255,255,255,.2)',height:48,flexShrink:0}}>
           <span style={{fontSize:18}}>💲</span>
-          <span style={{fontWeight:700,fontSize:15}}>Accounting</span>
+          <span style={{fontWeight:700,fontSize:15}}>{isSw ? 'Uhasibu' : 'Accounting'}</span>
         </div>
         <div style={{display:'flex',flex:1}}>
           {M.map(m=>(
@@ -191,7 +222,7 @@ function Nav({ active, go, out }) {
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8,paddingRight:16,flexShrink:0}}>
           <span style={{fontSize:12,opacity:.8,whiteSpace:'nowrap'}}>Safari Grill &amp; Lounge</span>
-          <button onClick={out} style={{background:'rgba(255,255,255,.15)',color:'#fff',border:'none',borderRadius:6,padding:'4px 10px',cursor:'pointer',fontSize:12}}>← Exit</button>
+          <button onClick={out} style={{background:'rgba(255,255,255,.15)',color:'#fff',border:'none',borderRadius:6,padding:'4px 10px',cursor:'pointer',fontSize:12}}>{isSw ? '← Toka' : '← Exit'}</button>
         </div>
       </nav>
       {openItem?.sub && (
@@ -232,6 +263,8 @@ function Nav({ active, go, out }) {
 
 /* ══════════════════════ DASHBOARD ══════════════════════ */
 function Dashboard({ go }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const unpaid = INVOICES.filter(i=>i.state==='open');
   const totalUnpaid = unpaid.reduce((s,i)=>s+i.balance,0);
   const inflows = PAYMENTS.filter(p=>p.type==='inbound').reduce((s,p)=>s+p.amount,0);
@@ -240,7 +273,9 @@ function Dashboard({ go }) {
 
   const Bar = ({vals,color}) => {
     const max = Math.max(...vals,1);
-    const lbs = ['Due','25-31 Oct','This Week','8-14 Nov','15-21 Nov','Not Due'];
+    const lbs = isSw
+      ? ['Imefika','25-31 Okt','Wiki Hii','8-14 Nov','15-21 Nov','Bado']
+      : ['Due','25-31 Oct','This Week','8-14 Nov','15-21 Nov','Not Due'];
     return (
       <div style={{display:'flex',alignItems:'flex-end',gap:5,height:80,marginTop:10}}>
         {vals.map((v,i)=>(
@@ -258,10 +293,10 @@ function Dashboard({ go }) {
       {/* KPI strip */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:20}}>
         {[
-          {l:'Unpaid Invoices',v:fmt(totalUnpaid),sub:`${unpaid.length} invoices`,bg:'#fef3c7',c:'#92400e'},
-          {l:'Bills to Pay',v:fmt(pendingBills),sub:`${BILLS.filter(b=>b.state==='open').length} bills`,bg:'#dbeafe',c:'#1e40af'},
-          {l:'Bank Balance',v:fmt(bankTotal),sub:`${BANK_ACCOUNTS.length} accounts`,bg:GBG,c:G},
-          {l:'Cash Received',v:fmt(inflows),sub:'This month',bg:'#d1fae5',c:'#065f46'},
+          {l:isSw?'Ankara Ambazo Hazijalipwa':'Unpaid Invoices',v:fmt(totalUnpaid),sub:isSw?`ankara ${unpaid.length}`:`${unpaid.length} invoices`,bg:'#fef3c7',c:'#92400e'},
+          {l:isSw?'Bili za Kulipa':'Bills to Pay',v:fmt(pendingBills),sub:isSw?`bili ${BILLS.filter(b=>b.state==='open').length}`:`${BILLS.filter(b=>b.state==='open').length} bills`,bg:'#dbeafe',c:'#1e40af'},
+          {l:isSw?'Salio la Benki':'Bank Balance',v:fmt(bankTotal),sub:isSw?`akaunti ${BANK_ACCOUNTS.length}`:`${BANK_ACCOUNTS.length} accounts`,bg:GBG,c:G},
+          {l:isSw?'Fedha Zilizopokelewa':'Cash Received',v:fmt(inflows),sub:isSw?'Mwezi huu':'This month',bg:'#d1fae5',c:'#065f46'},
         ].map((k,i)=>(
           <div key={i} style={{background:'#fff',borderRadius:10,border:'1px solid #e5e7eb',padding:16}}>
             <div style={{fontSize:12,color:'#6b7280',marginBottom:6}}>{k.l}</div>
@@ -275,24 +310,24 @@ function Dashboard({ go }) {
         {/* Sales */}
         <div style={{background:'#fff',borderRadius:12,border:'1px solid #e5e7eb',padding:20}}>
           <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}>
-            <span style={{fontWeight:700,fontSize:15}}>Sales</span>
+            <span style={{fontWeight:700,fontSize:15}}>{isSw?'Mauzo':'Sales'}</span>
             <span style={{color:'#9ca3af',cursor:'pointer',fontSize:18}}>⋮</span>
           </div>
-          <button onClick={()=>go('cust_invoices')} style={{background:G,color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontWeight:600,fontSize:13,marginBottom:10}}>New</button>
-          <div style={{fontSize:12.5,marginBottom:5}}><span style={{color:G,fontWeight:600}}>{unpaid.length} Unpaid</span><span style={{float:'right',fontWeight:600}}>{fmt(totalUnpaid)}</span></div>
-          <div style={{fontSize:12.5}}><span style={{color:'#ef4444',fontWeight:600}}>{unpaid.length} Late</span><span style={{float:'right',fontWeight:600,color:'#ef4444'}}>{fmt(totalUnpaid)}</span></div>
+          <button onClick={()=>go('cust_invoices')} style={{background:G,color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontWeight:600,fontSize:13,marginBottom:10}}>{isSw?'Mpya':'New'}</button>
+          <div style={{fontSize:12.5,marginBottom:5}}><span style={{color:G,fontWeight:600}}>{unpaid.length} {isSw?'Hazijalipwa':'Unpaid'}</span><span style={{float:'right',fontWeight:600}}>{fmt(totalUnpaid)}</span></div>
+          <div style={{fontSize:12.5}}><span style={{color:'#ef4444',fontWeight:600}}>{unpaid.length} {isSw?'Zimechelewa':'Late'}</span><span style={{float:'right',fontWeight:600,color:'#ef4444'}}>{fmt(totalUnpaid)}</span></div>
           <Bar vals={[600000,150000,45000,300000,500000,175000]} color="#d4b2e8"/>
         </div>
 
         {/* Purchases */}
         <div style={{background:'#fff',borderRadius:12,border:'1px solid #e5e7eb',padding:20}}>
           <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}>
-            <span style={{fontWeight:700,fontSize:15}}>Purchases</span>
+            <span style={{fontWeight:700,fontSize:15}}>{isSw?'Manunuzi':'Purchases'}</span>
             <span style={{color:'#9ca3af',cursor:'pointer',fontSize:18}}>⋮</span>
           </div>
           <div style={{display:'flex',gap:8,marginBottom:10}}>
-            <button style={{background:G,color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontWeight:600,fontSize:13}}>Upload</button>
-            <button onClick={()=>go('vend_bills')} style={{background:'#fff',color:'#374151',border:'1px solid #d1d5db',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>New</button>
+            <button style={{background:G,color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontWeight:600,fontSize:13}}>{isSw?'Pakia':'Upload'}</button>
+            <button onClick={()=>go('vend_bills')} style={{background:'#fff',color:'#374151',border:'1px solid #d1d5db',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>{isSw?'Mpya':'New'}</button>
           </div>
           <Bar vals={[225000,50000,0,176000,0,0]} color="#a7d7c5"/>
         </div>
@@ -301,33 +336,33 @@ function Dashboard({ go }) {
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
         {/* Bank */}
         <div style={{background:'#fff',borderRadius:12,border:'1px solid #e5e7eb',padding:20}}>
-          <div style={{fontWeight:700,fontSize:15,marginBottom:12}}>Bank</div>
+          <div style={{fontWeight:700,fontSize:15,marginBottom:12}}>{isSw?'Benki':'Bank'}</div>
           <div style={{display:'flex',gap:8,marginBottom:14}}>
-            <button style={{background:G,color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontWeight:600,fontSize:13}}>Bank Setup</button>
-            <button onClick={()=>go('bank')} style={{background:'#fff',color:'#374151',border:'1px solid #d1d5db',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Transactions</button>
+            <button style={{background:G,color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontWeight:600,fontSize:13}}>{isSw?'Mipangilio ya Benki':'Bank Setup'}</button>
+            <button onClick={()=>go('bank')} style={{background:'#fff',color:'#374151',border:'1px solid #d1d5db',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>{isSw?'Miamala':'Transactions'}</button>
           </div>
           {BANK_ACCOUNTS.map(b=>(
             <div key={b.id} style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid #f3f4f6'}}>
               <div style={{fontWeight:600,fontSize:13,marginBottom:3}}>{b.name}</div>
               <div style={{display:'flex',justifyContent:'space-between',fontSize:12.5}}>
-                <span style={{color:'#6b7280'}}>Balance</span>
+                <span style={{color:'#6b7280'}}>{isSw?'Salio':'Balance'}</span>
                 <span style={{color:b.balance<0?'#ef4444':'#111827',fontWeight:700}}>{fmt(b.balance)}</span>
               </div>
             </div>
           ))}
           <div style={{display:'flex',justifyContent:'space-between',fontSize:12.5,marginTop:4}}>
-            <span style={{color:'#6b7280'}}>Payments</span><span style={{color:G,fontWeight:600}}>{fmt(inflows)}</span>
+            <span style={{color:'#6b7280'}}>{isSw?'Malipo':'Payments'}</span><span style={{color:G,fontWeight:600}}>{fmt(inflows)}</span>
           </div>
           <div style={{display:'flex',justifyContent:'space-between',fontSize:12.5,marginTop:4}}>
-            <span style={{color:'#6b7280'}}>Misc. Operations</span><span style={{color:G,fontWeight:600}}>TSh 23,273,200</span>
+            <span style={{color:'#6b7280'}}>{isSw?'Shughuli Nyingine':'Misc. Operations'}</span><span style={{color:G,fontWeight:600}}>TSh 23,273,200</span>
           </div>
         </div>
 
         {/* Tax Returns */}
         <div style={{background:'#fff',borderRadius:12,border:'1px solid #e5e7eb',padding:20}}>
-          <div style={{fontWeight:700,fontSize:15,marginBottom:12}}>Tax Returns</div>
-          <button onClick={()=>go('rpt_tax')} style={{background:G,color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontWeight:600,fontSize:13,marginBottom:16}}>Tax Returns</button>
-          {[{l:'Set Company Data',d:true},{l:'Set Periods',d:true},{l:'Review Chart of Accounts',d:false}].map((x,i)=>(
+          <div style={{fontWeight:700,fontSize:15,marginBottom:12}}>{isSw?'Marejesho ya Kodi':'Tax Returns'}</div>
+          <button onClick={()=>go('rpt_tax')} style={{background:G,color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontWeight:600,fontSize:13,marginBottom:16}}>{isSw?'Marejesho ya Kodi':'Tax Returns'}</button>
+          {[{l:isSw?'Weka Taarifa za Kampuni':'Set Company Data',d:true},{l:isSw?'Weka Vipindi vya Uhasibu':'Set Periods',d:true},{l:isSw?'Kagua Orodha ya Akaunti':'Review Chart of Accounts',d:false}].map((x,i)=>(
             <div key={i} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,marginBottom:10}}>
               <div style={{width:13,height:13,borderRadius:'50%',background:x.d?G:'#e5e7eb',border:`2px solid ${x.d?G:'#d1d5db'}`,flexShrink:0}}/>
               <span style={{color:x.d?'#374151':'#9ca3af'}}>{x.l}</span>
@@ -341,20 +376,22 @@ function Dashboard({ go }) {
 
 /* ══════════════════════ INVOICES ══════════════════════ */
 function Invoices({ onNew, onRow, data }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [q,setQ]=useState('');
   const rows=(data||INVOICES).filter(i=>i.partner.toLowerCase().includes(q.toLowerCase())||i.no.includes(q));
   return (
     <div>
-      <Toolbar title="Customer Invoices" onNew={onNew} newLabel="Invoice" extra={['Upload']}/>
-      <SBar v={q} sv={setQ} ph="Search invoices..."/>
+      <Toolbar title={isSw?"Ankara za Wateja":"Customer Invoices"} onNew={onNew} newLabel={isSw?"Ankara":"Invoice"} extra={[isSw?'Pakia':'Upload']}/>
+      <SBar v={q} sv={setQ} ph={isSw?"Tafuta ankara...":"Search invoices..."}/>
       <GT onRow={onRow} rows={rows} cols={[
-        {k:'no',l:'Number',fn:v=><span style={{color:G,fontWeight:600}}>{v}</span>},
-        {k:'date',l:'Invoice Date'},
-        {k:'due',l:'Due Date',fn:(v,row)=><span style={{color:row.state==='open'&&new Date(v)<new Date()?'#ef4444':'#374151'}}>{v}</span>},
-        {k:'partner',l:'Customer',b:true},
-        {k:'total',l:'Total',r:true,fn:v=><span style={{fontWeight:600}}>{fmt(v)}</span>},
-        {k:'balance',l:'Amount Due',r:true,fn:v=><span style={{fontWeight:600,color:v>0?'#92400e':'#065f46'}}>{fmt(v)}</span>},
-        {k:'state',l:'Status',fn:v=><Badge s={v}/>},
+        {k:'no',l:isSw?'Namba':'Number',fn:v=><span style={{color:G,fontWeight:600}}>{v}</span>},
+        {k:'date',l:isSw?'Tarehe ya Ankara':'Invoice Date'},
+        {k:'due',l:isSw?'Tarehe ya Mwisho':'Due Date',fn:(v,row)=><span style={{color:row.state==='open'&&new Date(v)<new Date()?'#ef4444':'#374151'}}>{v}</span>},
+        {k:'partner',l:isSw?'Mteja':'Customer',b:true},
+        {k:'total',l:isSw?'Jumla':'Total',r:true,fn:v=><span style={{fontWeight:600}}>{fmt(v)}</span>},
+        {k:'balance',l:isSw?'Kiasi Kinachodaiwa':'Amount Due',r:true,fn:v=><span style={{fontWeight:600,color:v>0?'#92400e':'#065f46'}}>{fmt(v)}</span>},
+        {k:'state',l:isSw?'Hali':'Status',fn:v=><Badge s={v}/>},
       ]}/>
     </div>
   );
@@ -362,20 +399,22 @@ function Invoices({ onNew, onRow, data }) {
 
 /* ══════════════════════ BILLS ══════════════════════ */
 function Bills({ onNew, onRow, data }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [q,setQ]=useState('');
   const rows=(data||BILLS).filter(b=>b.partner.toLowerCase().includes(q.toLowerCase())||b.no.includes(q));
   return (
     <div>
-      <Toolbar title="Vendor Bills" onNew={onNew} newLabel="Bill" extra={['Upload']}/>
-      <SBar v={q} sv={setQ} ph="Search bills..."/>
+      <Toolbar title={isSw?"Bili za Wasambazaji":"Vendor Bills"} onNew={onNew} newLabel={isSw?"Bili":"Bill"} extra={[isSw?'Pakia':'Upload']}/>
+      <SBar v={q} sv={setQ} ph={isSw?"Tafuta bili...":"Search bills..."}/>
       <GT onRow={onRow} rows={rows} cols={[
-        {k:'no',l:'Number',fn:v=><span style={{color:G,fontWeight:600}}>{v}</span>},
-        {k:'date',l:'Bill Date'},
-        {k:'due',l:'Due Date'},
-        {k:'partner',l:'Vendor',b:true},
-        {k:'total',l:'Total',r:true,fn:v=><span style={{fontWeight:600}}>{fmt(v)}</span>},
-        {k:'balance',l:'Amount Due',r:true,fn:v=><span style={{fontWeight:600,color:v>0?'#92400e':'#065f46'}}>{fmt(v)}</span>},
-        {k:'state',l:'Status',fn:v=><Badge s={v}/>},
+        {k:'no',l:isSw?'Namba':'Number',fn:v=><span style={{color:G,fontWeight:600}}>{v}</span>},
+        {k:'date',l:isSw?'Tarehe ya Bili':'Bill Date'},
+        {k:'due',l:isSw?'Tarehe ya Mwisho':'Due Date'},
+        {k:'partner',l:isSw?'Msambazaji':'Vendor',b:true},
+        {k:'total',l:isSw?'Jumla':'Total',r:true,fn:v=><span style={{fontWeight:600}}>{fmt(v)}</span>},
+        {k:'balance',l:isSw?'Kiasi Kinachodaiwa':'Amount Due',r:true,fn:v=><span style={{fontWeight:600,color:v>0?'#92400e':'#065f46'}}>{fmt(v)}</span>},
+        {k:'state',l:isSw?'Hali':'Status',fn:v=><Badge s={v}/>},
       ]}/>
     </div>
   );
@@ -383,22 +422,24 @@ function Bills({ onNew, onRow, data }) {
 
 /* ══════════════════════ PAYMENTS ══════════════════════ */
 function PaymentsView({ dir, onNew, onRow }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [q,setQ]=useState('');
   const data=dir?PAYMENTS.filter(p=>p.type===dir):PAYMENTS;
   const rows=data.filter(p=>p.partner.toLowerCase().includes(q.toLowerCase()));
-  const title=dir==='inbound'?'Customer Payments':dir==='outbound'?'Vendor Payments':'Payments';
+  const title=dir==='inbound'?(isSw?'Malipo ya Wateja':'Customer Payments'):dir==='outbound'?(isSw?'Malipo ya Wasambazaji':'Vendor Payments'):(isSw?'Malipo':'Payments');
   return (
     <div>
-      <Toolbar title={title} onNew={onNew} newLabel="Payment"/>
-      <SBar v={q} sv={setQ} ph="Search payments..."/>
+      <Toolbar title={title} onNew={onNew} newLabel={isSw?"Malipo":"Payment"}/>
+      <SBar v={q} sv={setQ} ph={isSw?"Tafuta malipo...":"Search payments..."}/>
       <GT onRow={onRow} rows={rows} cols={[
-        {k:'no',l:'Number',fn:v=><span style={{color:G,fontWeight:600}}>{v}</span>},
-        {k:'date',l:'Date'},
-        {k:'partner',l:'Partner',b:true},
-        {k:'memo',l:'Memo',wrap:true},
-        {k:'journal',l:'Journal'},
-        {k:'method',l:'Method',fn:v=><span style={{background:'#f3f4f6',padding:'2px 8px',borderRadius:4,fontSize:11,fontWeight:600,textTransform:'uppercase'}}>{v}</span>},
-        {k:'amount',l:'Amount',r:true,fn:(v,row)=><span style={{fontWeight:600,color:row.type==='inbound'?'#065f46':'#c0392b'}}>{row.type==='outbound'?'- ':''}{fmt(v)}</span>},
+        {k:'no',l:isSw?'Namba':'Number',fn:v=><span style={{color:G,fontWeight:600}}>{v}</span>},
+        {k:'date',l:isSw?'Tarehe':'Date'},
+        {k:'partner',l:isSw?'Mshirika':'Partner',b:true},
+        {k:'memo',l:isSw?'Maelezo':'Memo',wrap:true},
+        {k:'journal',l:isSw?'Jarida':'Journal'},
+        {k:'method',l:isSw?'Njia':'Method',fn:v=><span style={{background:'#f3f4f6',padding:'2px 8px',borderRadius:4,fontSize:11,fontWeight:600,textTransform:'uppercase'}}>{v}</span>},
+        {k:'amount',l:isSw?'Kiasi':'Amount',r:true,fn:(v,row)=><span style={{fontWeight:600,color:row.type==='inbound'?'#065f46':'#c0392b'}}>{row.type==='outbound'?'- ':''}{fmt(v)}</span>},
       ]}/>
     </div>
   );
@@ -406,23 +447,26 @@ function PaymentsView({ dir, onNew, onRow }) {
 
 /* ══════════════════════ PARTNERS ══════════════════════ */
 function Partners({ type, onNew, onRow }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [q,setQ]=useState('');
   const data=type==='customer'?CUSTOMERS:VENDORS;
   const rows=data.filter(p=>p.name.toLowerCase().includes(q.toLowerCase()));
-  const title=type==='customer'?'Customers':'Vendors';
+  const title=type==='customer'?(isSw?'Wateja':'Customers'):(isSw?'Wasambazaji':'Vendors');
+  const singular=type==='customer'?(isSw?'Mteja':'Customer'):(isSw?'Msambazaji':'Vendor');
   return (
     <div>
-      <Toolbar title={title} onNew={onNew} newLabel={title.slice(0,-1)}/>
-      <SBar v={q} sv={setQ} ph={`Search ${title.toLowerCase()}...`}/>
+      <Toolbar title={title} onNew={onNew} newLabel={singular}/>
+      <SBar v={q} sv={setQ} ph={isSw?`Tafuta ${title.toLowerCase()}...`:`Search ${title.toLowerCase()}...`}/>
       <GT onRow={onRow} rows={rows} cols={[
-        {k:'ref',l:'Reference'},
-        {k:'name',l:'Name',b:true},
-        {k:'city',l:'City'},
-        {k:'phone',l:'Phone'},
-        {k:'email',l:'Email'},
-        ...(type==='vendor'?[{k:'terms',l:'Payment Terms'}]:[]),
-        {k:'balance',l:'Balance',r:true,fn:v=><span style={{fontWeight:600,color:v>0?'#92400e':'#065f46'}}>{fmt(v)}</span>},
-        {k:'overdue',l:'Overdue',r:true,fn:v=>v>0?<span style={{color:'#ef4444',fontWeight:600}}>{fmt(v)}</span>:<span style={{color:'#d1d5db'}}>—</span>},
+        {k:'ref',l:isSw?'Rejea':'Reference'},
+        {k:'name',l:isSw?'Jina':'Name',b:true},
+        {k:'city',l:isSw?'Mji':'City'},
+        {k:'phone',l:isSw?'Simu':'Phone'},
+        {k:'email',l:isSw?'Barua Pepe':'Email'},
+        ...(type==='vendor'?[{k:'terms',l:isSw?'Masharti ya Malipo':'Payment Terms'}]:[]),
+        {k:'balance',l:isSw?'Salio':'Balance',r:true,fn:v=><span style={{fontWeight:600,color:v>0?'#92400e':'#065f46'}}>{fmt(v)}</span>},
+        {k:'overdue',l:isSw?'Imechelewa':'Overdue',r:true,fn:v=>v>0?<span style={{color:'#ef4444',fontWeight:600}}>{fmt(v)}</span>:<span style={{color:'#d1d5db'}}>—</span>},
       ]}/>
     </div>
   );
@@ -430,19 +474,27 @@ function Partners({ type, onNew, onRow }) {
 
 /* ══════════════════════ JOURNAL ENTRIES ══════════════════════ */
 function JournalEntries({ entries=[], onNew, onRow }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [q,setQ]=useState('');
   const [exp,setExp]=useState(null);
   const rows=entries.filter(j=>j.ref.toLowerCase().includes(q.toLowerCase())||j.no.includes(q));
+  const headers = isSw
+    ? ['Namba','Tarehe','Jarida','Rejea','Jumla','Hali']
+    : ['Number','Date','Journal','Reference','Total','Status'];
+  const subHeaders = isSw
+    ? ['Akaunti','Mshirika','Debit','Credit']
+    : ['Account','Partner','Debit','Credit'];
   return (
     <div>
-      <Toolbar title="Journal Entries" onNew={onNew} newLabel="Journal Entry"/>
-      <SBar v={q} sv={setQ} ph="Search journal entries..."/>
+      <Toolbar title={isSw?"Maingizo ya Jarida":"Journal Entries"} onNew={onNew} newLabel={isSw?"Ingizo la Jarida":"Journal Entry"}/>
+      <SBar v={q} sv={setQ} ph={isSw?"Tafuta maingizo ya jarida...":"Search journal entries..."}/>
       <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
         <thead>
           <tr style={{background:'#f9fafb',borderBottom:'2px solid #e5e7eb'}}>
             <th style={{width:36,padding:'10px 12px'}}><input type="checkbox"/></th>
-            {['Number','Date','Journal','Reference','Total','Status'].map(h=>(
-              <th key={h} style={{padding:'10px 12px',textAlign:h==='Total'?'right':'left',color:'#6b7280',fontWeight:600,fontSize:12}}>{h}</th>
+            {headers.map((h,idx)=>(
+              <th key={h} style={{padding:'10px 12px',textAlign:idx===4?'right':'left',color:'#6b7280',fontWeight:600,fontSize:12}}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -467,7 +519,7 @@ function JournalEntries({ entries=[], onNew, onRow }) {
                     <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                       <thead>
                         <tr style={{background:'#e8f5ee'}}>
-                          {['Account','Partner','Debit','Credit'].map((h,i)=>(
+                          {subHeaders.map((h,i)=>(
                             <th key={h} style={{padding:`7px ${i===0?'24px':'12px'}`,textAlign:i>1?'right':'left',color:G,fontWeight:600}}>{h}</th>
                           ))}
                         </tr>
@@ -496,13 +548,15 @@ function JournalEntries({ entries=[], onNew, onRow }) {
 
 /* ══════════════════════ CHART OF ACCOUNTS ══════════════════════ */
 function ChartOfAccounts() {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [q,setQ]=useState('');
   const filtered=CHART_OF_ACCOUNTS.filter(a=>a.name.toLowerCase().includes(q.toLowerCase())||a.code.includes(q));
   const cats=[...new Set(filtered.map(a=>a.category))];
   return (
     <div>
-      <Toolbar title="Chart of Accounts" onNew={()=>{}} newLabel="Account"/>
-      <SBar v={q} sv={setQ} ph="Search accounts..."/>
+      <Toolbar title={isSw?"Orodha ya Akaunti":"Chart of Accounts"} onNew={()=>{}} newLabel={isSw?"Akaunti":"Account"}/>
+      <SBar v={q} sv={setQ} ph={isSw?"Tafuta akaunti...":"Search accounts..."}/>
       <div style={{padding:'12px 20px'}}>
         {cats.map(cat=>(
           <div key={cat} style={{marginBottom:20}}>
@@ -515,7 +569,7 @@ function ChartOfAccounts() {
                 <span style={{flex:1,color:'#374151',fontSize:13,fontWeight:500}}>{acc.name}</span>
                 <span style={{fontSize:12,color:'#6b7280',minWidth:80}}>{acc.type}</span>
                 <span style={{background:acc.normal==='debit'?'#dbeafe':'#fce7f3',color:acc.normal==='debit'?'#1e40af':'#9d174d',borderRadius:4,padding:'2px 8px',fontSize:11,fontWeight:600}}>{acc.normal}</span>
-                <button style={{background:'transparent',color:G,border:`1px solid ${G}40`,borderRadius:4,padding:'2px 8px',cursor:'pointer',fontSize:11}}>Setup</button>
+                <button style={{background:'transparent',color:G,border:`1px solid ${G}40`,borderRadius:4,padding:'2px 8px',cursor:'pointer',fontSize:11}}>{isSw?'Weka':'Setup'}</button>
               </div>
             ))}
           </div>
@@ -527,9 +581,11 @@ function ChartOfAccounts() {
 
 /* ══════════════════════ BANK & CASH ══════════════════════ */
 function BankCash() {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   return (
     <div>
-      <Toolbar title="Bank & Cash" onNew={()=>{}} newLabel="Transaction"/>
+      <Toolbar title={isSw?"Benki na Taslimu":"Bank & Cash"} onNew={()=>{}} newLabel={isSw?"Muamala":"Transaction"}/>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:16,padding:24}}>
         {BANK_ACCOUNTS.map(b=>(
           <div key={b.id} style={{background:'#fff',borderRadius:12,border:'1px solid #e5e7eb',padding:20}}>
@@ -541,10 +597,10 @@ function BankCash() {
               <span style={{fontSize:22}}>🏦</span>
             </div>
             <div style={{fontSize:26,fontWeight:700,color:b.balance<0?'#ef4444':'#111827',marginBottom:4}}>{fmt(b.balance)}</div>
-            <div style={{fontSize:11,color:'#9ca3af',marginBottom:14}}>Last sync: {b.lastSync}</div>
+            <div style={{fontSize:11,color:'#9ca3af',marginBottom:14}}>{isSw?'Usawazishaji wa mwisho':'Last sync'}: {b.lastSync}</div>
             <div style={{display:'flex',gap:8}}>
-              <button style={{flex:1,background:G,color:'#fff',border:'none',borderRadius:6,padding:'7px 0',cursor:'pointer',fontWeight:600,fontSize:12}}>Transactions</button>
-              <button style={{flex:1,background:'#fff',color:'#374151',border:'1px solid #d1d5db',borderRadius:6,padding:'7px 0',cursor:'pointer',fontSize:12}}>Reconcile</button>
+              <button style={{flex:1,background:G,color:'#fff',border:'none',borderRadius:6,padding:'7px 0',cursor:'pointer',fontWeight:600,fontSize:12}}>{isSw?'Miamala':'Transactions'}</button>
+              <button style={{flex:1,background:'#fff',color:'#374151',border:'1px solid #d1d5db',borderRadius:6,padding:'7px 0',cursor:'pointer',fontSize:12}}>{isSw?'Patanisha':'Reconcile'}</button>
             </div>
           </div>
         ))}
@@ -555,6 +611,8 @@ function BankCash() {
 
 /* ══════════════════════ BALANCE SHEET ══════════════════════ */
 function BalanceSheet() {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [ex,setEx]=useState({});
   const toggle=k=>setEx(p=>({...p,[k]:!p[k]}));
   const bs=BALANCE_SHEET;
@@ -585,7 +643,7 @@ function BalanceSheet() {
       <tr style={{background:'#f3f4f6'}}><td colSpan={2} style={{padding:'9px 24px',fontWeight:700,fontSize:13,color:'#374151'}}>{title}</td></tr>
       {items.map((item,i)=><Row key={i} item={item} sk={sk}/>)}
       <tr style={{borderTop:'2px solid #e5e7eb',background:'#f8fafc'}}>
-        <td style={{padding:'9px 24px',fontWeight:700,fontSize:13}}>Total {title}</td>
+        <td style={{padding:'9px 24px',fontWeight:700,fontSize:13}}>{isSw ? `Jumla ya ${title}` : `Total ${title}`}</td>
         <td style={{padding:'9px 24px',textAlign:'right',fontWeight:700,fontSize:13,color:numColor(total)}}>{fmtN(total)}</td>
       </tr>
     </>
@@ -593,32 +651,32 @@ function BalanceSheet() {
 
   return(
     <div>
-      <RBar title="Balance Sheet" btns={['📅 As of 11/01/2026','% Comparison','📋 All Journals','📊 Analytic','≡ Posted Entries','🇹🇿 Report: Balance sheet (TZ)','In .TSh']}/>
+      <RBar title={isSw?"Mizania (Balance Sheet)":"Balance Sheet"} btns={isSw?['📅 Kufikia 11/01/2026','% Ulinganisho','📋 Majarida Yote','📊 Uchambuzi','≡ Maingizo Yaliyothibitishwa','🇹🇿 Ripoti: Mizania (TZ)','Katika .TSh']:['📅 As of 11/01/2026','% Comparison','📋 All Journals','📊 Analytic','≡ Posted Entries','🇹🇿 Report: Balance sheet (TZ)','In .TSh']}/>
       <Banner/>
       <div style={{maxWidth:700,margin:'24px auto',background:'#fff',borderRadius:8,border:'1px solid #e5e7eb',overflow:'hidden'}}>
         <div style={{display:'flex',justifyContent:'flex-end',borderBottom:'2px solid #e5e7eb'}}>
           <div style={{padding:'12px 24px',minWidth:220,textAlign:'right'}}>
             <div style={{fontWeight:600,fontSize:13,borderBottom:'1px solid #e5e7eb',paddingBottom:4,marginBottom:4}}>{bs.date}</div>
-            <div style={{fontWeight:700,fontSize:12,color:'#374151'}}>Balance</div>
+            <div style={{fontWeight:700,fontSize:12,color:'#374151'}}>{isSw?'Salio':'Balance'}</div>
           </div>
         </div>
         <table style={{width:'100%',borderCollapse:'collapse'}}>
           <tbody>
             <tr style={{background:'#e8f5ee'}}>
-              <td style={{padding:'10px 24px',fontWeight:700,fontSize:14,color:G}}>Active</td>
+              <td style={{padding:'10px 24px',fontWeight:700,fontSize:14,color:G}}>{isSw?'Mali (Assets)':'Active'}</td>
               <td style={{padding:'10px 24px',textAlign:'right',fontWeight:700,fontSize:14,color:G}}>{fmtN(totalA)}</td>
             </tr>
-            <Section title="Non currents assets" total={bs.assets.noncurrent.total} items={bs.assets.noncurrent.items} sk="nca"/>
-            <Section title="Current Assets" total={bs.assets.current.total} items={bs.assets.current.items} sk="ca"/>
+            <Section title={isSw?"Mali za Kudumu":"Non currents assets"} total={bs.assets.noncurrent.total} items={bs.assets.noncurrent.items} sk="nca"/>
+            <Section title={isSw?"Mali za Sasa":"Current Assets"} total={bs.assets.current.total} items={bs.assets.current.items} sk="ca"/>
             <tr><td colSpan={2} style={{height:12}}/></tr>
             <tr style={{background:'#e8f5ee'}}>
-              <td style={{padding:'10px 24px',fontWeight:700,fontSize:14,color:GD}}>Liabilities &amp; Equity</td>
+              <td style={{padding:'10px 24px',fontWeight:700,fontSize:14,color:GD}}>{isSw?'Madeni na Mtaji':'Liabilities & Equity'}</td>
               <td style={{padding:'10px 24px',textAlign:'right',fontWeight:700,fontSize:14,color:GD}}>{fmtN(bs.liabilities.current.total)}</td>
             </tr>
-            <Section title="Non-Current Liabilities" total={bs.liabilities.noncurrent.total} items={bs.liabilities.noncurrent.items} sk="ncl"/>
-            <Section title="Current Liabilities" total={bs.liabilities.current.total} items={bs.liabilities.current.items} sk="cl"/>
+            <Section title={isSw?"Madeni ya Muda Mrefu":"Non-Current Liabilities"} total={bs.liabilities.noncurrent.total} items={bs.liabilities.noncurrent.items} sk="ncl"/>
+            <Section title={isSw?"Madeni ya Muda Mfupi":"Current Liabilities"} total={bs.liabilities.current.total} items={bs.liabilities.current.items} sk="cl"/>
             <tr><td colSpan={2} style={{height:12}}/></tr>
-            <tr style={{background:'#f3f4f6'}}><td colSpan={2} style={{padding:'9px 24px',fontWeight:700,fontSize:13}}>Equity</td></tr>
+            <tr style={{background:'#f3f4f6'}}><td colSpan={2} style={{padding:'9px 24px',fontWeight:700,fontSize:13}}>{isSw?'Mtaji (Equity)':'Equity'}</td></tr>
             {bs.equity.items.map((item,i)=>(
               <tr key={i} onMouseEnter={e=>e.currentTarget.style.background='#fafafa'} onMouseLeave={e=>e.currentTarget.style.background=''}>
                 <td style={{padding:'8px 12px 8px 44px',fontSize:13,color:'#4b5563'}}>{item.name}</td>
@@ -626,7 +684,7 @@ function BalanceSheet() {
               </tr>
             ))}
             <tr style={{borderTop:'2px solid #e5e7eb',background:'#f8fafc'}}>
-              <td style={{padding:'9px 24px',fontWeight:700,fontSize:13}}>Total Equity</td>
+              <td style={{padding:'9px 24px',fontWeight:700,fontSize:13}}>{isSw?'Jumla ya Mtaji':'Total Equity'}</td>
               <td style={{padding:'9px 24px',textAlign:'right',fontWeight:700,fontSize:13,color:G}}>{fmtN(bs.equity.total)}</td>
             </tr>
           </tbody>
@@ -638,6 +696,8 @@ function BalanceSheet() {
 
 /* ══════════════════════ P&L ══════════════════════ */
 function PL() {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const pl=PROFIT_LOSS;
   const ti=pl.income.reduce((s,i)=>s+i.amount,0);
   const tc=pl.cogs.reduce((s,i)=>s+i.amount,0);
@@ -655,7 +715,7 @@ function PL() {
         </tr>
       ))}
       <tr style={{borderTop:'2px solid #e5e7eb',background:'#f8fafc'}}>
-        <td style={{padding:'9px 24px',fontWeight:700,fontSize:13}}>Total {title}</td>
+        <td style={{padding:'9px 24px',fontWeight:700,fontSize:13}}>{isSw?`Jumla ya ${title}`:`Total ${title}`}</td>
         <td style={{padding:'9px 24px',textAlign:'right',fontWeight:700,fontSize:13,color:totC||'#374151'}}>{fmtN(total)}</td>
       </tr>
     </>
@@ -663,26 +723,26 @@ function PL() {
 
   return(
     <div>
-      <RBar title="Profit and Loss" btns={['📅 Nov 2026','% Comparison','📋 All Journals','T Analytic','≡ Posted Entries','In .TSh']}/>
+      <RBar title={isSw?"Faida na Hasara (P&L)":"Profit and Loss"} btns={isSw?['📅 Nov 2026','% Ulinganisho','📋 Majarida Yote','T Uchambuzi','≡ Maingizo Yaliyothibitishwa','Katika .TSh']:['📅 Nov 2026','% Comparison','📋 All Journals','T Analytic','≡ Posted Entries','In .TSh']}/>
       <Banner/>
       <div style={{maxWidth:700,margin:'24px auto',background:'#fff',borderRadius:8,border:'1px solid #e5e7eb',overflow:'hidden'}}>
         <div style={{display:'flex',justifyContent:'flex-end',borderBottom:'2px solid #e5e7eb'}}>
           <div style={{padding:'12px 24px',minWidth:220,textAlign:'right'}}>
             <div style={{fontWeight:600,fontSize:13,borderBottom:'1px solid #e5e7eb',paddingBottom:4,marginBottom:4}}>Nov 2026</div>
-            <div style={{fontWeight:700,fontSize:12}}>Balance</div>
+            <div style={{fontWeight:700,fontSize:12}}>{isSw?'Salio':'Balance'}</div>
           </div>
         </div>
         <table style={{width:'100%',borderCollapse:'collapse'}}>
           <tbody>
-            <Sec title="Income" items={pl.income} total={ti} tc={G}/>
+            <Sec title={isSw?"Mapato":"Income"} items={pl.income} total={ti} tc={G}/>
             <tr style={{background:'#e8f5ee'}}>
-              <td style={{padding:'10px 24px',fontWeight:700,fontSize:14,color:G}}>Gross Profit</td>
+              <td style={{padding:'10px 24px',fontWeight:700,fontSize:14,color:G}}>{isSw?'Faida Ghafi (Gross Profit)':'Gross Profit'}</td>
               <td style={{padding:'10px 24px',textAlign:'right',fontWeight:700,fontSize:14,color:G}}>{fmtN(gp)}</td>
             </tr>
-            <Sec title="Cost of Revenue" items={pl.cogs} total={tc} tc="#c0392b"/>
-            <Sec title="Operating Expenses" items={pl.expenses} total={te} tc="#c0392b"/>
+            <Sec title={isSw?"Gharama za Mauzo":"Cost of Revenue"} items={pl.cogs} total={tc} tc="#c0392b"/>
+            <Sec title={isSw?"Gharama za Uendeshaji":"Operating Expenses"} items={pl.expenses} total={te} tc="#c0392b"/>
             <tr style={{background:net>=0?'#e8f5ee':'#fee2e2',borderTop:'2px solid #e5e7eb'}}>
-              <td style={{padding:'12px 24px',fontWeight:700,fontSize:15,color:net>=0?G:'#c0392b'}}>Net Profit / (Loss)</td>
+              <td style={{padding:'12px 24px',fontWeight:700,fontSize:15,color:net>=0?G:'#c0392b'}}>{isSw?'Faida Halisi / (Hasara)':'Net Profit / (Loss)'}</td>
               <td style={{padding:'12px 24px',textAlign:'right',fontWeight:700,fontSize:15,color:net>=0?G:'#c0392b'}}>{fmtN(net)}</td>
             </tr>
           </tbody>
@@ -694,6 +754,8 @@ function PL() {
 
 /* ══════════════════════ CASH FLOW ══════════════════════ */
 function CashFlow() {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const cf=CASH_FLOW;
   const op=cf.operating.reduce((s,i)=>s+i.amount,0);
   const inv=cf.investing.reduce((s,i)=>s+i.amount,0);
@@ -710,7 +772,7 @@ function CashFlow() {
         </tr>
       ))}
       <tr style={{borderTop:'2px solid #e5e7eb',background:'#f8fafc'}}>
-        <td style={{padding:'9px 24px',fontWeight:700,fontSize:13}}>Net Cash from {title}</td>
+        <td style={{padding:'9px 24px',fontWeight:700,fontSize:13}}>{isSw?`Fedha Halisi kutoka ${title}`:`Net Cash from ${title}`}</td>
         <td style={{padding:'9px 24px',textAlign:'right',fontWeight:700,fontSize:13,color:numColor(total)}}>{fmtN(total)}</td>
       </tr>
     </>
@@ -718,22 +780,22 @@ function CashFlow() {
 
   return(
     <div>
-      <RBar title="Cash Flow Statement" btns={['📅 Nov 2026','% Comparison','📋 All Journals','≡ Posted Entries','In .TSh']}/>
+      <RBar title={isSw?"Mtiririko wa Fedha":"Cash Flow Statement"} btns={isSw?['📅 Nov 2026','% Ulinganisho','📋 Majarida Yote','≡ Maingizo Yaliyothibitishwa','Katika .TSh']:['📅 Nov 2026','% Comparison','📋 All Journals','≡ Posted Entries','In .TSh']}/>
       <Banner/>
       <div style={{maxWidth:700,margin:'24px auto',background:'#fff',borderRadius:8,border:'1px solid #e5e7eb',overflow:'hidden'}}>
         <div style={{display:'flex',justifyContent:'flex-end',borderBottom:'2px solid #e5e7eb'}}>
           <div style={{padding:'12px 24px',minWidth:220,textAlign:'right'}}>
             <div style={{fontWeight:600,fontSize:13,borderBottom:'1px solid #e5e7eb',paddingBottom:4,marginBottom:4}}>Nov 2026</div>
-            <div style={{fontWeight:700,fontSize:12}}>Balance</div>
+            <div style={{fontWeight:700,fontSize:12}}>{isSw?'Salio':'Balance'}</div>
           </div>
         </div>
         <table style={{width:'100%',borderCollapse:'collapse'}}>
           <tbody>
-            <Sec title="Operating Activities" items={cf.operating} total={op}/>
-            <Sec title="Investing Activities" items={cf.investing} total={inv}/>
-            <Sec title="Financing Activities" items={cf.financing} total={fin}/>
+            <Sec title={isSw?"Shughuli za Uendeshaji":"Operating Activities"} items={cf.operating} total={op}/>
+            <Sec title={isSw?"Shughuli za Uwekezaji":"Investing Activities"} items={cf.investing} total={inv}/>
+            <Sec title={isSw?"Shughuli za Kifedha":"Financing Activities"} items={cf.financing} total={fin}/>
             <tr style={{background:net>=0?'#e8f5ee':'#fee2e2',borderTop:'3px solid #e5e7eb'}}>
-              <td style={{padding:'12px 24px',fontWeight:700,fontSize:15,color:net>=0?G:'#c0392b'}}>Net Change in Cash</td>
+              <td style={{padding:'12px 24px',fontWeight:700,fontSize:15,color:net>=0?G:'#c0392b'}}>{isSw?'Mabadiliko Halisi ya Fedha':'Net Change in Cash'}</td>
               <td style={{padding:'12px 24px',textAlign:'right',fontWeight:700,fontSize:15,color:numColor(net)}}>{fmtN(net)}</td>
             </tr>
           </tbody>
@@ -745,26 +807,28 @@ function CashFlow() {
 
 /* ══════════════════════ TRIAL BALANCE ══════════════════════ */
 function TrialBalance() {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const tD=TRIAL_BALANCE.reduce((s,r)=>s+r.debit,0);
   const tC=TRIAL_BALANCE.reduce((s,r)=>s+r.credit,0);
   return(
     <div>
-      <RBar title="Trial Balance" btns={['🔍','📅 Nov 2026','% Comparison','📋 All Journals','T Analytic','≡ Posted Entries','In .TSh']}/>
+      <RBar title={isSw?"Urari wa Majaribio (Trial Balance)":"Trial Balance"} btns={isSw?['🔍','📅 Nov 2026','% Ulinganisho','📋 Majarida Yote','T Uchambuzi','≡ Maingizo Yaliyothibitishwa','Katika .TSh']:['🔍','📅 Nov 2026','% Comparison','📋 All Journals','T Analytic','≡ Posted Entries','In .TSh']}/>
       <Banner/>
       <div style={{maxWidth:880,margin:'24px auto',background:'#fff',borderRadius:8,border:'1px solid #e5e7eb',overflow:'auto'}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:12.5}}>
           <thead>
             <tr style={{background:'#f9fafb',borderBottom:'1px solid #e5e7eb'}}>
-              <th rowSpan={2} style={{padding:'10px 24px',textAlign:'left',color:'#374151',fontWeight:600,borderBottom:'2px solid #e5e7eb',minWidth:280}}>Account</th>
-              <th style={{padding:'8px 24px',textAlign:'center',color:'#374151',fontWeight:600,borderLeft:'1px solid #e5e7eb',borderBottom:'1px solid #e5e7eb'}}>Initial Balance</th>
+              <th rowSpan={2} style={{padding:'10px 24px',textAlign:'left',color:'#374151',fontWeight:600,borderBottom:'2px solid #e5e7eb',minWidth:280}}>{isSw?'Akaunti':'Account'}</th>
+              <th style={{padding:'8px 24px',textAlign:'center',color:'#374151',fontWeight:600,borderLeft:'1px solid #e5e7eb',borderBottom:'1px solid #e5e7eb'}}>{isSw?'Salio la Awali':'Initial Balance'}</th>
               <th colSpan={2} style={{padding:'8px 24px',textAlign:'center',color:'#374151',fontWeight:600,borderLeft:'1px solid #e5e7eb',borderBottom:'1px solid #e5e7eb'}}>Nov 2026</th>
-              <th style={{padding:'8px 24px',textAlign:'center',color:'#374151',fontWeight:600,borderLeft:'1px solid #e5e7eb',borderBottom:'1px solid #e5e7eb'}}>End Balance</th>
+              <th style={{padding:'8px 24px',textAlign:'center',color:'#374151',fontWeight:600,borderLeft:'1px solid #e5e7eb',borderBottom:'1px solid #e5e7eb'}}>{isSw?'Salio la Mwisho':'End Balance'}</th>
             </tr>
             <tr style={{background:'#f9fafb',borderBottom:'2px solid #e5e7eb'}}>
-              <th style={{padding:'5px 24px',textAlign:'right',color:'#6b7280',fontWeight:500,fontSize:11,borderLeft:'1px solid #e5e7eb'}}>Balance</th>
+              <th style={{padding:'5px 24px',textAlign:'right',color:'#6b7280',fontWeight:500,fontSize:11,borderLeft:'1px solid #e5e7eb'}}>{isSw?'Salio':'Balance'}</th>
               <th style={{padding:'5px 12px',textAlign:'right',color:'#6b7280',fontWeight:500,fontSize:11,borderLeft:'1px solid #e5e7eb'}}>Debit</th>
               <th style={{padding:'5px 12px',textAlign:'right',color:'#6b7280',fontWeight:500,fontSize:11}}>Credit</th>
-              <th style={{padding:'5px 24px',textAlign:'right',color:'#6b7280',fontWeight:500,fontSize:11,borderLeft:'1px solid #e5e7eb'}}>Balance</th>
+              <th style={{padding:'5px 24px',textAlign:'right',color:'#6b7280',fontWeight:500,fontSize:11,borderLeft:'1px solid #e5e7eb'}}>{isSw?'Salio':'Balance'}</th>
             </tr>
           </thead>
           <tbody>
@@ -785,7 +849,7 @@ function TrialBalance() {
           </tbody>
           <tfoot>
             <tr style={{background:'#f9fafb',borderTop:'2px solid #e5e7eb'}}>
-              <td style={{padding:'10px 24px',fontWeight:700,fontSize:13}}>Total</td>
+              <td style={{padding:'10px 24px',fontWeight:700,fontSize:13}}>{isSw?'Jumla':'Total'}</td>
               <td style={{padding:'10px 24px',textAlign:'right',fontWeight:700,borderLeft:'1px solid #e5e7eb'}}>0.00</td>
               <td style={{padding:'10px 12px',textAlign:'right',fontWeight:700,color:G,borderLeft:'1px solid #e5e7eb'}}>{fmtN(tD)}</td>
               <td style={{padding:'10px 12px',textAlign:'right',fontWeight:700,color:'#c0392b'}}>{fmtN(tC)}</td>
@@ -800,12 +864,14 @@ function TrialBalance() {
 
 /* ══════════════════════ GENERAL LEDGER ══════════════════════ */
 function GeneralLedger() {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [ex,setEx]=useState({});
   const tD=GENERAL_LEDGER.reduce((s,r)=>s+r.debit,0);
   const tC=GENERAL_LEDGER.reduce((s,r)=>s+r.credit,0);
   return(
     <div>
-      <RBar title="General Ledger" btns={['🔍','📅 Nov 2026','📋 All Journals','T Analytic','≡ Posted Entries','In .TSh']}/>
+      <RBar title={isSw?"Leja Kuu (General Ledger)":"General Ledger"} btns={isSw?['🔍','📅 Nov 2026','📋 Majarida Yote','T Uchambuzi','≡ Maingizo Yaliyothibitishwa','Katika .TSh']:['🔍','📅 Nov 2026','📋 All Journals','T Analytic','≡ Posted Entries','In .TSh']}/>
       <Banner/>
       <div style={{maxWidth:980,margin:'24px auto',background:'#fff',borderRadius:8,border:'1px solid #e5e7eb',overflow:'auto'}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:12.5}}>
@@ -814,10 +880,10 @@ function GeneralLedger() {
               <th colSpan={3} style={{padding:'10px 24px',textAlign:'left',color:'#374151',fontWeight:600}}>Nov 2026</th>
               <th style={{padding:'10px 12px',textAlign:'right',color:'#374151',fontWeight:600}}>Debit</th>
               <th style={{padding:'10px 12px',textAlign:'right',color:'#374151',fontWeight:600}}>Credit</th>
-              <th style={{padding:'10px 24px',textAlign:'right',color:'#374151',fontWeight:600}}>Balance</th>
+              <th style={{padding:'10px 24px',textAlign:'right',color:'#374151',fontWeight:600}}>{isSw?'Salio':'Balance'}</th>
             </tr>
             <tr style={{background:'#f9fafb',borderBottom:'1px solid #e5e7eb'}}>
-              {['Date','Partner','Currency','','',''].map((h,i)=>(
+              {(isSw?['Tarehe','Mshirika','Sarafu','','','']:['Date','Partner','Currency','','','']).map((h,i)=>(
                 <th key={i} style={{padding:'5px '+(i===0?'24px':'12px'),color:'#6b7280',fontWeight:500,fontSize:11,textAlign:i>2?'right':'left'}}>{h}</th>
               ))}
             </tr>
@@ -846,7 +912,7 @@ function GeneralLedger() {
                 {ex[i]&&(
                   <tr>
                     <td colSpan={6} style={{background:'#f8fafc',padding:'8px 48px',fontSize:12,color:'#9ca3af',fontStyle:'italic'}}>
-                      Opening balance carried forward — no individual transaction lines in demo mode.
+                      {isSw?'Salio la awali limehamishwa — hakuna mistari ya miamala binafsi katika hali ya majaribio.':'Opening balance carried forward — no individual transaction lines in demo mode.'}
                     </td>
                   </tr>
                 )}
@@ -855,7 +921,7 @@ function GeneralLedger() {
           </tbody>
           <tfoot>
             <tr style={{background:'#f9fafb',borderTop:'2px solid #e5e7eb'}}>
-              <td colSpan={3} style={{padding:'10px 24px',fontWeight:700,fontSize:13}}>Total General Ledger</td>
+              <td colSpan={3} style={{padding:'10px 24px',fontWeight:700,fontSize:13}}>{isSw?'Jumla ya Leja Kuu':'Total General Ledger'}</td>
               <td style={{padding:'10px 12px',textAlign:'right',fontWeight:700,color:G}}>{tD.toLocaleString()}.00 TSh</td>
               <td style={{padding:'10px 12px',textAlign:'right',fontWeight:700,color:'#c0392b'}}>{tC.toLocaleString()}.00 TSh</td>
               <td style={{padding:'10px 24px',textAlign:'right',fontWeight:700}}>0.00 TSh</td>
@@ -869,9 +935,14 @@ function GeneralLedger() {
 
 /* ══════════════════════ PARTNER LEDGER ══════════════════════ */
 function PartnerLedger() {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
+  const headers = isSw
+    ? ['Tarehe','Rejea','Debit','Credit','Salio']
+    : ['Date','Reference','Debit','Credit','Balance'];
   return(
     <div>
-      <RBar title="Partner Ledger" btns={['📅 Nov 2026','📋 All Journals','≡ Posted Entries','In .TSh']}/>
+      <RBar title={isSw?"Leja ya Washirika":"Partner Ledger"} btns={isSw?['📅 Nov 2026','📋 Majarida Yote','≡ Maingizo Yaliyothibitishwa','Katika .TSh']:['📅 Nov 2026','📋 All Journals','≡ Posted Entries','In .TSh']}/>
       <Banner/>
       <div style={{maxWidth:860,margin:'24px auto',background:'#fff',borderRadius:8,border:'1px solid #e5e7eb',overflow:'hidden'}}>
         {PARTNER_LEDGER.map((pl,pi)=>(
@@ -883,7 +954,7 @@ function PartnerLedger() {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:12.5}}>
               <thead>
                 <tr style={{background:'#f9fafb',borderBottom:'1px solid #e5e7eb'}}>
-                  {['Date','Reference','Debit','Credit','Balance'].map((h,i)=>(
+                  {headers.map((h,i)=>(
                     <th key={h} style={{padding:'7px '+(i<2?'24px':'12px'),textAlign:i>1?'right':'left',color:'#6b7280',fontWeight:500,fontSize:11}}>{h}</th>
                   ))}
                 </tr>
@@ -901,7 +972,7 @@ function PartnerLedger() {
                   </tr>
                 ))}
                 <tr style={{background:'#f8fafc',borderTop:'2px solid #e5e7eb',borderBottom:'3px solid #e5e7eb'}}>
-                  <td colSpan={2} style={{padding:'8px 24px',fontWeight:700,fontSize:12.5}}>Total for {pl.partner}</td>
+                  <td colSpan={2} style={{padding:'8px 24px',fontWeight:700,fontSize:12.5}}>{isSw?`Jumla kwa ${pl.partner}`:`Total for ${pl.partner}`}</td>
                   <td style={{padding:'8px 12px',textAlign:'right',fontWeight:700,color:G}}>{fmtN(pl.total_debit)}</td>
                   <td style={{padding:'8px 12px',textAlign:'right',fontWeight:700,color:'#c0392b'}}>{fmtN(pl.total_credit)}</td>
                   <td style={{padding:'8px 24px',textAlign:'right',fontWeight:700,color:numColor(pl.balance)}}>{fmtN(pl.balance)}</td>
@@ -917,23 +988,27 @@ function PartnerLedger() {
 
 /* ══════════════════════ AGED REPORTS ══════════════════════ */
 function AgedReport({ type='receivable' }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const data=type==='receivable'?AGED_RECEIVABLE:AGED_PAYABLE;
-  const title=type==='receivable'?'Aged Receivable':'Aged Payable';
-  const cols=['Not Due','1-30 Days','31-60 Days','61-90 Days','Older'];
+  const title=type==='receivable'?(isSw?'Madeni ya Muda Mrefu':'Aged Receivable'):(isSw?'Malipo ya Muda Mrefu':'Aged Payable');
+  const cols=isSw
+    ? ['Bado','Siku 1-30','Siku 31-60','Siku 61-90','Zaidi']
+    : ['Not Due','1-30 Days','31-60 Days','61-90 Days','Older'];
   const keys=['current','days_1_30','days_31_60','days_61_90','older'];
   const total=data.reduce((s,r)=>s+r.total,0);
   const agingColor=['#374151','#d97706','#c0392b','#991b1b','#7f1d1d'];
 
   return(
     <div>
-      <RBar title={title} btns={['📅 As of 11/01/2026','📋 All Journals','≡ Posted Entries','In .TSh']}/>
+      <RBar title={title} btns={isSw?['📅 Kufikia 11/01/2026','📋 Majarida Yote','≡ Maingizo Yaliyothibitishwa','Katika .TSh']:['📅 As of 11/01/2026','📋 All Journals','≡ Posted Entries','In .TSh']}/>
       <Banner/>
       <div style={{maxWidth:920,margin:'24px auto',background:'#fff',borderRadius:8,border:'1px solid #e5e7eb',overflow:'auto'}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:12.5}}>
           <thead>
             <tr style={{background:'#f9fafb',borderBottom:'2px solid #e5e7eb'}}>
-              <th style={{padding:'10px 24px',textAlign:'left',color:'#374151',fontWeight:600}}>Partner</th>
-              <th style={{padding:'10px 12px',textAlign:'right',color:'#374151',fontWeight:600}}>Total</th>
+              <th style={{padding:'10px 24px',textAlign:'left',color:'#374151',fontWeight:600}}>{isSw?'Mshirika':'Partner'}</th>
+              <th style={{padding:'10px 12px',textAlign:'right',color:'#374151',fontWeight:600}}>{isSw?'Jumla':'Total'}</th>
               {cols.map(c=><th key={c} style={{padding:'10px 12px',textAlign:'right',color:'#374151',fontWeight:600}}>{c}</th>)}
             </tr>
           </thead>
@@ -952,7 +1027,7 @@ function AgedReport({ type='receivable' }) {
           </tbody>
           <tfoot>
             <tr style={{background:'#f9fafb',borderTop:'2px solid #e5e7eb'}}>
-              <td style={{padding:'10px 24px',fontWeight:700}}>Total</td>
+              <td style={{padding:'10px 24px',fontWeight:700}}>{isSw?'Jumla':'Total'}</td>
               <td style={{padding:'10px 12px',textAlign:'right',fontWeight:700,color:G}}>{fmtN(total)}</td>
               {keys.map((k,ki)=>{
                 const s=data.reduce((sum,r)=>sum+r[k],0);
@@ -968,20 +1043,25 @@ function AgedReport({ type='receivable' }) {
 
 /* ══════════════════════ TAX REPORT ══════════════════════ */
 function TaxReport() {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const totalTax=TAX_REPORT.reduce((s,r)=>s+r.tax,0);
+  const headers = isSw
+    ? ['Jina la Kodi','Msimbo wa Kodi','Kiasi Kinachotozwa Kodi','Kiasi cha Kodi']
+    : ['Tax Name','Tax Code','Taxable Base','Tax Amount'];
   return(
     <div>
-      <RBar title="Tax Report" btns={['📅 Nov 2026','📋 All Journals','≡ Posted Entries','In .TSh']}/>
+      <RBar title={isSw?"Ripoti ya Kodi":"Tax Report"} btns={isSw?['📅 Nov 2026','📋 Majarida Yote','≡ Maingizo Yaliyothibitishwa','Katika .TSh']:['📅 Nov 2026','📋 All Journals','≡ Posted Entries','In .TSh']}/>
       <Banner/>
       <div style={{maxWidth:760,margin:'24px auto',background:'#fff',borderRadius:8,border:'1px solid #e5e7eb',overflow:'hidden'}}>
         <div style={{padding:'14px 24px',background:'#f9fafb',borderBottom:'2px solid #e5e7eb',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span style={{fontWeight:700,fontSize:14,color:'#111827'}}>Tax Summary — November 2026</span>
-          <span style={{background:GBG,color:G,borderRadius:6,padding:'4px 12px',fontWeight:700,fontSize:13}}>Total Tax: {fmt(totalTax)}</span>
+          <span style={{fontWeight:700,fontSize:14,color:'#111827'}}>{isSw?'Muhtasari wa Kodi — Novemba 2026':'Tax Summary — November 2026'}</span>
+          <span style={{background:GBG,color:G,borderRadius:6,padding:'4px 12px',fontWeight:700,fontSize:13}}>{isSw?'Jumla ya Kodi':'Total Tax'}: {fmt(totalTax)}</span>
         </div>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
           <thead>
             <tr style={{borderBottom:'1px solid #e5e7eb',background:'#f9fafb'}}>
-              {['Tax Name','Tax Code','Taxable Base','Tax Amount'].map((h,i)=>(
+              {headers.map((h,i)=>(
                 <th key={h} style={{padding:'10px '+(i<2?'24px':'12px'),textAlign:i>1?'right':'left',color:'#6b7280',fontWeight:600,fontSize:12}}>{h}</th>
               ))}
             </tr>
@@ -1002,7 +1082,7 @@ function TaxReport() {
           </tbody>
           <tfoot>
             <tr style={{background:'#f9fafb',borderTop:'2px solid #e5e7eb'}}>
-              <td colSpan={3} style={{padding:'10px 24px',fontWeight:700,fontSize:13}}>Total Tax Payable</td>
+              <td colSpan={3} style={{padding:'10px 24px',fontWeight:700,fontSize:13}}>{isSw?'Jumla ya Kodi Inayolipwa':'Total Tax Payable'}</td>
               <td style={{padding:'10px 12px',textAlign:'right',fontWeight:700,fontSize:14,color:G}}>{fmt(totalTax)}</td>
             </tr>
           </tfoot>

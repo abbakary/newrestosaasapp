@@ -3,8 +3,9 @@
  * Full Odoo-style create/edit forms for: Invoice, Bill, Payment, Customer, Vendor, Journal Entry
  * Reference: zalongwa-odoo-apps / tax_invoice_pdf / zalongwa_account_financial_report
  */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import { CHART_OF_ACCOUNTS, CUSTOMERS, VENDORS } from '../data_accounting';
+import { Ctx } from '../store';
 
 /* ─── theme ─────────────────────────────────────────── */
 const G  = '#1C7A4B';
@@ -22,6 +23,13 @@ const parseN = v => parseFloat(v)||0;
 
 /** Odoo-style status bar */
 function StatusBar({ states, current }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
+  const STATE_LABELS = {
+    draft: isSw ? 'Rasimu' : 'Draft',
+    posted: isSw ? 'Imethibitishwa' : 'Posted',
+    paid: isSw ? 'Imelipwa' : 'Paid',
+  };
   const idx = states.indexOf(current);
   return (
     <div style={{display:'flex',alignItems:'center',gap:0,background:'#f9fafb',borderBottom:'1px solid #e5e7eb',padding:'0 24px',height:40,overflowX:'auto'}}>
@@ -42,7 +50,7 @@ function StatusBar({ states, current }) {
               borderRight: i===states.length-1?(active||done?'none':'1px solid #e5e7eb'):'none',
               ...(i===0?{borderLeft:active||done?'none':'1px solid #e5e7eb',borderRadius:'4px 0 0 4px'}:{})
             }}>
-              {s.charAt(0).toUpperCase()+s.slice(1)}
+              {STATE_LABELS[s] || (s.charAt(0).toUpperCase()+s.slice(1))}
             </div>
           </div>
         );
@@ -144,8 +152,15 @@ const CardHeader = ({title,sub}) => (
 
 /** Inline editable lines table */
 function LinesTable({ lines, setLines, type='invoice' }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const accounts = CHART_OF_ACCOUNTS.filter(a => ['income','expense','asset'].includes(a.type));
-  const TAX_OPTS = [{ v:0,l:'No Tax' },{ v:18,l:'18% VAT' },{ v:8,l:'8% VAT' },{ v:5,l:'5% Withholding' }];
+  const TAX_OPTS = [
+    { v:0, l: isSw ? 'Hakuna Kodi' : 'No Tax' },
+    { v:18, l: '18% VAT' },
+    { v:8, l: '8% VAT' },
+    { v:5, l: isSw ? '5% Kodi ya Zuio' : '5% Withholding' }
+  ];
 
   const addLine = () => setLines(prev => [...prev, {
     id: uid(), description:'', account: type==='invoice'?'acc_4001':'acc_5001',
@@ -165,13 +180,17 @@ function LinesTable({ lines, setLines, type='invoice' }) {
   const taxAmt   = lines.reduce((s,l) => s + (parseN(l.qty)*parseN(l.price))*(parseN(l.tax)/100), 0);
   const total    = subtotal + taxAmt;
 
+  const headers = isSw
+    ? ['Maelezo','Akaunti','Idadi','Bei ya Kimoja','Kodi %','Kiasi']
+    : ['Description','Account','Qty','Unit Price','Tax %','Amount'];
+
   return (
     <div>
       <div style={{overflowX:'auto'}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
           <thead>
             <tr style={{background:'#f9fafb',borderBottom:'2px solid #e5e7eb'}}>
-              {['Description','Account','Qty','Unit Price','Tax %','Amount'].map((h,i)=>(
+              {headers.map((h,i)=>(
                 <th key={h} style={{padding:'9px '+(i===0?'16px':'10px'),textAlign:i>1?'right':'left',color:'#6b7280',fontWeight:600,fontSize:12}}>{h}</th>
               ))}
               <th style={{width:40}}/>
@@ -185,7 +204,7 @@ function LinesTable({ lines, setLines, type='invoice' }) {
                   onMouseEnter={e=>e.currentTarget.style.background=GB}
                   onMouseLeave={e=>e.currentTarget.style.background=''}>
                   <td style={{padding:'6px 16px 6px 16px',minWidth:200}}>
-                    <Inp value={line.description} onChange={e=>updateLine(line.id,'description',e.target.value)} placeholder="Product or service description"/>
+                    <Inp value={line.description} onChange={e=>updateLine(line.id,'description',e.target.value)} placeholder={isSw?"Maelezo ya bidhaa au huduma":"Product or service description"}/>
                   </td>
                   <td style={{padding:'6px 10px',minWidth:180}}>
                     <Sel value={line.account} onChange={e=>updateLine(line.id,'account',e.target.value)}>
@@ -207,7 +226,7 @@ function LinesTable({ lines, setLines, type='invoice' }) {
                     {fmt(lineTotal)}
                   </td>
                   <td style={{padding:'6px 8px',textAlign:'center'}}>
-                    <button onClick={()=>removeLine(line.id)} style={{background:'transparent',border:'none',cursor:'pointer',color:'#ef4444',fontSize:16,lineHeight:1,padding:'2px 4px'}} title="Remove line">×</button>
+                    <button onClick={()=>removeLine(line.id)} style={{background:'transparent',border:'none',cursor:'pointer',color:'#ef4444',fontSize:16,lineHeight:1,padding:'2px 4px'}} title={isSw?"Ondoa mstari":"Remove line"}>×</button>
                   </td>
                 </tr>
               );
@@ -219,7 +238,7 @@ function LinesTable({ lines, setLines, type='invoice' }) {
       {/* Add line */}
       <div style={{padding:'10px 16px',borderTop:'1px solid #f3f4f6'}}>
         <button onClick={addLine} style={{background:'transparent',color:G,border:`1px dashed ${G}60`,borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13,fontWeight:600}}>
-          + Add a line
+          {isSw ? '+ Ongeza mstari' : '+ Add a line'}
         </button>
       </div>
 
@@ -228,15 +247,15 @@ function LinesTable({ lines, setLines, type='invoice' }) {
         <table style={{borderCollapse:'collapse',fontSize:13,minWidth:280}}>
           <tbody>
             <tr>
-              <td style={{padding:'5px 20px 5px 0',color:'#6b7280',textAlign:'right'}}>Subtotal</td>
+              <td style={{padding:'5px 20px 5px 0',color:'#6b7280',textAlign:'right'}}>{isSw ? 'Jumla Ndogo' : 'Subtotal'}</td>
               <td style={{padding:'5px 0',textAlign:'right',fontWeight:500,color:'#374151',minWidth:140}}>{fmt(subtotal)}</td>
             </tr>
             <tr>
-              <td style={{padding:'5px 20px 5px 0',color:'#6b7280',textAlign:'right'}}>Tax</td>
+              <td style={{padding:'5px 20px 5px 0',color:'#6b7280',textAlign:'right'}}>{isSw ? 'Kodi' : 'Tax'}</td>
               <td style={{padding:'5px 0',textAlign:'right',fontWeight:500,color:'#374151'}}>{fmt(taxAmt)}</td>
             </tr>
             <tr style={{borderTop:'2px solid #e5e7eb'}}>
-              <td style={{padding:'10px 20px 10px 0',color:'#111827',fontWeight:700,fontSize:14,textAlign:'right'}}>Total</td>
+              <td style={{padding:'10px 20px 10px 0',color:'#111827',fontWeight:700,fontSize:14,textAlign:'right'}}>{isSw ? 'Jumla Kuu' : 'Total'}</td>
               <td style={{padding:'10px 0',textAlign:'right',fontWeight:800,fontSize:16,color:G}}>{fmt(total)}</td>
             </tr>
           </tbody>
@@ -248,6 +267,8 @@ function LinesTable({ lines, setLines, type='invoice' }) {
 
 /** Journal lines table (debit/credit) */
 function JELinesTable({ lines, setLines }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const accounts = CHART_OF_ACCOUNTS;
   const all_partners = [...CUSTOMERS.map(c=>({id:c.id,name:c.name,type:'Customer'})), ...VENDORS.map(v=>({id:v.id,name:v.name,type:'Vendor'}))];
 
@@ -259,13 +280,17 @@ function JELinesTable({ lines, setLines }) {
   const totalC = lines.reduce((s,l)=>s+parseN(l.credit),0);
   const balanced = Math.abs(totalD-totalC) < 0.01;
 
+  const headers = isSw
+    ? ['Akaunti','Mshirika / Mteja','Maelezo','Debit','Credit']
+    : ['Account','Partner / Label','Label','Debit','Credit'];
+
   return (
     <div>
       <div style={{overflowX:'auto'}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
           <thead>
             <tr style={{background:'#f9fafb',borderBottom:'2px solid #e5e7eb'}}>
-              {['Account','Partner / Label','Label','Debit','Credit'].map((h,i)=>(
+              {headers.map((h,i)=>(
                 <th key={h} style={{padding:'9px '+(i===0?'16px':'10px'),textAlign:i>2?'right':'left',color:'#6b7280',fontWeight:600,fontSize:12}}>{h}</th>
               ))}
               <th style={{width:40}}/>
@@ -288,7 +313,7 @@ function JELinesTable({ lines, setLines }) {
                   </Sel>
                 </td>
                 <td style={{padding:'6px 10px',minWidth:180}}>
-                  <Inp value={line.label} onChange={e=>updateLine(line.id,'label',e.target.value)} placeholder="Label…"/>
+                  <Inp value={line.label} onChange={e=>updateLine(line.id,'label',e.target.value)} placeholder={isSw?"Maelezo…":"Label…"}/>
                 </td>
                 <td style={{padding:'6px 10px',minWidth:130}}>
                   <Inp type="number" value={line.debit||''} min="0" step="1" onChange={e=>updateLine(line.id,'debit',e.target.value)} style={{textAlign:'right'}}/>
@@ -306,21 +331,21 @@ function JELinesTable({ lines, setLines }) {
       </div>
       <div style={{padding:'10px 16px',borderTop:'1px solid #f3f4f6'}}>
         <button onClick={addLine} style={{background:'transparent',color:G,border:`1px dashed ${G}60`,borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13,fontWeight:600}}>
-          + Add a line
+          {isSw ? '+ Ongeza mstari' : '+ Add a line'}
         </button>
       </div>
       {/* Totals */}
       <div style={{display:'flex',justifyContent:'flex-end',gap:16,padding:'14px 20px',borderTop:'2px solid #e5e7eb',alignItems:'center'}}>
-        {!balanced && <span style={{color:'#ef4444',fontSize:12,fontWeight:600}}>⚠ Not balanced (diff: {fmt(Math.abs(totalD-totalC))})</span>}
-        {balanced && totalD>0 && <span style={{color:G,fontSize:12,fontWeight:600}}>✓ Balanced</span>}
+        {!balanced && <span style={{color:'#ef4444',fontSize:12,fontWeight:600}}>⚠ {isSw ? `Haijalingana (tofauti: ${fmt(Math.abs(totalD-totalC))})` : `Not balanced (diff: ${fmt(Math.abs(totalD-totalC))})`}</span>}
+        {balanced && totalD>0 && <span style={{color:G,fontSize:12,fontWeight:600}}>✓ {isSw ? 'Imelingana' : 'Balanced'}</span>}
         <table style={{borderCollapse:'collapse',fontSize:13}}>
           <tbody>
             <tr style={{borderTop:'2px solid #e5e7eb'}}>
-              <td style={{padding:'8px 20px 8px 0',color:'#374151',fontWeight:700,textAlign:'right'}}>Total Debit</td>
+              <td style={{padding:'8px 20px 8px 0',color:'#374151',fontWeight:700,textAlign:'right'}}>{isSw ? 'Jumla ya Debit' : 'Total Debit'}</td>
               <td style={{padding:'8px 0',textAlign:'right',fontWeight:700,color:G,minWidth:140}}>{fmt(totalD)}</td>
             </tr>
             <tr>
-              <td style={{padding:'4px 20px 8px 0',color:'#374151',fontWeight:700,textAlign:'right'}}>Total Credit</td>
+              <td style={{padding:'4px 20px 8px 0',color:'#374151',fontWeight:700,textAlign:'right'}}>{isSw ? 'Jumla ya Credit' : 'Total Credit'}</td>
               <td style={{padding:'4px 0 8px',textAlign:'right',fontWeight:700,color:'#c0392b'}}>{fmt(totalC)}</td>
             </tr>
           </tbody>
@@ -334,6 +359,8 @@ function JELinesTable({ lines, setLines }) {
    INVOICE FORM  (out_invoice)
 ═══════════════════════════════════════════════════════ */
 export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const isNew = !initial?.id;
   const [state, setState] = useState(initial?.state||'draft');
   const [partner, setPartner] = useState(initial?.partnerId||'');
@@ -351,7 +378,7 @@ export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
   const amountDue = initial?.balance ?? total;
 
   const partnerObj = CUSTOMERS.find(c=>c.id===partner);
-  const docNo = isNew ? (state==='draft'?'Draft':'INV/'+new Date().getFullYear()+'/'+Math.floor(Math.random()*9000+1000)) : initial.no;
+  const docNo = isNew ? (state==='draft'?(isSw?'Rasimu':'Draft'):'INV/'+new Date().getFullYear()+'/'+Math.floor(Math.random()*9000+1000)) : initial.no;
 
   const handleConfirm = () => { setState('posted'); onSave&&onSave({...buildDoc(), state:'posted'}); };
   const handleReset   = () => setState('draft');
@@ -370,22 +397,22 @@ export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
   return (
     <div style={{background:'#f8fafc',minHeight:'100vh'}}>
       {/* Breadcrumb */}
-      <Breadcrumb items={[{label:'Invoices',onClick:onBack},{label:isNew?'New Invoice':docNo}]}/>
+      <Breadcrumb items={[{label:isSw?'Ankara':'Invoices',onClick:onBack},{label:isNew?(isSw?'Ankara Mpya':'New Invoice'):docNo}]}/>
 
       {/* Action bar */}
       <ActionBar>
-        {state==='draft'&&<BtnPrimary onClick={handleConfirm}>Confirm</BtnPrimary>}
-        {state==='posted'&&<BtnSecondary onClick={()=>setState('paid')}>Register Payment</BtnSecondary>}
-        {state==='posted'&&<BtnSecondary>Send &amp; Print</BtnSecondary>}
-        {state==='draft'&&<BtnSecondary onClick={handleSave}>Save</BtnSecondary>}
-        {state==='draft'&&<BtnDanger onClick={onDiscard||onBack}>Discard</BtnDanger>}
+        {state==='draft'&&<BtnPrimary onClick={handleConfirm}>{isSw?'Thibitisha':'Confirm'}</BtnPrimary>}
+        {state==='posted'&&<BtnSecondary onClick={()=>setState('paid')}>{isSw?'Sajili Malipo':'Register Payment'}</BtnSecondary>}
+        {state==='posted'&&<BtnSecondary>{isSw?'Tuma & Chapisha':'Send & Print'}</BtnSecondary>}
+        {state==='draft'&&<BtnSecondary onClick={handleSave}>{isSw?'Hifadhi':'Save'}</BtnSecondary>}
+        {state==='draft'&&<BtnDanger onClick={onDiscard||onBack}>{isSw?'Futa':'Discard'}</BtnDanger>}
         {state==='posted'&&<BtnSecondary onClick={()=>{}}>PDF</BtnSecondary>}
-        {state!=='draft'&&<BtnSecondary onClick={handleReset}>Reset to Draft</BtnSecondary>}
+        {state!=='draft'&&<BtnSecondary onClick={handleReset}>{isSw?'Rudisha kwa Rasimu':'Reset to Draft'}</BtnSecondary>}
         <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'center'}}>
           {state==='posted'&&<div style={{background:'#fef3c7',color:'#92400e',borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:600}}>
-            Amount Due: {fmt(amountDue)}
+            {isSw?'Kiasi Kinachodaiwa':'Amount Due'}: {fmt(amountDue)}
           </div>}
-          {state==='paid'&&<div style={{background:'#d1fae5',color:'#065f46',borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:700}}>✓ Paid</div>}
+          {state==='paid'&&<div style={{background:'#d1fae5',color:'#065f46',borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:700}}>✓ {isSw?'Imelipwa':'Paid'}</div>}
         </div>
       </ActionBar>
 
@@ -400,7 +427,7 @@ export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
             {/* Doc title */}
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
               <div>
-                <div style={{fontSize:12,color:'#9ca3af',fontWeight:600,textTransform:'uppercase',letterSpacing:.5,marginBottom:4}}>Customer Invoice</div>
+                <div style={{fontSize:12,color:'#9ca3af',fontWeight:600,textTransform:'uppercase',letterSpacing:.5,marginBottom:4}}>{isSw?'Ankara ya Mteja':'Customer Invoice'}</div>
                 <div style={{fontSize:22,fontWeight:700,color:'#111827'}}>{docNo}</div>
               </div>
               <div style={{textAlign:'right',fontSize:12,color:'#6b7280'}}>
@@ -412,27 +439,27 @@ export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
 
             {/* 2-col fields */}
             <div style={{display:'flex',gap:16,flexWrap:'wrap'}}>
-              <Field label="Customer" required half>
+              <Field label={isSw?"Mteja":"Customer"} required half>
                 <Sel value={partner} onChange={e=>setPartner(e.target.value)} disabled={state!=='draft'}>
-                  <option value="">— Select Customer —</option>
+                  <option value="">{isSw?'— Chagua Mteja —':'— Select Customer —'}</option>
                   {CUSTOMERS.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
                 </Sel>
               </Field>
-              <Field label="Invoice Date" required half>
+              <Field label={isSw?"Tarehe ya Ankara":"Invoice Date"} required half>
                 <Inp type="date" value={invDate} onChange={e=>setInvDate(e.target.value)} readOnly={state!=='draft'}/>
               </Field>
-              <Field label="Payment Terms" half>
+              <Field label={isSw?"Masharti ya Malipo":"Payment Terms"} half>
                 <Sel value={payTerms} onChange={e=>setPayTerms(e.target.value)} disabled={state!=='draft'}>
                   {['Immediate','Net 7','Net 15','Net 30','Net 60'].map(t=><option key={t}>{t}</option>)}
                 </Sel>
               </Field>
-              <Field label="Due Date" half>
+              <Field label={isSw?"Tarehe ya Mwisho":"Due Date"} half>
                 <Inp type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)} readOnly={state!=='draft'}/>
               </Field>
-              <Field label="Source Document / PO Number" half>
-                <Inp value={ref} onChange={e=>setRef(e.target.value)} placeholder="e.g. PO-2026-001" readOnly={state!=='draft'}/>
+              <Field label={isSw?"Hati Chanzo / Namba ya PO":"Source Document / PO Number"} half>
+                <Inp value={ref} onChange={e=>setRef(e.target.value)} placeholder={isSw?"mf. PO-2026-001":"e.g. PO-2026-001"} readOnly={state!=='draft'}/>
               </Field>
-              <Field label="Journal" half>
+              <Field label={isSw?"Jarida":"Journal"} half>
                 <Sel value={journal} onChange={e=>setJournal(e.target.value)} disabled={state!=='draft'}>
                   {['Sales Journal','Cash','Bank','Miscellaneous'].map(j=><option key={j}>{j}</option>)}
                 </Sel>
@@ -442,7 +469,7 @@ export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
             {/* Customer address block */}
             {partnerObj&&(
               <div style={{marginTop:16,padding:'12px 16px',background:'#f9fafb',borderRadius:8,border:'1px solid #e5e7eb',fontSize:12.5}}>
-                <div style={{fontWeight:700,color:'#374151',marginBottom:4}}>Bill To</div>
+                <div style={{fontWeight:700,color:'#374151',marginBottom:4}}>{isSw?'Bili Kwa':'Bill To'}</div>
                 <div style={{color:'#374151',fontWeight:600}}>{partnerObj.name}</div>
                 <div style={{color:'#6b7280'}}>{partnerObj.city}, Tanzania</div>
                 <div style={{color:'#6b7280'}}>{partnerObj.phone} · {partnerObj.email}</div>
@@ -453,7 +480,7 @@ export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
 
         {/* Lines card */}
         <Card>
-          <CardHeader title="Invoice Lines"/>
+          <CardHeader title={isSw?"Mistari ya Ankara":"Invoice Lines"}/>
           <LinesTable lines={lines} setLines={state==='draft'?setLines:()=>{}} type="invoice"/>
         </Card>
 
@@ -461,21 +488,21 @@ export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
         <Card>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:0}}>
             <div style={{padding:20,borderRight:'1px solid #f3f4f6'}}>
-              <Field label="Internal Notes">
-                <Txt value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Internal notes visible only to staff…" readOnly={state!=='draft'}/>
+              <Field label={isSw?"Maelezo ya Ndani":"Internal Notes"}>
+                <Txt value={notes} onChange={e=>setNotes(e.target.value)} placeholder={isSw?"Maelezo ya ndani kwa wafanyakazi pekee…":"Internal notes visible only to staff…"} readOnly={state!=='draft'}/>
               </Field>
             </div>
             <div style={{padding:20}}>
-              <Field label="Terms &amp; Conditions">
-                <Txt placeholder="Payment terms, bank details, legal notes…" rows={3}/>
+              <Field label={isSw?"Vigezo na Masharti":"Terms & Conditions"}>
+                <Txt placeholder={isSw?"Masharti ya malipo, taarifa za benki…":"Payment terms, bank details, legal notes…"} rows={3}/>
               </Field>
               <div style={{marginTop:12,padding:'12px 16px',background:'#f9fafb',borderRadius:8,border:'1px solid #e5e7eb',fontSize:12.5}}>
                 <div style={{marginBottom:4,display:'flex',justifyContent:'space-between'}}>
-                  <span style={{color:'#6b7280'}}>Bank:</span>
+                  <span style={{color:'#6b7280'}}>{isSw?'Benki':'Bank'}:</span>
                   <span style={{fontWeight:600,color:'#374151'}}>CRDB Business Account</span>
                 </div>
                 <div style={{display:'flex',justifyContent:'space-between'}}>
-                  <span style={{color:'#6b7280'}}>Account No.:</span>
+                  <span style={{color:'#6b7280'}}>{isSw?'Namba ya Akaunti':'Account No.'}:</span>
                   <span style={{fontWeight:600,color:'#374151'}}>0150194874500</span>
                 </div>
                 <div style={{display:'flex',justifyContent:'space-between'}}>
@@ -489,12 +516,12 @@ export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
 
         {/* Chatter / log */}
         <Card>
-          <CardHeader title="Activity Log"/>
+          <CardHeader title={isSw?"Kumbukumbu ya Matukio":"Activity Log"}/>
           <div style={{padding:16}}>
             {[
-              { user:'System', msg: isNew?'Invoice created':'Invoice loaded', time: today(), icon:'📄' },
-              ...(state==='posted'?[{user:'System',msg:'Invoice confirmed and posted to accounting',time:today(),icon:'✅'}]:[]),
-              ...(state==='paid'?[{user:'System',msg:'Payment registered. Invoice marked as paid.',time:today(),icon:'💰'}]:[]),
+              { user:isSw?'Mfumo':'System', msg: isNew?(isSw?'Ankara imeundwa':'Invoice created'):(isSw?'Ankara imepakiwa':'Invoice loaded'), time: today(), icon:'📄' },
+              ...(state==='posted'?[{user:isSw?'Mfumo':'System',msg:isSw?'Ankara imethibitishwa na kuingizwa kwenye uhasibu':'Invoice confirmed and posted to accounting',time:today(),icon:'✅'}]:[]),
+              ...(state==='paid'?[{user:isSw?'Mfumo':'System',msg:isSw?'Malipo yamesajiliwa. Ankara imewekwa kama imelipwa.':'Payment registered. Invoice marked as paid.',time:today(),icon:'💰'}]:[]),
             ].map((ev,i)=>(
               <div key={i} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 0',borderBottom:'1px solid #f3f4f6'}}>
                 <div style={{width:32,height:32,borderRadius:'50%',background:GB,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{ev.icon}</div>
@@ -506,8 +533,8 @@ export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
               </div>
             ))}
             <div style={{marginTop:12,display:'flex',gap:8}}>
-              <Inp placeholder="Write a note…" style={{flex:1}}/>
-              <BtnPrimary>Send</BtnPrimary>
+              <Inp placeholder={isSw?"Andika maelezo…":"Write a note…"} style={{flex:1}}/>
+              <BtnPrimary>{isSw?'Tuma':'Send'}</BtnPrimary>
             </div>
           </div>
         </Card>
@@ -520,6 +547,8 @@ export function InvoiceForm({ initial, onSave, onBack, onDiscard }) {
    BILL FORM  (in_invoice)
 ═══════════════════════════════════════════════════════ */
 export function BillForm({ initial, onSave, onBack, onDiscard }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const isNew = !initial?.id;
   const [state, setState] = useState(initial?.state||'draft');
   const [partner, setPartner] = useState(initial?.partnerId||'');
@@ -534,7 +563,7 @@ export function BillForm({ initial, onSave, onBack, onDiscard }) {
   const taxAmt   = lines.reduce((s,l)=>s+(parseN(l.qty)*parseN(l.price))*(parseN(l.tax)/100),0);
   const total    = subtotal+taxAmt;
   const vendorObj= VENDORS.find(v=>v.id===partner);
-  const docNo    = isNew?'Draft':initial?.no||'BILL/'+new Date().getFullYear()+'/'+Math.floor(Math.random()*9000+1000);
+  const docNo    = isNew?(isSw?'Rasimu':'Draft'):initial?.no||'BILL/'+new Date().getFullYear()+'/'+Math.floor(Math.random()*9000+1000);
 
   const handleConfirm = () => { setState('posted'); onSave&&onSave({...buildDoc(),state:'posted'}); };
   const handleSave    = () => onSave&&onSave(buildDoc());
@@ -550,15 +579,15 @@ export function BillForm({ initial, onSave, onBack, onDiscard }) {
 
   return (
     <div style={{background:'#f8fafc',minHeight:'100vh'}}>
-      <Breadcrumb items={[{label:'Vendor Bills',onClick:onBack},{label:isNew?'New Bill':docNo}]}/>
+      <Breadcrumb items={[{label:isSw?'Bili za Wasambazaji':'Vendor Bills',onClick:onBack},{label:isNew?(isSw?'Bili Mpya':'New Bill'):docNo}]}/>
       <ActionBar>
-        {state==='draft'&&<BtnPrimary onClick={handleConfirm}>Confirm</BtnPrimary>}
-        {state==='posted'&&<BtnSecondary onClick={()=>setState('paid')}>Register Payment</BtnSecondary>}
-        {state==='draft'&&<BtnSecondary onClick={handleSave}>Save</BtnSecondary>}
-        {state==='draft'&&<BtnDanger onClick={onDiscard||onBack}>Discard</BtnDanger>}
-        {state!=='draft'&&<BtnSecondary onClick={()=>setState('draft')}>Reset to Draft</BtnSecondary>}
-        {state==='posted'&&<div style={{marginLeft:'auto',background:'#fef3c7',color:'#92400e',borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:600}}>Amount Due: {fmt(total)}</div>}
-        {state==='paid'&&<div style={{marginLeft:'auto',background:'#d1fae5',color:'#065f46',borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:700}}>✓ Paid</div>}
+        {state==='draft'&&<BtnPrimary onClick={handleConfirm}>{isSw?'Thibitisha':'Confirm'}</BtnPrimary>}
+        {state==='posted'&&<BtnSecondary onClick={()=>setState('paid')}>{isSw?'Sajili Malipo':'Register Payment'}</BtnSecondary>}
+        {state==='draft'&&<BtnSecondary onClick={handleSave}>{isSw?'Hifadhi':'Save'}</BtnSecondary>}
+        {state==='draft'&&<BtnDanger onClick={onDiscard||onBack}>{isSw?'Futa':'Discard'}</BtnDanger>}
+        {state!=='draft'&&<BtnSecondary onClick={()=>setState('draft')}>{isSw?'Rudisha kwa Rasimu':'Reset to Draft'}</BtnSecondary>}
+        {state==='posted'&&<div style={{marginLeft:'auto',background:'#fef3c7',color:'#92400e',borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:600}}>{isSw?'Kiasi Kinachodaiwa':'Amount Due'}: {fmt(total)}</div>}
+        {state==='paid'&&<div style={{marginLeft:'auto',background:'#d1fae5',color:'#065f46',borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:700}}>✓ {isSw?'Imelipwa':'Paid'}</div>}
       </ActionBar>
       <StatusBar states={['draft','posted','paid']} current={state}/>
 
@@ -567,7 +596,7 @@ export function BillForm({ initial, onSave, onBack, onDiscard }) {
           <div style={{padding:24}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
               <div>
-                <div style={{fontSize:12,color:'#9ca3af',fontWeight:600,textTransform:'uppercase',letterSpacing:.5,marginBottom:4}}>Vendor Bill</div>
+                <div style={{fontSize:12,color:'#9ca3af',fontWeight:600,textTransform:'uppercase',letterSpacing:.5,marginBottom:4}}>{isSw?'Bili ya Msambazaji':'Vendor Bill'}</div>
                 <div style={{fontSize:22,fontWeight:700,color:'#111827'}}>{docNo}</div>
               </div>
               <div style={{textAlign:'right',fontSize:12,color:'#6b7280'}}>
@@ -576,30 +605,30 @@ export function BillForm({ initial, onSave, onBack, onDiscard }) {
               </div>
             </div>
             <div style={{display:'flex',gap:16,flexWrap:'wrap'}}>
-              <Field label="Vendor" required half>
+              <Field label={isSw?"Msambazaji":"Vendor"} required half>
                 <Sel value={partner} onChange={e=>setPartner(e.target.value)} disabled={state!=='draft'}>
-                  <option value="">— Select Vendor —</option>
+                  <option value="">{isSw?'— Chagua Msambazaji —':'— Select Vendor —'}</option>
                   {VENDORS.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}
                 </Sel>
               </Field>
-              <Field label="Bill Date" required half>
+              <Field label={isSw?"Tarehe ya Bili":"Bill Date"} required half>
                 <Inp type="date" value={billDate} onChange={e=>setBillDate(e.target.value)} readOnly={state!=='draft'}/>
               </Field>
-              <Field label="Due Date" half>
+              <Field label={isSw?"Tarehe ya Mwisho":"Due Date"} half>
                 <Inp type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)} readOnly={state!=='draft'}/>
               </Field>
-              <Field label="Journal" half>
+              <Field label={isSw?"Jarida":"Journal"} half>
                 <Sel value={journal} onChange={e=>setJournal(e.target.value)} disabled={state!=='draft'}>
                   {['Purchase Journal','Cash','Bank','Miscellaneous'].map(j=><option key={j}>{j}</option>)}
                 </Sel>
               </Field>
-              <Field label="Vendor Bill Reference / Source" half>
-                <Inp value={ref} onChange={e=>setRef(e.target.value)} placeholder="Vendor's invoice number…" readOnly={state!=='draft'}/>
+              <Field label={isSw?"Rejea ya Bili ya Msambazaji":"Vendor Bill Reference / Source"} half>
+                <Inp value={ref} onChange={e=>setRef(e.target.value)} placeholder={isSw?"Namba ya ankara ya msambazaji…":"Vendor's invoice number…"} readOnly={state!=='draft'}/>
               </Field>
             </div>
             {vendorObj&&(
               <div style={{marginTop:16,padding:'12px 16px',background:'#f9fafb',borderRadius:8,border:'1px solid #e5e7eb',fontSize:12.5}}>
-                <div style={{fontWeight:700,color:'#374151',marginBottom:4}}>Vendor Details</div>
+                <div style={{fontWeight:700,color:'#374151',marginBottom:4}}>{isSw?'Taarifa za Msambazaji':'Vendor Details'}</div>
                 <div style={{color:'#374151',fontWeight:600}}>{vendorObj.name}</div>
                 <div style={{color:'#6b7280'}}>{vendorObj.city} · {vendorObj.terms}</div>
                 <div style={{color:'#6b7280'}}>{vendorObj.phone} · {vendorObj.email}</div>
@@ -609,14 +638,14 @@ export function BillForm({ initial, onSave, onBack, onDiscard }) {
         </Card>
 
         <Card>
-          <CardHeader title="Bill Lines"/>
+          <CardHeader title={isSw?"Mistari ya Bili":"Bill Lines"}/>
           <LinesTable lines={lines} setLines={state==='draft'?setLines:()=>{}} type="bill"/>
         </Card>
 
         <Card>
           <div style={{padding:20}}>
-            <Field label="Notes">
-              <Txt value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Internal notes…" readOnly={state!=='draft'}/>
+            <Field label={isSw?"Maelezo":"Notes"}>
+              <Txt value={notes} onChange={e=>setNotes(e.target.value)} placeholder={isSw?"Maelezo ya ndani…":"Internal notes…"} readOnly={state!=='draft'}/>
             </Field>
           </div>
         </Card>
@@ -629,6 +658,8 @@ export function BillForm({ initial, onSave, onBack, onDiscard }) {
    PAYMENT FORM
 ═══════════════════════════════════════════════════════ */
 export function PaymentForm({ initial, direction='inbound', onSave, onBack, onDiscard }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const isNew = !initial?.id;
   const [state,   setState]   = useState(initial?.state||'draft');
   const [partner, setPartner] = useState(initial?.partner||'');
@@ -642,7 +673,7 @@ export function PaymentForm({ initial, direction='inbound', onSave, onBack, onDi
   const dir     = initial?.type === 'outbound' ? 'outbound' : direction;
   const isIn    = dir === 'inbound';
   const partners= isIn ? CUSTOMERS : VENDORS;
-  const docNo   = isNew ? 'New Payment' : (initial?.no||'PAY-'+uid());
+  const docNo   = isNew ? (isSw?'Malipo Mapya':'New Payment') : (initial?.no||'PAY-'+uid());
   const fmt2    = v => 'TSh '+(parseN(v)).toLocaleString('en-US');
 
   const handlePost = () => { setState('posted'); onSave&&onSave(buildDoc()); };
@@ -656,73 +687,73 @@ export function PaymentForm({ initial, direction='inbound', onSave, onBack, onDi
 
   return (
     <div style={{background:'#f8fafc',minHeight:'100vh'}}>
-      <Breadcrumb items={[{label:isIn?'Customer Payments':'Vendor Payments',onClick:onBack},{label:isNew?`New ${isIn?'Customer':'Vendor'} Payment`:docNo}]}/>
+      <Breadcrumb items={[{label:isIn?(isSw?'Malipo ya Wateja':'Customer Payments'):(isSw?'Malipo ya Wasambazaji':'Vendor Payments'),onClick:onBack},{label:isNew?(isIn?(isSw?'Malipo Mapya ya Mteja':'New Customer Payment'):(isSw?'Malipo Mapya ya Msambazaji':'New Vendor Payment')):docNo}]}/>
       <ActionBar>
-        {state==='draft'&&<BtnPrimary onClick={handlePost}>Confirm Payment</BtnPrimary>}
-        {state==='draft'&&<BtnSecondary onClick={handleSave}>Save</BtnSecondary>}
-        {state==='draft'&&<BtnDanger onClick={onDiscard||onBack}>Discard</BtnDanger>}
-        {state==='posted'&&<BtnSecondary>Print Receipt</BtnSecondary>}
-        {state==='posted'&&<BtnSecondary onClick={()=>setState('draft')}>Reset to Draft</BtnSecondary>}
-        {state==='posted'&&<div style={{marginLeft:'auto',background:'#d1fae5',color:'#065f46',borderRadius:6,padding:'5px 14px',fontSize:13,fontWeight:700}}>✓ Posted</div>}
+        {state==='draft'&&<BtnPrimary onClick={handlePost}>{isSw?'Thibitisha Malipo':'Confirm Payment'}</BtnPrimary>}
+        {state==='draft'&&<BtnSecondary onClick={handleSave}>{isSw?'Hifadhi':'Save'}</BtnSecondary>}
+        {state==='draft'&&<BtnDanger onClick={onDiscard||onBack}>{isSw?'Futa':'Discard'}</BtnDanger>}
+        {state==='posted'&&<BtnSecondary>{isSw?'Chapisha Risiti':'Print Receipt'}</BtnSecondary>}
+        {state==='posted'&&<BtnSecondary onClick={()=>setState('draft')}>{isSw?'Rudisha kwa Rasimu':'Reset to Draft'}</BtnSecondary>}
+        {state==='posted'&&<div style={{marginLeft:'auto',background:'#d1fae5',color:'#065f46',borderRadius:6,padding:'5px 14px',fontSize:13,fontWeight:700}}>✓ {isSw?'Imethibitishwa':'Posted'}</div>}
       </ActionBar>
       <StatusBar states={['draft','posted']} current={state}/>
 
       <div style={{maxWidth:780,margin:'32px auto',padding:'0 16px'}}>
         <Card>
-          <CardHeader title={isIn ? '📥 Incoming Payment' : '📤 Outgoing Payment'}/>
+          <CardHeader title={isIn ? (isSw?'📥 Malipo Yanayoingia':'📥 Incoming Payment') : (isSw?'📤 Malipo Yanayotoka':'📤 Outgoing Payment')}/>
           <div style={{padding:24,display:'flex',flexDirection:'column',gap:16}}>
             {/* Payment type toggle */}
             <div style={{display:'flex',gap:0,border:'1px solid #d1d5db',borderRadius:8,overflow:'hidden',width:'fit-content'}}>
               {['inbound','outbound'].map(d=>(
                 <button key={d} onClick={()=>{}} disabled={state!=='draft'}
                   style={{padding:'8px 20px',background:dir===d?G:'#fff',color:dir===d?'#fff':'#374151',border:'none',cursor:'pointer',fontWeight:dir===d?600:400,fontSize:13}}>
-                  {d==='inbound'?'📥 Receive Money':'📤 Send Money'}
+                  {d==='inbound'?(isSw?'📥 Pokea Fedha':'📥 Receive Money'):(isSw?'📤 Tuma Fedha':'📤 Send Money')}
                 </button>
               ))}
             </div>
 
             <div style={{display:'flex',gap:16,flexWrap:'wrap'}}>
-              <Field label={isIn?'Customer':'Vendor'} required half>
+              <Field label={isIn?(isSw?'Mteja':'Customer'):(isSw?'Msambazaji':'Vendor')} required half>
                 <Sel value={partner} onChange={e=>setPartner(e.target.value)} disabled={state!=='draft'}>
-                  <option value="">— Select {isIn?'Customer':'Vendor'} —</option>
+                  <option value="">{isIn?(isSw?'— Chagua Mteja —':'— Select Customer —'):(isSw?'— Chagua Msambazaji —':'— Select Vendor —')}</option>
                   {partners.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
                 </Sel>
               </Field>
-              <Field label="Payment Date" required half>
+              <Field label={isSw?"Tarehe ya Malipo":"Payment Date"} required half>
                 <Inp type="date" value={date} onChange={e=>setDate(e.target.value)} readOnly={state!=='draft'}/>
               </Field>
-              <Field label="Amount" required half>
+              <Field label={isSw?"Kiasi":"Amount"} required half>
                 <div style={{display:'flex',gap:0}}>
                   <div style={{background:'#f3f4f6',border:'1px solid #d1d5db',borderRight:'none',borderRadius:'6px 0 0 6px',padding:'7px 12px',fontSize:13,color:'#6b7280',whiteSpace:'nowrap'}}>TSh</div>
                   <Inp type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0" min="0" step="1000" readOnly={state!=='draft'} style={{borderRadius:'0 6px 6px 0',textAlign:'right',fontSize:16,fontWeight:700}}/>
                 </div>
               </Field>
-              <Field label="Payment Method" half>
+              <Field label={isSw?"Njia ya Malipo":"Payment Method"} half>
                 <Sel value={method} onChange={e=>setMethod(e.target.value)} disabled={state!=='draft'}>
                   {['bank','cash','momo','cheque','card'].map(m=><option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
                 </Sel>
               </Field>
-              <Field label="Journal" required half>
+              <Field label={isSw?"Jarida":"Journal"} required half>
                 <Sel value={journal} onChange={e=>setJournal(e.target.value)} disabled={state!=='draft'}>
                   {['Bank','Cash','Mobile Money','Cheque'].map(j=><option key={j}>{j}</option>)}
                 </Sel>
               </Field>
-              <Field label="Reference / Transaction ID" half>
-                <Inp value={ref} onChange={e=>setRef(e.target.value)} placeholder="e.g. TX9912ABC" readOnly={state!=='draft'}/>
+              <Field label={isSw?"Rejea / Namba ya Muamala":"Reference / Transaction ID"} half>
+                <Inp value={ref} onChange={e=>setRef(e.target.value)} placeholder={isSw?"mf. TX9912ABC":"e.g. TX9912ABC"} readOnly={state!=='draft'}/>
               </Field>
             </div>
 
-            <Field label="Memo">
-              <Inp value={memo} onChange={e=>setMemo(e.target.value)} placeholder="Payment description or invoice reference…" readOnly={state!=='draft'}/>
+            <Field label={isSw?"Maelezo":"Memo"}>
+              <Inp value={memo} onChange={e=>setMemo(e.target.value)} placeholder={isSw?"Maelezo ya malipo au rejea ya ankara…":"Payment description or invoice reference…"} readOnly={state!=='draft'}/>
             </Field>
 
             {/* Summary box */}
             {parseN(amount)>0&&(
               <div style={{background:isIn?GB:'#fff7ed',border:`1px solid ${isIn?G+'40':'#f59e0b40'}`,borderRadius:8,padding:'16px 20px'}}>
-                <div style={{fontSize:12,color:'#6b7280',marginBottom:8,fontWeight:600,textTransform:'uppercase',letterSpacing:.5}}>Payment Summary</div>
+                <div style={{fontSize:12,color:'#6b7280',marginBottom:8,fontWeight:600,textTransform:'uppercase',letterSpacing:.5}}>{isSw?'Muhtasari wa Malipo':'Payment Summary'}</div>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                   <div>
-                    <div style={{fontSize:13,color:'#374151'}}>{partners.find(p=>p.id===partner)?.name||'Partner'}</div>
+                    <div style={{fontSize:13,color:'#374151'}}>{partners.find(p=>p.id===partner)?.name||(isSw?'Mshirika':'Partner')}</div>
                     <div style={{fontSize:12,color:'#6b7280'}}>{method.toUpperCase()} · {date}</div>
                   </div>
                   <div style={{fontSize:26,fontWeight:800,color:isIn?G:'#f59e0b'}}>{isIn?'+':'-'}{fmt2(amount)}</div>
@@ -740,6 +771,8 @@ export function PaymentForm({ initial, direction='inbound', onSave, onBack, onDi
    PARTNER FORM  (customer or vendor)
 ═══════════════════════════════════════════════════════ */
 export function PartnerForm({ initial, type='customer', onSave, onBack, onDiscard }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const isNew = !initial?.id;
   const [name,      setName]      = useState(initial?.name||'');
   const [ptype,     setPtype]     = useState(initial?.type||'company');
@@ -757,7 +790,8 @@ export function PartnerForm({ initial, type='customer', onSave, onBack, onDiscar
   const [tab,       setTab]       = useState('general');
 
   const isCustomer = type==='customer';
-  const title = isCustomer ? 'Customer' : 'Vendor';
+  const title = isCustomer ? (isSw?'Mteja':'Customer') : (isSw?'Msambazaji':'Vendor');
+  const pluralTitle = isCustomer ? (isSw?'Wateja':'Customers') : (isSw?'Wasambazaji':'Vendors');
 
   const buildDoc = () => ({
     id: initial?.id||'partner_'+uid(),
@@ -766,14 +800,19 @@ export function PartnerForm({ initial, type='customer', onSave, onBack, onDiscar
     balance:0, overdue:0,
   });
 
-  const TABS = ['general','accounting','bank','notes'];
+  const TABS = [
+    { k:'general', l: isSw?'Taarifa za Jumla':'General' },
+    { k:'accounting', l: isSw?'Uhasibu':'Accounting' },
+    { k:'bank', l: isSw?'Benki':'Bank' },
+    { k:'notes', l: isSw?'Maelezo':'Notes' },
+  ];
 
   return (
     <div style={{background:'#f8fafc',minHeight:'100vh'}}>
-      <Breadcrumb items={[{label:`${title}s`,onClick:onBack},{label:isNew?`New ${title}`:name||'Unnamed'}]}/>
+      <Breadcrumb items={[{label:pluralTitle,onClick:onBack},{label:isNew?(isCustomer?(isSw?'Mteja Mpya':'New Customer'):(isSw?'Msambazaji Mpya':'New Vendor')):name||(isSw?'Bila Jina':'Unnamed')}]}/>
       <ActionBar>
-        <BtnPrimary onClick={()=>onSave&&onSave(buildDoc())}>Save</BtnPrimary>
-        <BtnDanger onClick={onDiscard||onBack}>Discard</BtnDanger>
+        <BtnPrimary onClick={()=>onSave&&onSave(buildDoc())}>{isSw?'Hifadhi':'Save'}</BtnPrimary>
+        <BtnDanger onClick={onDiscard||onBack}>{isSw?'Futa':'Discard'}</BtnDanger>
       </ActionBar>
 
       <div style={{maxWidth:1000,margin:'24px auto',padding:'0 16px'}}>
@@ -784,18 +823,18 @@ export function PartnerForm({ initial, type='customer', onSave, onBack, onDiscar
               {ptype==='company'?'🏢':'👤'}
             </div>
             <div style={{flex:1}}>
-              <Inp value={name} onChange={e=>setName(e.target.value)} placeholder={`${title} Name`} style={{fontSize:22,fontWeight:700,border:'none',borderBottom:'2px solid #e5e7eb',borderRadius:0,padding:'4px 0',background:'transparent'}}/>
+              <Inp value={name} onChange={e=>setName(e.target.value)} placeholder={isCustomer?(isSw?'Jina la Mteja':'Customer Name'):(isSw?'Jina la Msambazaji':'Vendor Name')} style={{fontSize:22,fontWeight:700,border:'none',borderBottom:'2px solid #e5e7eb',borderRadius:0,padding:'4px 0',background:'transparent'}}/>
               <div style={{display:'flex',gap:8,marginTop:8}}>
                 {['company','individual'].map(pt=>(
                   <button key={pt} onClick={()=>setPtype(pt)}
                     style={{background:ptype===pt?G:'#f3f4f6',color:ptype===pt?'#fff':'#374151',border:'none',borderRadius:16,padding:'4px 12px',cursor:'pointer',fontSize:12,fontWeight:ptype===pt?600:400}}>
-                    {pt==='company'?'🏢 Company':'👤 Individual'}
+                    {pt==='company'?(isSw?'🏢 Kampuni':'🏢 Company'):(isSw?'👤 Mtu Binafsi':'👤 Individual')}
                   </button>
                 ))}
               </div>
             </div>
             <div style={{textAlign:'right',fontSize:12,color:'#6b7280'}}>
-              <div style={{fontWeight:600,color:'#374151',fontSize:13}}>{isCustomer?'Customer':'Vendor'}</div>
+              <div style={{fontWeight:600,color:'#374151',fontSize:13}}>{title}</div>
               {ref&&<div style={{marginTop:2}}>{ref}</div>}
             </div>
           </div>
@@ -803,8 +842,8 @@ export function PartnerForm({ initial, type='customer', onSave, onBack, onDiscar
           {/* Tabs */}
           <div style={{display:'flex',borderBottom:'2px solid #e5e7eb',padding:'0 24px'}}>
             {TABS.map(t=>(
-              <button key={t} onClick={()=>setTab(t)} style={{padding:'8px 16px',background:'transparent',border:'none',borderBottom:tab===t?`2px solid ${G}`:'2px solid transparent',color:tab===t?G:'#6b7280',fontWeight:tab===t?600:400,cursor:'pointer',fontSize:13,textTransform:'capitalize',marginBottom:-2}}>
-                {t}
+              <button key={t.k} onClick={()=>setTab(t.k)} style={{padding:'8px 16px',background:'transparent',border:'none',borderBottom:tab===t.k?`2px solid ${G}`:'2px solid transparent',color:tab===t.k?G:'#6b7280',fontWeight:tab===t.k?600:400,cursor:'pointer',fontSize:13,marginBottom:-2}}>
+                {t.l}
               </button>
             ))}
           </div>
@@ -812,10 +851,10 @@ export function PartnerForm({ initial, type='customer', onSave, onBack, onDiscar
           <div style={{padding:24}}>
             {tab==='general'&&(
               <div style={{display:'flex',gap:16,flexWrap:'wrap'}}>
-                <Field label="Phone" half><Inp value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+255 7XX XXX XXX"/></Field>
-                <Field label="Email" half><Inp type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="contact@company.tz"/></Field>
-                <Field label="City" half><Inp value={city} onChange={e=>setCity(e.target.value)} placeholder="Dar es Salaam"/></Field>
-                <Field label="Country" half>
+                <Field label={isSw?"Simu":"Phone"} half><Inp value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+255 7XX XXX XXX"/></Field>
+                <Field label={isSw?"Barua Pepe":"Email"} half><Inp type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="contact@company.tz"/></Field>
+                <Field label={isSw?"Mji":"City"} half><Inp value={city} onChange={e=>setCity(e.target.value)} placeholder="Dar es Salaam"/></Field>
+                <Field label={isSw?"Nchi":"Country"} half>
                   <Sel value={country} onChange={e=>setCountry(e.target.value)}>
                     <option value="TZ">Tanzania</option>
                     <option value="KE">Kenya</option>
@@ -823,8 +862,8 @@ export function PartnerForm({ initial, type='customer', onSave, onBack, onDiscar
                     <option value="RW">Rwanda</option>
                   </Sel>
                 </Field>
-                <Field label="Reference" half><Inp value={ref} onChange={e=>setRef(e.target.value)} placeholder="Internal reference"/></Field>
-                <Field label="Payment Terms" half>
+                <Field label={isSw?"Rejea":"Reference"} half><Inp value={ref} onChange={e=>setRef(e.target.value)} placeholder={isSw?"Rejea ya ndani":"Internal reference"}/></Field>
+                <Field label={isSw?"Masharti ya Malipo":"Payment Terms"} half>
                   <Sel value={terms} onChange={e=>setTerms(e.target.value)}>
                     {['Immediate','Net 7','Net 15','Net 30','Net 60','Cash'].map(t=><option key={t}>{t}</option>)}
                   </Sel>
@@ -833,31 +872,31 @@ export function PartnerForm({ initial, type='customer', onSave, onBack, onDiscar
             )}
             {tab==='accounting'&&(
               <div style={{display:'flex',gap:16,flexWrap:'wrap'}}>
-                <Field label="TIN (Tax Identification Number)" half><Inp value={tin} onChange={e=>setTin(e.target.value)} placeholder="TZ-TIN-XXXXX"/></Field>
-                <Field label="VRN (VAT Registration Number)" half><Inp value={vrn} onChange={e=>setVrn(e.target.value)} placeholder="10-XXXXXXX-X"/></Field>
-                <Field label={isCustomer?'Account Receivable':'Account Payable'} half>
+                <Field label={isSw?"TIN (Namba ya Mlipakodi)":"TIN (Tax Identification Number)"} half><Inp value={tin} onChange={e=>setTin(e.target.value)} placeholder="TZ-TIN-XXXXX"/></Field>
+                <Field label={isSw?"VRN (Namba ya Usajili wa VAT)":"VRN (VAT Registration Number)"} half><Inp value={vrn} onChange={e=>setVrn(e.target.value)} placeholder="10-XXXXXXX-X"/></Field>
+                <Field label={isCustomer?(isSw?'Akaunti ya Madeni (Receivable)':'Account Receivable'):(isSw?'Akaunti ya Malipo (Payable)':'Account Payable')} half>
                   <Sel>
                     {CHART_OF_ACCOUNTS.filter(a=>isCustomer?a.type==='receivable':a.type==='payable').map(a=>(
                       <option key={a.id}>{a.code} {a.name}</option>
                     ))}
                   </Sel>
                 </Field>
-                <Field label="Fiscal Position" half>
+                <Field label={isSw?"Msimamo wa Kodi":"Fiscal Position"} half>
                   <Sel><option>Tanzania Standard</option><option>Export (Zero-rated)</option></Sel>
                 </Field>
               </div>
             )}
             {tab==='bank'&&(
               <div style={{display:'flex',gap:16,flexWrap:'wrap'}}>
-                <Field label="Bank Name" half><Inp value={bank} onChange={e=>setBank(e.target.value)} placeholder="e.g. CRDB Bank"/></Field>
-                <Field label="Account Number" half><Inp value={bankAcc} onChange={e=>setBankAcc(e.target.value)} placeholder="e.g. 0150194874500"/></Field>
-                <Field label="Account Holder" half><Inp placeholder="e.g. Company Limited"/></Field>
+                <Field label={isSw?"Jina la Benki":"Bank Name"} half><Inp value={bank} onChange={e=>setBank(e.target.value)} placeholder={isSw?"mf. Benki ya CRDB":"e.g. CRDB Bank"}/></Field>
+                <Field label={isSw?"Namba ya Akaunti":"Account Number"} half><Inp value={bankAcc} onChange={e=>setBankAcc(e.target.value)} placeholder={isSw?"mf. 0150194874500":"e.g. 0150194874500"}/></Field>
+                <Field label={isSw?"Mmiliki wa Akaunti":"Account Holder"} half><Inp placeholder={isSw?"mf. Company Limited":"e.g. Company Limited"}/></Field>
                 <Field label="SWIFT / BIC" half><Inp placeholder="e.g. CRDBTZTZ"/></Field>
               </div>
             )}
             {tab==='notes'&&(
-              <Field label="Internal Notes">
-                <Txt value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Internal notes about this partner…" style={{minHeight:120}}/>
+              <Field label={isSw?"Maelezo ya Ndani":"Internal Notes"}>
+                <Txt value={notes} onChange={e=>setNotes(e.target.value)} placeholder={isSw?"Maelezo ya ndani kuhusu mshirika huyu…":"Internal notes about this partner…"} style={{minHeight:120}}/>
               </Field>
             )}
           </div>
@@ -871,12 +910,15 @@ export function PartnerForm({ initial, type='customer', onSave, onBack, onDiscar
    JOURNAL ENTRY FORM
 ═══════════════════════════════════════════════════════ */
 export function JournalEntryForm({ initial, onSave, onBack, onDiscard }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const isNew = !initial?.id;
   const [state,   setState]   = useState(initial?.state||'draft');
   const [date,    setDate]    = useState(initial?.date||today());
   const [ref,     setRef]     = useState(initial?.ref||'');
   const [journal, setJournal] = useState(initial?.journal||'Miscellaneous');
   const [notes,   setNotes]   = useState(initial?.notes||'');
+  const [err,     setErr]     = useState('');
   const [lines,   setLines]   = useState(initial?.lines?.map(l=>({...l,id:l.id||uid()}))||[
     {id:uid(),account:'acc_1518',partner:'',label:'',debit:0,credit:0},
     {id:uid(),account:'acc_4001',partner:'',label:'',debit:0,credit:0},
@@ -885,10 +927,11 @@ export function JournalEntryForm({ initial, onSave, onBack, onDiscard }) {
   const totalD = lines.reduce((s,l)=>s+parseN(l.debit),0);
   const totalC = lines.reduce((s,l)=>s+parseN(l.credit),0);
   const balanced = Math.abs(totalD-totalC)<0.01;
-  const docNo = isNew?'New Entry':(initial?.no||'JE/'+new Date().getFullYear()+'/'+uid());
+  const docNo = isNew?(isSw?'Ingizo Jipya':'New Entry'):(initial?.no||'JE/'+new Date().getFullYear()+'/'+uid());
 
   const handlePost = () => {
-    if(!balanced){ alert('Journal entry is not balanced. Total Debit must equal Total Credit.'); return; }
+    if(!balanced){ setErr(isSw?'Ingizo la jarida halijalingana. Jumla ya Debit lazima ilingane na Jumla ya Credit.':'Journal entry is not balanced. Total Debit must equal Total Credit.'); return; }
+    setErr('');
     setState('posted'); onSave&&onSave(buildDoc());
   };
   const handleSave = () => onSave&&onSave(buildDoc());
@@ -900,15 +943,16 @@ export function JournalEntryForm({ initial, onSave, onBack, onDiscard }) {
 
   return (
     <div style={{background:'#f8fafc',minHeight:'100vh'}}>
-      <Breadcrumb items={[{label:'Journal Entries',onClick:onBack},{label:isNew?'New Journal Entry':docNo}]}/>
+      <Breadcrumb items={[{label:isSw?'Maingizo ya Jarida':'Journal Entries',onClick:onBack},{label:isNew?(isSw?'Ingizo Jipya la Jarida':'New Journal Entry'):docNo}]}/>
       <ActionBar>
-        {state==='draft'&&<BtnPrimary onClick={handlePost} style={{opacity:balanced?1:.6}}>Post Entry</BtnPrimary>}
-        {state==='draft'&&<BtnSecondary onClick={handleSave}>Save Draft</BtnSecondary>}
-        {state==='draft'&&<BtnDanger onClick={onDiscard||onBack}>Discard</BtnDanger>}
-        {state==='posted'&&<BtnSecondary onClick={()=>setState('draft')}>Reset to Draft</BtnSecondary>}
+        {state==='draft'&&<BtnPrimary onClick={handlePost} style={{opacity:balanced?1:.6}}>{isSw?'Thibitisha Ingizo':'Post Entry'}</BtnPrimary>}
+        {state==='draft'&&<BtnSecondary onClick={handleSave}>{isSw?'Hifadhi Rasimu':'Save Draft'}</BtnSecondary>}
+        {state==='draft'&&<BtnDanger onClick={onDiscard||onBack}>{isSw?'Futa':'Discard'}</BtnDanger>}
+        {state==='posted'&&<BtnSecondary onClick={()=>setState('draft')}>{isSw?'Rudisha kwa Rasimu':'Reset to Draft'}</BtnSecondary>}
         {state==='posted'&&<BtnSecondary>PDF</BtnSecondary>}
-        {!balanced&&<span style={{marginLeft:8,color:'#ef4444',fontSize:12,fontWeight:600}}>⚠ Entry not balanced</span>}
-        {state==='posted'&&<div style={{marginLeft:'auto',background:'#d1fae5',color:'#065f46',borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:700}}>✓ Posted</div>}
+        {!balanced&&<span style={{marginLeft:8,color:'#ef4444',fontSize:12,fontWeight:600}}>⚠ {isSw?'Ingizo halijalingana':'Entry not balanced'}</span>}
+        {err&&<span style={{marginLeft:8,color:'#ef4444',fontSize:12,fontWeight:600}}>{err}</span>}
+        {state==='posted'&&<div style={{marginLeft:'auto',background:'#d1fae5',color:'#065f46',borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:700}}>✓ {isSw?'Imethibitishwa':'Posted'}</div>}
       </ActionBar>
       <StatusBar states={['draft','posted']} current={state}/>
 
@@ -917,31 +961,31 @@ export function JournalEntryForm({ initial, onSave, onBack, onDiscard }) {
           <div style={{padding:24}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
               <div>
-                <div style={{fontSize:12,color:'#9ca3af',fontWeight:600,textTransform:'uppercase',letterSpacing:.5,marginBottom:4}}>Journal Entry</div>
+                <div style={{fontSize:12,color:'#9ca3af',fontWeight:600,textTransform:'uppercase',letterSpacing:.5,marginBottom:4}}>{isSw?'Ingizo la Jarida':'Journal Entry'}</div>
                 <div style={{fontSize:22,fontWeight:700,color:'#111827'}}>{docNo}</div>
               </div>
             </div>
             <div style={{display:'flex',gap:16,flexWrap:'wrap'}}>
-              <Field label="Date" required half>
+              <Field label={isSw?"Tarehe":"Date"} required half>
                 <Inp type="date" value={date} onChange={e=>setDate(e.target.value)} readOnly={state!=='draft'}/>
               </Field>
-              <Field label="Journal" required half>
+              <Field label={isSw?"Jarida":"Journal"} required half>
                 <Sel value={journal} onChange={e=>setJournal(e.target.value)} disabled={state!=='draft'}>
                   {['Sales Journal','Purchase Journal','Bank','Cash','Payroll Journal','Miscellaneous'].map(j=><option key={j}>{j}</option>)}
                 </Sel>
               </Field>
-              <Field label="Reference" half>
-                <Inp value={ref} onChange={e=>setRef(e.target.value)} placeholder="Source document reference" readOnly={state!=='draft'}/>
+              <Field label={isSw?"Rejea":"Reference"} half>
+                <Inp value={ref} onChange={e=>setRef(e.target.value)} placeholder={isSw?"Rejea ya hati chanzo":"Source document reference"} readOnly={state!=='draft'}/>
               </Field>
-              <Field label="Notes" half>
-                <Inp value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Internal note" readOnly={state!=='draft'}/>
+              <Field label={isSw?"Maelezo":"Notes"} half>
+                <Inp value={notes} onChange={e=>setNotes(e.target.value)} placeholder={isSw?"Maelezo ya ndani":"Internal note"} readOnly={state!=='draft'}/>
               </Field>
             </div>
           </div>
         </Card>
 
         <Card>
-          <CardHeader title="Journal Lines" sub={balanced&&totalD>0?`Balanced · ${fmt(totalD)}`:'Not balanced'}/>
+          <CardHeader title={isSw?"Mistari ya Jarida":"Journal Lines"} sub={balanced&&totalD>0?(isSw?`Imelingana · ${fmt(totalD)}`:`Balanced · ${fmt(totalD)}`):(isSw?'Haijalingana':'Not balanced')}/>
           <JELinesTable lines={lines} setLines={state==='draft'?setLines:()=>{}}/>
         </Card>
       </div>
@@ -953,20 +997,31 @@ export function JournalEntryForm({ initial, onSave, onBack, onDiscard }) {
    INVOICE / BILL DETAIL VIEW (read-only, for existing docs)
 ═══════════════════════════════════════════════════════ */
 export function DocDetail({ doc, onBack, onEdit }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const isInvoice = doc.type==='out_invoice';
   const partnerObj = isInvoice ? CUSTOMERS.find(c=>c.id===doc.partnerId) : VENDORS.find(v=>v.id===doc.partnerId);
   const statusColor = { open:'#fef3c7', paid:'#d1fae5', draft:'#f3f4f6', posted:'#dbeafe' };
-  const statusText  = { open:'Unpaid', paid:'Paid', draft:'Draft', posted:'Posted' };
+  const statusText  = {
+    open: isSw?'Haijalipwa':'Unpaid',
+    paid: isSw?'Imelipwa':'Paid',
+    draft: isSw?'Rasimu':'Draft',
+    posted: isSw?'Imethibitishwa':'Posted'
+  };
   const stColor     = { open:'#92400e', paid:'#065f46', draft:'#6b7280', posted:'#1e40af' };
+
+  const lineHeaders = isSw
+    ? ['#','Maelezo','Akaunti','Idadi','Bei ya Kimoja','Kodi','Kiasi']
+    : ['#','Description','Account','Qty','Unit Price','Tax','Amount'];
 
   return (
     <div style={{background:'#f8fafc',minHeight:'100vh'}}>
-      <Breadcrumb items={[{label:isInvoice?'Invoices':'Bills',onClick:onBack},{label:doc.no}]}/>
+      <Breadcrumb items={[{label:isInvoice?(isSw?'Ankara':'Invoices'):(isSw?'Bili':'Bills'),onClick:onBack},{label:doc.no}]}/>
       <ActionBar>
-        {doc.state==='open'&&<BtnPrimary onClick={()=>onEdit&&onEdit(doc)}>Register Payment</BtnPrimary>}
-        <BtnSecondary onClick={()=>onEdit&&onEdit(doc)}>Edit</BtnSecondary>
+        {doc.state==='open'&&<BtnPrimary onClick={()=>onEdit&&onEdit(doc)}>{isSw?'Sajili Malipo':'Register Payment'}</BtnPrimary>}
+        <BtnSecondary onClick={()=>onEdit&&onEdit(doc)}>{isSw?'Hariri':'Edit'}</BtnSecondary>
         <BtnSecondary>PDF</BtnSecondary>
-        <BtnSecondary>Print</BtnSecondary>
+        <BtnSecondary>{isSw?'Chapisha':'Print'}</BtnSecondary>
         <div style={{marginLeft:'auto',background:statusColor[doc.state]||'#f3f4f6',color:stColor[doc.state]||'#6b7280',borderRadius:6,padding:'5px 14px',fontSize:12,fontWeight:700}}>
           {statusText[doc.state]||doc.state}
         </div>
@@ -978,12 +1033,12 @@ export function DocDetail({ doc, onBack, onEdit }) {
           <div style={{padding:32}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:24}}>
               <div>
-                <div style={{fontSize:12,color:'#9ca3af',fontWeight:600,textTransform:'uppercase',letterSpacing:.5,marginBottom:6}}>{isInvoice?'Customer Invoice':'Vendor Bill'}</div>
+                <div style={{fontSize:12,color:'#9ca3af',fontWeight:600,textTransform:'uppercase',letterSpacing:.5,marginBottom:6}}>{isInvoice?(isSw?'Ankara ya Mteja':'Customer Invoice'):(isSw?'Bili ya Msambazaji':'Vendor Bill')}</div>
                 <div style={{fontSize:26,fontWeight:800,color:'#111827'}}>{doc.no}</div>
                 <div style={{marginTop:8,display:'flex',gap:8,alignItems:'center'}}>
                   <span style={{background:statusColor[doc.state],color:stColor[doc.state],borderRadius:20,padding:'3px 12px',fontSize:12,fontWeight:700}}>{statusText[doc.state]||doc.state}</span>
                   {doc.state==='open'&&doc.due&&new Date(doc.due)<new Date()&&(
-                    <span style={{background:'#fee2e2',color:'#991b1b',borderRadius:20,padding:'3px 12px',fontSize:12,fontWeight:700}}>Overdue</span>
+                    <span style={{background:'#fee2e2',color:'#991b1b',borderRadius:20,padding:'3px 12px',fontSize:12,fontWeight:700}}>{isSw?'Imechelewa':'Overdue'}</span>
                   )}
                 </div>
               </div>
@@ -997,7 +1052,7 @@ export function DocDetail({ doc, onBack, onEdit }) {
             {/* Info grid */}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:24,marginBottom:20}}>
               <div>
-                <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,textTransform:'uppercase',letterSpacing:.5,marginBottom:8}}>{isInvoice?'Bill To':'From'}</div>
+                <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,textTransform:'uppercase',letterSpacing:.5,marginBottom:8}}>{isInvoice?(isSw?'Bili Kwa':'Bill To'):(isSw?'Kutoka':'From')}</div>
                 <div style={{fontWeight:700,fontSize:14,color:'#374151'}}>{doc.partner}</div>
                 {partnerObj&&(
                   <>
@@ -1009,10 +1064,10 @@ export function DocDetail({ doc, onBack, onEdit }) {
               </div>
               <div style={{textAlign:'right'}}>
                 {[
-                  {l:'Invoice No.',v:doc.no},
-                  {l:'Date',v:doc.date},
-                  {l:'Due Date',v:doc.due},
-                  {l:'Reference',v:doc.ref||'—'},
+                  {l:isSw?'Namba ya Ankara':'Invoice No.',v:doc.no},
+                  {l:isSw?'Tarehe':'Date',v:doc.date},
+                  {l:isSw?'Tarehe ya Mwisho':'Due Date',v:doc.due},
+                  {l:isSw?'Rejea':'Reference',v:doc.ref||'—'},
                 ].map((f,i)=>(
                   <div key={i} style={{display:'flex',justifyContent:'flex-end',gap:16,marginBottom:6,fontSize:13}}>
                     <span style={{color:'#9ca3af',minWidth:90}}>{f.l}</span>
@@ -1026,7 +1081,7 @@ export function DocDetail({ doc, onBack, onEdit }) {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,marginBottom:0}}>
               <thead>
                 <tr style={{background:'#f9fafb',borderBottom:'2px solid #e5e7eb'}}>
-                  {['#','Description','Account','Qty','Unit Price','Tax','Amount'].map((h,i)=>(
+                  {lineHeaders.map((h,i)=>(
                     <th key={h} style={{padding:'10px '+(i===0||i>3?'16px':'10px'),textAlign:i>3?'right':'left',color:'#6b7280',fontWeight:600,fontSize:12}}>{h}</th>
                   ))}
                 </tr>
@@ -1054,24 +1109,24 @@ export function DocDetail({ doc, onBack, onEdit }) {
             <div style={{display:'flex',justifyContent:'flex-end',paddingTop:16,borderTop:'2px solid #e5e7eb'}}>
               <table style={{borderCollapse:'collapse',fontSize:13,minWidth:300}}>
                 <tbody>
-                  <tr><td style={{padding:'5px 20px 5px 0',color:'#6b7280',textAlign:'right'}}>Subtotal</td><td style={{padding:'5px 0',textAlign:'right',fontWeight:500,minWidth:160}}>{fmt(doc.subtotal||doc.total)}</td></tr>
-                  <tr><td style={{padding:'5px 20px 5px 0',color:'#6b7280',textAlign:'right'}}>Tax (18%)</td><td style={{padding:'5px 0',textAlign:'right',fontWeight:500}}>{fmt(doc.tax_amount||0)}</td></tr>
+                  <tr><td style={{padding:'5px 20px 5px 0',color:'#6b7280',textAlign:'right'}}>{isSw?'Jumla Ndogo':'Subtotal'}</td><td style={{padding:'5px 0',textAlign:'right',fontWeight:500,minWidth:160}}>{fmt(doc.subtotal||doc.total)}</td></tr>
+                  <tr><td style={{padding:'5px 20px 5px 0',color:'#6b7280',textAlign:'right'}}>{isSw?'Kodi (18%)':'Tax (18%)'}</td><td style={{padding:'5px 0',textAlign:'right',fontWeight:500}}>{fmt(doc.tax_amount||0)}</td></tr>
                   <tr style={{borderTop:'2px solid #e5e7eb'}}>
-                    <td style={{padding:'12px 20px 12px 0',color:'#111827',fontWeight:700,fontSize:15,textAlign:'right'}}>Total</td>
+                    <td style={{padding:'12px 20px 12px 0',color:'#111827',fontWeight:700,fontSize:15,textAlign:'right'}}>{isSw?'Jumla Kuu':'Total'}</td>
                     <td style={{padding:'12px 0',textAlign:'right',fontWeight:800,fontSize:18,color:'#111827'}}>{fmt(doc.total)}</td>
                   </tr>
                   {doc.paid>0&&(
-                    <tr><td style={{padding:'5px 20px 5px 0',color:G,textAlign:'right',fontWeight:600}}>Amount Paid</td><td style={{padding:'5px 0',textAlign:'right',fontWeight:600,color:G}}>-{fmt(doc.paid)}</td></tr>
+                    <tr><td style={{padding:'5px 20px 5px 0',color:G,textAlign:'right',fontWeight:600}}>{isSw?'Kiasi Kilicholipwa':'Amount Paid'}</td><td style={{padding:'5px 0',textAlign:'right',fontWeight:600,color:G}}>-{fmt(doc.paid)}</td></tr>
                   )}
                   {doc.balance>0&&(
                     <tr style={{background:'#fffbeb'}}>
-                      <td style={{padding:'10px 20px 10px 0',color:'#92400e',fontWeight:700,fontSize:14,textAlign:'right'}}>Amount Due</td>
+                      <td style={{padding:'10px 20px 10px 0',color:'#92400e',fontWeight:700,fontSize:14,textAlign:'right'}}>{isSw?'Kiasi Kinachodaiwa':'Amount Due'}</td>
                       <td style={{padding:'10px 0',textAlign:'right',fontWeight:800,fontSize:16,color:'#92400e'}}>{fmt(doc.balance)}</td>
                     </tr>
                   )}
                   {doc.balance===0&&doc.state==='paid'&&(
                     <tr style={{background:GB}}>
-                      <td colSpan={2} style={{padding:'10px 0',textAlign:'center',fontWeight:700,fontSize:14,color:G}}>✓ Fully Paid</td>
+                      <td colSpan={2} style={{padding:'10px 0',textAlign:'center',fontWeight:700,fontSize:14,color:G}}>✓ {isSw?'Imelipwa Kamili':'Fully Paid'}</td>
                     </tr>
                   )}
                 </tbody>
@@ -1083,7 +1138,7 @@ export function DocDetail({ doc, onBack, onEdit }) {
         {/* Notes */}
         {doc.notes&&(
           <Card><div style={{padding:'16px 24px',fontSize:13,color:'#6b7280'}}>
-            <div style={{fontWeight:600,color:'#374151',marginBottom:6}}>Notes</div>
+            <div style={{fontWeight:600,color:'#374151',marginBottom:6}}>{isSw?'Maelezo':'Notes'}</div>
             {doc.notes}
           </div></Card>
         )}

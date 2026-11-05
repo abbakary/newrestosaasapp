@@ -368,10 +368,10 @@ export function ReceiptModal({ o, close, initialTab = 'customer', userRole = 'ca
             <div className="thermal-dash-line">==================================================</div>
 
             <div className="fiscal-meta">
-              <div>RECEIPT NUMBER: <b>{receiptNumberStr}</b></div>
-              <div>DATE & TIME: <b>{isoTimeWithTz}</b></div>
-              <div>OPERATOR: <b>Zawadi Ally (Till #01)</b></div>
-              <div>TABLE / POS: <b>{o.tb} (Terminal #01)</b></div>
+              <div>{isSw ? 'NAMBARI YA RISITI:' : 'RECEIPT NUMBER:'} <b>{receiptNumberStr}</b></div>
+              <div>{isSw ? 'TAREHE NA MUDA:' : 'DATE & TIME:'} <b>{isoTimeWithTz}</b></div>
+              <div>{isSw ? 'MHUDUMU:' : 'OPERATOR:'} <b>Zawadi Ally (Till #01)</b></div>
+              <div>{isSw ? 'MEZA / POS:' : 'TABLE / POS:'} <b>{o.tb} (Terminal #01)</b></div>
             </div>
 
             <div className="thermal-dash-line">--------------------------------------------------</div>
@@ -379,17 +379,18 @@ export function ReceiptModal({ o, close, initialTab = 'customer', userRole = 'ca
             <table className="thermal-items-table">
               <thead>
                 <tr>
-                  <th className="col-item">DESCRIPTION</th>
-                  <th className="col-qty">QTY</th>
-                  <th className="col-amt">AMOUNT</th>
+                  <th className="col-item">{isSw ? 'MAELEZO' : 'DESCRIPTION'}</th>
+                  <th className="col-qty">{isSw ? 'IDADI' : 'QTY'}</th>
+                  <th className="col-amt">{isSw ? 'KIASI' : 'AMOUNT'}</th>
                 </tr>
               </thead>
               <tbody>
                 {(o.it || []).map((l, idx) => {
                   const item = M[l.id] || { n: `Item #${l.id}`, p: l.p || 0 };
+                  const itemName = getMenuName ? getMenuName(item) : item.n;
                   return (
                     <tr key={idx}>
-                      <td className="col-item">{(item.n || '').toUpperCase()}</td>
+                      <td className="col-item">{(itemName || '').toUpperCase()}</td>
                       <td className="col-qty">{l.q}</td>
                       <td className="col-amt">{fmtNum(item.p * l.q)}.00 TSh</td>
                     </tr>
@@ -400,7 +401,7 @@ export function ReceiptModal({ o, close, initialTab = 'customer', userRole = 'ca
 
             {discountAmt > 0 && (
               <div className="thermal-discount-row">
-                <span>LESS DISCOUNT ({discountPct}%):</span>
+                <span>{isSw ? 'PUNGUZO' : 'LESS DISCOUNT'} ({discountPct}%):</span>
                 <span>-{fmtNum(discountAmt)}.00 TSh</span>
               </div>
             )}
@@ -408,7 +409,7 @@ export function ReceiptModal({ o, close, initialTab = 'customer', userRole = 'ca
             <div className="thermal-total-divider" />
 
             <div className="thermal-total-row">
-              <span className="thermal-total-label">TOTAL TAX INCL.:</span>
+              <span className="thermal-total-label">{isSw ? 'JUMLA KUU (PAMOJA NA KODI):' : 'TOTAL TAX INCL.:'}</span>
               <span className="thermal-total-amount">{fmtNum(payableGross)}.00 TSh</span>
             </div>
 
@@ -416,18 +417,18 @@ export function ReceiptModal({ o, close, initialTab = 'customer', userRole = 'ca
               {isVatOn ? (
                 <>
                   <div className="thermal-tax-row">
-                    <span>TAX CATEGORY A ({Number(vatSettings.rate || 18).toFixed(2)}%):</span>
+                    <span>{isSw ? 'KODI YA VAT' : 'TAX CATEGORY A'} ({Number(vatSettings.rate || 18).toFixed(2)}%):</span>
                     <span>{fmtNum(vatTax)}.00 TSh</span>
                   </div>
                   <div className="thermal-tax-row">
-                    <span>NET TURNOVER:</span>
+                    <span>{isSw ? 'MAUZO BILA KODI:' : 'NET TURNOVER:'}</span>
                     <span>{fmtNum(netTaxable)}.00 TSh</span>
                   </div>
                 </>
               ) : (
                 <div className="thermal-tax-row" style={{ color: '#444' }}>
-                  <span>TAX STATUS:</span>
-                  <span><b>TAX EXEMPT / VAT DISABLED (0%)</b></span>
+                  <span>{isSw ? 'HALI YA KODI:' : 'TAX STATUS:'}</span>
+                  <span><b>{isSw ? 'MSAMAHA WA KODI / VAT IMEZIMWA (0%)' : 'TAX EXEMPT / VAT DISABLED (0%)'}</b></span>
                 </div>
               )}
               <div className="thermal-tax-row">

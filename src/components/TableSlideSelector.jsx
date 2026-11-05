@@ -13,7 +13,8 @@ export function TableSlideSelector({
   orderType = 'dine_in',
   onChangeOrderType = null
 }) {
-  const { S, wn } = useContext(Ctx);
+  const { S, wn, lang } = useContext(Ctx);
+  const isSw = (lang || 'sw') === 'sw';
   const [filter, setFilter] = useState('all'); // 'all', 'available', 'occupied', 'takeaway'
   const [search, setSearch] = useState('');
   const [warnMsg, setWarnMsg] = useState('');
@@ -51,7 +52,9 @@ export function TableSlideSelector({
 
   const handleTableClick = (t, isOccupied, activeOrder) => {
     if (isOccupied) {
-      setWarnMsg(`⚠️ Table ${t} is currently OCCUPIED by ${activeOrder?.by || 'Guests'} (Order ${activeOrder?.no || ''}). Normal restaurant operations require settling or transferring the active bill before seating new guests.`);
+      setWarnMsg(isSw
+        ? `⚠️ Meza ${t} INATUMIKA sasa na ${activeOrder?.by || 'Wageni'} (Oda ${activeOrder?.no || ''}). Tafadhali maliza au hamisha bili iliyopo kabla ya kuketi wageni wapya.`
+        : `⚠️ Table ${t} is currently OCCUPIED by ${activeOrder?.by || 'Guests'} (Order ${activeOrder?.no || ''}). Normal restaurant operations require settling or transferring the active bill before seating new guests.`);
       setTimeout(() => setWarnMsg(''), 5000);
       return;
     }
@@ -119,11 +122,11 @@ export function TableSlideSelector({
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 22 }}>🪑</span>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: -0.3 }}>
-                Table Seating & Floor Selection
+                {isSw ? 'Uchaguzi wa Meza na Ukumbi' : 'Table Seating & Floor Selection'}
               </h3>
             </div>
             <small style={{ color: 'var(--mut)', display: 'block', marginTop: 2 }}>
-              Safari Grill & Lounge · Live Floor Operations
+              {isSw ? 'Safari Grill & Lounge · Huduma ya Ukumbini' : 'Safari Grill & Lounge · Live Floor Operations'}
             </small>
           </div>
 
@@ -159,19 +162,19 @@ export function TableSlideSelector({
           flexShrink: 0
         }}>
           <div style={{ background: 'var(--card)', padding: '8px 10px', borderRadius: 12, textAlign: 'center', border: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 11, color: 'var(--mut)', fontWeight: 600 }}>Available</span>
+            <span style={{ fontSize: 11, color: 'var(--mut)', fontWeight: 600 }}>{isSw ? 'Ziko Wazi' : 'Available'}</span>
             <b style={{ display: 'block', fontSize: 16, color: '#16a34a' }}>{tableStats.availableCount}</b>
           </div>
           <div style={{ background: 'var(--card)', padding: '8px 10px', borderRadius: 12, textAlign: 'center', border: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 11, color: 'var(--mut)', fontWeight: 600 }}>Occupied</span>
+            <span style={{ fontSize: 11, color: 'var(--mut)', fontWeight: 600 }}>{isSw ? 'Zinatumika' : 'Occupied'}</span>
             <b style={{ display: 'block', fontSize: 16, color: '#ef4444' }}>{tableStats.occupiedCount}</b>
           </div>
           <div style={{ background: 'var(--card)', padding: '8px 10px', borderRadius: 12, textAlign: 'center', border: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 11, color: 'var(--mut)', fontWeight: 600 }}>Diners Seated</span>
+            <span style={{ fontSize: 11, color: 'var(--mut)', fontWeight: 600 }}>{isSw ? 'Wageni' : 'Diners Seated'}</span>
             <b style={{ display: 'block', fontSize: 16, color: 'var(--tx)' }}>{tableStats.totalDiners}</b>
           </div>
           <div style={{ background: 'var(--card)', padding: '8px 10px', borderRadius: 12, textAlign: 'center', border: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 11, color: 'var(--mut)', fontWeight: 600 }}>Floor Active</span>
+            <span style={{ fontSize: 11, color: 'var(--mut)', fontWeight: 600 }}>{isSw ? 'Mauzo Meza' : 'Floor Active'}</span>
             <b style={{ display: 'block', fontSize: 14, color: '#0E5A47', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {fmt(tableStats.totalActiveRevenue)}
             </b>
@@ -183,7 +186,7 @@ export function TableSlideSelector({
           <div className="search" style={{ background: 'var(--bg)', border: '1px solid var(--line)', padding: '7px 12px', borderRadius: 12, marginBottom: 10 }}>
             <span>🔍</span>
             <input
-              placeholder="Search table number (T1, T4) or waiter..."
+              placeholder={isSw ? 'Tafuta namba ya meza (T1, T4) au mhudumu...' : 'Search table number (T1, T4) or waiter...'}
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{ fontSize: 13.5 }}
@@ -193,10 +196,10 @@ export function TableSlideSelector({
 
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
             {[
-              ['all', `All Tables (${dineTables.length})`],
-              ['available', `🟢 Available (${tableStats.availableCount})`],
-              ['occupied', `🔴 Occupied (${tableStats.occupiedCount})`],
-              ['takeaway', '🛵 Counter & Online']
+              ['all', isSw ? `Meza Zote (${dineTables.length})` : `All Tables (${dineTables.length})`],
+              ['available', isSw ? `🟢 Wazi (${tableStats.availableCount})` : `🟢 Available (${tableStats.availableCount})`],
+              ['occupied', isSw ? `🔴 Zinatumika (${tableStats.occupiedCount})` : `🔴 Occupied (${tableStats.occupiedCount})`],
+              ['takeaway', isSw ? '🛵 Kaunta & Mtandaoni' : '🛵 Counter & Online']
             ].map(([k, l]) => (
               <button
                 key={k}
@@ -250,14 +253,14 @@ export function TableSlideSelector({
                 style={{ padding: '12px 14px' }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <b style={{ fontSize: 15 }}>🛵 Takeaway Counter</b>
-                  {selectedTable === 'Takeaway' && <span style={{ color: '#15803D', fontWeight: 800 }}>✓ Selected</span>}
+                  <b style={{ fontSize: 15 }}>🛵 {isSw ? 'Kaunta ya Kuchukua' : 'Takeaway Counter'}</b>
+                  {selectedTable === 'Takeaway' && <span style={{ color: '#15803D', fontWeight: 800 }}>✓ {isSw ? 'Imechaguliwa' : 'Selected'}</span>}
                 </div>
                 <small style={{ color: 'var(--mut)', display: 'block', fontSize: 11.5 }}>
-                  Walk-in pickup / Bar counter (No table seating)
+                  {isSw ? 'Mteja wa kupita / Kaunta ya Baa (Bila meza)' : 'Walk-in pickup / Bar counter (No table seating)'}
                 </small>
                 <div style={{ marginTop: 8, display: 'inline-block', background: '#DCFCE7', color: '#166534', padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 700 }}>
-                  Always Available
+                  {isSw ? 'Inapatikana Muda Wote' : 'Always Available'}
                 </div>
               </div>
 
@@ -268,14 +271,14 @@ export function TableSlideSelector({
                 style={{ padding: '12px 14px' }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <b style={{ fontSize: 15 }}>📱 Online Delivery</b>
-                  {selectedTable === 'Online' && <span style={{ color: '#15803D', fontWeight: 800 }}>✓ Selected</span>}
+                  <b style={{ fontSize: 15 }}>📱 {isSw ? 'Oda ya Mtandaoni' : 'Online Delivery'}</b>
+                  {selectedTable === 'Online' && <span style={{ color: '#15803D', fontWeight: 800 }}>✓ {isSw ? 'Imechaguliwa' : 'Selected'}</span>}
                 </div>
                 <small style={{ color: 'var(--mut)', display: 'block', fontSize: 11.5 }}>
-                  Remote customer app / Dispatch rider
+                  {isSw ? 'App ya mteja / Dereva wa usafirishaji' : 'Remote customer app / Dispatch rider'}
                 </small>
                 <div style={{ marginTop: 8, display: 'inline-block', background: '#E0F2FE', color: '#0369A1', padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 700 }}>
-                  Remote Channel
+                  {isSw ? 'Njia ya Mtandao' : 'Remote Channel'}
                 </div>
               </div>
             </div>
@@ -286,13 +289,15 @@ export function TableSlideSelector({
             const active = getTableOrders(t);
             const isOccupied = active.length > 0;
             const cap = SEATS[t] || 4;
-            const waiterName = wn(TW[t]) || 'Staff';
+            const waiterName = wn(TW[t]) || (isSw ? 'Mhudumu' : 'Staff');
             const isSelected = selectedTable === t;
             const activeOrder = active[0];
             const runningTotal = active.reduce((acc, o) => acc + tot(o), 0);
             const elapsedMins = activeOrder ? Math.max(1, Math.round((Date.now() - activeOrder.t) / 60000)) : 0;
 
-            const zoneName = ['T1', 'T2', 'T3'].includes(t) ? 'Indoor Main Hall' : 'Garden Terrace & VIP';
+            const zoneName = ['T1', 'T2', 'T3'].includes(t)
+              ? (isSw ? 'Ukumbi wa Ndani' : 'Indoor Main Hall')
+              : (isSw ? 'Bustani & VIP' : 'Garden Terrace & VIP');
 
             return (
               <div
@@ -304,7 +309,7 @@ export function TableSlideSelector({
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--tx)' }}>
-                        Table {t}
+                        {isSw ? `Meza ${t}` : `Table ${t}`}
                       </span>
                       <span style={{
                         fontSize: 11,
@@ -314,11 +319,11 @@ export function TableSlideSelector({
                         background: isOccupied ? '#FEE2E2' : '#DCFCE7',
                         color: isOccupied ? '#DC2626' : '#166534'
                       }}>
-                        {isOccupied ? '🔴 OCCUPIED' : '🟢 AVAILABLE'}
+                        {isOccupied ? (isSw ? '🔴 INATUMIKA' : '🔴 OCCUPIED') : (isSw ? '🟢 IKO WAZI' : '🟢 AVAILABLE')}
                       </span>
                     </div>
                     <small style={{ color: 'var(--mut)', display: 'block', marginTop: 2 }}>
-                      {zoneName} · Capacity: <b>{cap} Guests</b> · Waiter: {waiterName}
+                      {zoneName} · {isSw ? 'Uwezo:' : 'Capacity:'} <b>{cap} {isSw ? 'Wageni' : 'Guests'}</b> · {isSw ? 'Mhudumu:' : 'Waiter:'} {waiterName}
                     </small>
                   </div>
 
@@ -331,7 +336,7 @@ export function TableSlideSelector({
                       padding: '3px 8px',
                       borderRadius: 8
                     }}>
-                      ✓ SELECTED
+                      ✓ {isSw ? 'IMECHAGULIWA' : 'SELECTED'}
                     </span>
                   )}
                 </div>
@@ -346,12 +351,12 @@ export function TableSlideSelector({
                     border: '1px solid rgba(239, 68, 68, 0.2)'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#B91C1C' }}>
-                      <span>Seated: {activeOrder?.by || 'Guests'} ({activeOrder?.guests || cap} covers)</span>
+                      <span>{isSw ? 'Wameketi:' : 'Seated:'} {activeOrder?.by || (isSw ? 'Wageni' : 'Guests')} ({activeOrder?.guests || cap} {isSw ? 'viti' : 'covers'})</span>
                       <span>{fmt(runningTotal)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--mut)', marginTop: 3 }}>
-                      <span>Ticket {activeOrder?.no || ''} · <Pill st={activeOrder?.st || 'preparing'} /></span>
-                      <span>⏱ Seated {elapsedMins} min ago</span>
+                      <span>{isSw ? 'Tiketi' : 'Ticket'} {activeOrder?.no || ''} · <Pill st={activeOrder?.st || 'preparing'} /></span>
+                      <span>⏱ {isSw ? `Dakika ${elapsedMins} zilizopita` : `Seated ${elapsedMins} min ago`}</span>
                     </div>
                     <div style={{
                       marginTop: 6,
@@ -363,7 +368,7 @@ export function TableSlideSelector({
                       gap: 4
                     }}>
                       <span>🔒</span>
-                      <span>Cannot select: Table is currently in active service</span>
+                      <span>{isSw ? 'Haiwezi kuchaguliwa: Meza ina huduma inayoendelea' : 'Cannot select: Table is currently in active service'}</span>
                     </div>
                   </div>
                 ) : (
@@ -375,7 +380,7 @@ export function TableSlideSelector({
                     fontSize: 12,
                     color: '#166534'
                   }}>
-                    <span>✓ Vacant & Sanitized · Ready for immediate seating</span>
+                    <span>✓ {isSw ? 'Wazi & Safi · Tayari kwa wageni' : 'Vacant & Sanitized · Ready for immediate seating'}</span>
                     <button
                       type="button"
                       style={{
@@ -389,7 +394,7 @@ export function TableSlideSelector({
                         cursor: 'pointer'
                       }}
                     >
-                      {isSelected ? '✓ In Use' : 'Select Table ➔'}
+                      {isSelected ? (isSw ? '✓ Inatumika' : '✓ In Use') : (isSw ? 'Chagua Meza ➔' : 'Select Table ➔')}
                     </button>
                   </div>
                 )}
@@ -400,8 +405,8 @@ export function TableSlideSelector({
           {!filteredTables.length && filter !== 'takeaway' && (
             <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--mut)' }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
-              <p style={{ fontWeight: 700, margin: 0 }}>No tables found matching your filter</p>
-              <small>Try choosing "All Tables" or clear your search term.</small>
+              <p style={{ fontWeight: 700, margin: 0 }}>{isSw ? 'Hakuna meza zilizopatikana' : 'No tables found matching your filter'}</p>
+              <small>{isSw ? 'Jaribu kuchagua "Meza Zote" au futa utafutaji.' : 'Try choosing "All Tables" or clear your search term.'}</small>
             </div>
           )}
         </div>
@@ -426,9 +431,9 @@ export function TableSlideSelector({
               border: '1px solid var(--line)'
             }}>
               <div>
-                <b style={{ fontSize: 13, display: 'block' }}>Party Size / Seated Diners:</b>
+                <b style={{ fontSize: 13, display: 'block' }}>{isSw ? 'Idadi ya Wageni Mezani:' : 'Party Size / Seated Diners:'}</b>
                 <small style={{ color: 'var(--mut)' }}>
-                  Table {selectedTable} fits up to {selectedTableCap} guests
+                  {isSw ? `Meza ${selectedTable} inachukua hadi wageni ${selectedTableCap}` : `Table ${selectedTable} fits up to ${selectedTableCap} guests`}
                 </small>
               </div>
 
@@ -449,7 +454,9 @@ export function TableSlideSelector({
                       if (guestCount < selectedTableCap) {
                         onChangeGuests(guestCount + 1);
                       } else {
-                        setWarnMsg(`Note: Table ${selectedTable} has a standard capacity of ${selectedTableCap} seats. You can still seat extra guests if chairs are added.`);
+                        setWarnMsg(isSw
+                          ? `Kumbuka: Meza ${selectedTable} ina viti ${selectedTableCap}. Unaweza kuongeza viti vya ziada ikihitajika.`
+                          : `Note: Table ${selectedTable} has a standard capacity of ${selectedTableCap} seats. You can still seat extra guests if chairs are added.`);
                         onChangeGuests(guestCount + 1);
                         setTimeout(() => setWarnMsg(''), 4000);
                       }
@@ -468,7 +475,7 @@ export function TableSlideSelector({
               style={{ flex: 1, padding: '12px 14px' }}
               onClick={onClose}
             >
-              Cancel
+              {isSw ? 'Ghairi' : 'Cancel'}
             </button>
             <button
               className="btn o sm"
@@ -482,13 +489,13 @@ export function TableSlideSelector({
               }}
               onClick={() => {
                 if (isSelectedTableOccupied) {
-                  setWarnMsg(`Cannot confirm: Table ${selectedTable} is occupied.`);
+                  setWarnMsg(isSw ? `Haiwezekani: Meza ${selectedTable} inatumika.` : `Cannot confirm: Table ${selectedTable} is occupied.`);
                   return;
                 }
                 onClose();
               }}
             >
-              ✓ Confirm {selectedTable} Selection
+              ✓ {isSw ? `Thibitisha Meza ${selectedTable}` : `Confirm ${selectedTable} Selection`}
             </button>
           </div>
         </div>

@@ -6,7 +6,8 @@ import { ManagerReviewModal } from '../components/FastDrinksAndInventory';
 import { MenuManagementView } from '../components/MenuManagement';
 
 export function Manager({ sess, out, setSess, setV }) {
-  const { S, A, wn } = useContext(Ctx);
+  const { S, A, wn, lang } = useContext(Ctx);
+  const isSw = (lang || 'sw') === 'sw';
   const [tab, setTab] = useState('overview');
   const [selWaiterId, setSelWaiterId] = useState('all');
   const [drillOrder, setDrillOrder] = useState(null);
@@ -93,10 +94,14 @@ export function Manager({ sess, out, setSess, setV }) {
             <span style={{ fontSize: 26 }}>⚠️</span>
             <div>
               <b style={{ color: '#92400E', fontSize: 14.5 }}>
-                {unreviewedItems.length} Quick-Added Menu Item{unreviewedItems.length > 1 ? 's' : ''} Need Stock & Cost Linking
+                {isSw
+                  ? `Bidhaa ${unreviewedItems.length} za Menyu Zilizoongezwa Haraka Zinahitaji Kuunganishwa na Stoo`
+                  : `${unreviewedItems.length} Quick-Added Menu Item${unreviewedItems.length > 1 ? 's' : ''} Need Stock & Cost Linking`}
               </b>
               <div style={{ fontSize: 12, color: '#B45309' }}>
-                Items were added rapidly on-site (&lt;10s) by cashier/kitchen. Link to inventory stock items to track depleted stock and margins.
+                {isSw
+                  ? 'Bidhaa ziliongezwa haraka (<10s) na keshia/jiko. Unganisha na bidhaa za stoo ili kufuatilia matumizi na faida.'
+                  : 'Items were added rapidly on-site (<10s) by cashier/kitchen. Link to inventory stock items to track depleted stock and margins.'}
               </div>
             </div>
           </div>
@@ -105,21 +110,21 @@ export function Manager({ sess, out, setSess, setV }) {
             style={{ background: '#D97706', color: '#fff', fontSize: 12.5, whiteSpace: 'nowrap' }}
             onClick={() => setReviewModal(true)}
           >
-            Review Items ({unreviewedItems.length}) ➔
+            {isSw ? `Kagua Bidhaa (${unreviewedItems.length}) ➔` : `Review Items (${unreviewedItems.length}) ➔`}
           </button>
         </div>
       )}
 
       <Hd
-        s={`Site General Manager · ${sess?.name || 'Rehema Said'}`}
-        t="Manager Operating Console"
+        s={`${isSw ? 'Meneja Mkuu wa Tawi' : 'Site General Manager'} · ${sess?.name || 'Rehema Said'}`}
+        t={isSw ? 'Dashibodi ya Uendeshaji wa Meneja' : 'Manager Operating Console'}
         r={
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn sm o" onClick={A.approve}>
-              ✓ Approve All Commissions
+              {isSw ? '✓ Idhinisha Kamisheni Zote' : '✓ Approve All Commissions'}
             </button>
             <button className="btn sm ghost" onClick={out}>
-              Exit
+              {isSw ? 'Toka' : 'Exit'}
             </button>
           </div>
         }
@@ -127,14 +132,14 @@ export function Manager({ sess, out, setSess, setV }) {
 
       <div className="inv-subnav">
         {[
-          ['overview', 'Day Operations & KPIs', '📊'],
-          ['vat', 'VAT & Tax Settings', '🏛️'],
-          ['menu', 'Menu Catalog & Pricing', '🍽️'],
-          ['finance', 'Site P&L & Expenses', '💼'],
-          ['commission', 'Commission Policy', '💰'],
-          ['reconciliation', 'Waiter Reconciliation', '🧾'],
-          ['checklists', 'Daily Checklists & HACCP', '📋'],
-          ['audit', 'Audit Log', '🛡️']
+          ['overview', isSw ? 'Uendeshaji wa Siku & KPIs' : 'Day Operations & KPIs', '📊'],
+          ['vat', isSw ? 'Mipangilio ya VAT na Kodi' : 'VAT & Tax Settings', '🏛️'],
+          ['menu', isSw ? 'Orodha ya Menyu na Bei' : 'Menu Catalog & Pricing', '🍽️'],
+          ['finance', isSw ? 'Faida & Hasara (P&L) na Gharama' : 'Site P&L & Expenses', '💼'],
+          ['commission', isSw ? 'Sera ya Kamisheni' : 'Commission Policy', '💰'],
+          ['reconciliation', isSw ? 'Uhakiki wa Wahudumu' : 'Waiter Reconciliation', '🧾'],
+          ['checklists', isSw ? 'Orodha za Ukaguzi & HACCP' : 'Daily Checklists & HACCP', '📋'],
+          ['audit', isSw ? 'Kumbukumbu ya Ukaguzi' : 'Audit Log', '🛡️']
         ].map(([k, l, icon]) => (
           <button
             key={k}
@@ -153,10 +158,13 @@ export function Manager({ sess, out, setSess, setV }) {
           <div className="card" style={{ marginBottom: 14, background: 'linear-gradient(135deg, #093B2F, #0E5A47)', color: '#fff' }}>
             <div className="row">
               <div>
-                <small style={{ color: '#cfe8df' }}>SITE WORKSPACE · TIMELINE</small>
+                <small style={{ color: '#cfe8df' }}>{isSw ? 'ENEO LA TAWI · RATIBA YA SIKU' : 'SITE WORKSPACE · TIMELINE'}</small>
                 <h3 style={{ margin: '4px 0', color: '#fff' }}>{currentSite.name}</h3>
                 <div style={{ fontSize: 13, color: '#cfe8df' }}>
-                  Current Status: <b style={{ color: '#FFD700', textTransform: 'uppercase' }}>{S.shiftState || 'Live Service'}</b>
+                  {isSw ? 'Hali ya Sasa:' : 'Current Status:'}{' '}
+                  <b style={{ color: '#FFD700', textTransform: 'uppercase' }}>
+                    {S.shiftState || (isSw ? 'Huduma Inaendelea' : 'Live Service')}
+                  </b>
                 </div>
               </div>
 
@@ -166,21 +174,21 @@ export function Manager({ sess, out, setSess, setV }) {
                   style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.4)', fontSize: 12 }}
                   onClick={() => A.setShift('opening', sess?.name || 'Manager')}
                 >
-                  1. Opening
+                  {isSw ? '1. Kufungua' : '1. Opening'}
                 </button>
                 <button
                   className={`btn sm ${S.shiftState === 'service' ? 'o' : 'ghost'}`}
                   style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.4)', fontSize: 12 }}
                   onClick={() => A.setShift('service', sess?.name || 'Manager')}
                 >
-                  2. Service
+                  {isSw ? '2. Huduma' : '2. Service'}
                 </button>
                 <button
                   className={`btn sm ${S.shiftState === 'closed' ? 'o' : 'ghost'}`}
                   style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.4)', fontSize: 12 }}
                   onClick={() => A.setShift('closed', sess?.name || 'Manager')}
                 >
-                  3. Day-Close
+                  {isSw ? '3. Kufunga Siku' : '3. Day-Close'}
                 </button>
               </div>
             </div>
@@ -188,12 +196,12 @@ export function Manager({ sess, out, setSess, setV }) {
 
           <div className="tiles">
             {[
-              ['Gross Sales Today', fmt(grossSales), 'Target: TSh 1,200,000', '#15803D'],
-              ['Net Revenue (excl. VAT)', fmt(netSales), `18% VAT: ${fmt(taxCollected)}`, '#0E5A47'],
-              ['Average Check / Cover', fmt(avgCheck), `${paid.length} bills settled`, '#007AFF'],
-              ['Live Service Tickets', `${liveCount} orders`, 'Currently active', '#FF9500'],
-              ['Waiter Commission Cost', `${commissionCostPct}%`, `Total: ${fmt(commissionAccrued)}`, '#5856D6'],
-              ['Food Cost % (Theoretical)', '29.4%', 'Target PAR: <32%', '#093B2F']
+              [isSw ? 'Mauzo Ghafi Leo' : 'Gross Sales Today', fmt(grossSales), isSw ? 'Lengo: TSh 1,200,000' : 'Target: TSh 1,200,000', '#15803D'],
+              [isSw ? 'Mapato Halisi (bila VAT)' : 'Net Revenue (excl. VAT)', fmt(netSales), `18% VAT: ${fmt(taxCollected)}`, '#0E5A47'],
+              [isSw ? 'Wastani wa Bili / Mgeni' : 'Average Check / Cover', fmt(avgCheck), isSw ? `Bili ${paid.length} zimelipwa` : `${paid.length} bills settled`, '#007AFF'],
+              [isSw ? 'Tiketi Zinazoendelea' : 'Live Service Tickets', `${liveCount} ${isSw ? 'oda' : 'orders'}`, isSw ? 'Zinazoendelea sasa' : 'Currently active', '#FF9500'],
+              [isSw ? 'Gharama ya Kamisheni' : 'Waiter Commission Cost', `${commissionCostPct}%`, `${isSw ? 'Jumla:' : 'Total:'} ${fmt(commissionAccrued)}`, '#5856D6'],
+              [isSw ? 'Gharama ya Chakula %' : 'Food Cost % (Theoretical)', '29.4%', isSw ? 'Lengo PAR: <32%' : 'Target PAR: <32%', '#093B2F']
             ].map(([label, val, sub, color]) => (
               <div key={label} className="card">
                 <small>{label}</small>
@@ -209,10 +217,14 @@ export function Manager({ sess, out, setSess, setV }) {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 20 }}>⚙️</span>
-                  <b style={{ fontSize: 16 }}>Inventory &amp; Kitchen Food Costing Mode</b>
+                  <b style={{ fontSize: 16 }}>
+                    {isSw ? 'Mfumo wa Stoo na Gharama za Chakula Jikoni' : 'Inventory & Kitchen Food Costing Mode'}
+                  </b>
                 </div>
                 <small style={{ color: 'var(--mut)', display: 'block', marginTop: 2 }}>
-                  Drinks always use direct link (−1 base bottle, no BOM). Kitchen dishes support two operating models:
+                  {isSw
+                    ? 'Vinywaji hutumia kiungo cha moja kwa moja (−1 chupa, bila BOM). Vyakula vya jikoni vina mifumo miwili:'
+                    : 'Drinks always use direct link (−1 base bottle, no BOM). Kitchen dishes support two operating models:'}
                 </small>
               </div>
 
@@ -229,7 +241,7 @@ export function Manager({ sess, out, setSess, setV }) {
                   }}
                   onClick={() => A.setKitchenTrackingMode('simple', sess?.name || 'Manager')}
                 >
-                  ✓ Option A: Simple (Issued)
+                  {isSw ? '✓ Chaguo A: Rahisi (Iliyotolewa)' : '✓ Option A: Simple (Issued)'}
                 </button>
                 <button
                   type="button"
@@ -243,7 +255,7 @@ export function Manager({ sess, out, setSess, setV }) {
                   }}
                   onClick={() => A.setKitchenTrackingMode('recipe', sess?.name || 'Manager')}
                 >
-                  Option B: Recipe-based (BOM)
+                  {isSw ? 'Chaguo B: Kulingana na Mapishi (BOM)' : 'Option B: Recipe-based (BOM)'}
                 </button>
               </div>
             </div>
@@ -257,16 +269,18 @@ export function Manager({ sess, out, setSess, setV }) {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                   <b style={{ color: S.kitchenTrackingMode !== 'recipe' ? '#0E5A47' : 'var(--tx)', fontSize: 13.5 }}>
-                    Option A: Simple (Recommended for Small/Mid Restaurants)
+                    {isSw ? 'Chaguo A: Rahisi (Inapendekezwa kwa Migahawa ya Kati)' : 'Option A: Simple (Recommended for Small/Mid Restaurants)'}
                   </b>
                   {S.kitchenTrackingMode !== 'recipe' && (
                     <span style={{ fontSize: 11, background: '#0E5A47', color: '#fff', padding: '2px 8px', borderRadius: 99, fontWeight: 700 }}>
-                      ACTIVE
+                      {isSw ? 'INATUMIKA' : 'ACTIVE'}
                     </span>
                   )}
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: 'var(--mut)', lineHeight: 1.4 }}>
-                  Food items are issued from Store to Kitchen. Cost is counted immediately upon issue. No BOM recipes needed. End-of-day count of leftovers gives actual variance.
+                  {isSw
+                    ? 'Vyakula vinatolewa kutoka Stoo kwenda Jikoni. Gharama inahesabiwa mara moja. Hakuna mapishi ya BOM yanayohitajika. Hesabu ya mwisho wa siku inaonyesha tofauti halisi.'
+                    : 'Food items are issued from Store to Kitchen. Cost is counted immediately upon issue. No BOM recipes needed. End-of-day count of leftovers gives actual variance.'}
                 </p>
               </div>
 
@@ -278,44 +292,48 @@ export function Manager({ sess, out, setSess, setV }) {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                   <b style={{ color: S.kitchenTrackingMode === 'recipe' ? '#0E5A47' : 'var(--tx)', fontSize: 13.5 }}>
-                    Option B: Recipe-Based (Precision Costing)
+                    {isSw ? 'Chaguo B: Kulingana na Mapishi (Gharama Kamili)' : 'Option B: Recipe-Based (Precision Costing)'}
                   </b>
                   {S.kitchenTrackingMode === 'recipe' && (
                     <span style={{ fontSize: 11, background: '#0E5A47', color: '#fff', padding: '2px 8px', borderRadius: 99, fontWeight: 700 }}>
-                      ACTIVE
+                      {isSw ? 'INATUMIKA' : 'ACTIVE'}
                     </span>
                   )}
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: 'var(--mut)', lineHeight: 1.4 }}>
-                  Each dish lists raw ingredients (e.g. Chicken Plate = 250g chicken + 1 tbsp oil). Each POS sale deducts ingredients from kitchen stock automatically.
+                  {isSw
+                    ? 'Kila chakula kinaorodhesha viungo (mf. Sahani ya Kuku = 250g kuku + kijiko 1 mafuta). Kila mauzo ya POS yanapunguza viungo kutoka stoo ya jikoni moja kwa moja.'
+                    : 'Each dish lists raw ingredients (e.g. Chicken Plate = 250g chicken + 1 tbsp oil). Each POS sale deducts ingredients from kitchen stock automatically.'}
                 </p>
               </div>
             </div>
           </div>
 
-          <p className="sec" style={{ marginTop: 20 }}>Live Shift Summary</p>
+          <p className="sec" style={{ marginTop: 20 }}>{isSw ? 'Muhtasari wa Zamu ya Sasa' : 'Live Shift Summary'}</p>
           <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
             <div>
-              <small>Cash in Drawer</small>
+              <small>{isSw ? 'Fedha Taslimu Kwenye Droo' : 'Cash in Drawer'}</small>
               <b style={{ fontSize: 18, display: 'block' }}>
                 {fmt(paid.filter(o => o.pm === 'cash').reduce((a, o) => a + tot(o), 0))}
               </b>
             </div>
             <div>
-              <small>Mobile Money (M-Pesa / Tigo)</small>
+              <small>{isSw ? 'Pesa ya Simu (M-Pesa / Tigo)' : 'Mobile Money (M-Pesa / Tigo)'}</small>
               <b style={{ fontSize: 18, display: 'block' }}>
                 {fmt(paid.filter(o => o.pm === 'momo').reduce((a, o) => a + tot(o), 0))}
               </b>
             </div>
             <div>
-              <small>Pending PO Deliveries</small>
+              <small>{isSw ? 'Oda za Ununuzi (PO) Zinazosubiri' : 'Pending PO Deliveries'}</small>
               <b style={{ fontSize: 18, display: 'block' }}>
                 {(S.purchaseOrders || []).filter(p => p.status === 'pending_approval').length} POs
               </b>
             </div>
             <div>
-              <small>Staff on Floor</small>
-              <b style={{ fontSize: 18, display: 'block' }}>2 Waiters · 1 Chef · 1 Cashier</b>
+              <small>{isSw ? 'Wafanyakazi Kazini' : 'Staff on Floor'}</small>
+              <b style={{ fontSize: 18, display: 'block' }}>
+                {isSw ? 'Wahudumu 2 · Mpishi 1 · Keshia 1' : '2 Waiters · 1 Chef · 1 Cashier'}
+              </b>
             </div>
           </div>
         </>
@@ -328,7 +346,9 @@ export function Manager({ sess, out, setSess, setV }) {
             <div className="row" style={{ flexWrap: 'wrap', gap: 10 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <b style={{ fontSize: 18 }}>🏛️ VAT & Sales Tax Settings (TRA / EFD Compliance)</b>
+                  <b style={{ fontSize: 18 }}>
+                    🏛️ {isSw ? 'Mipangilio ya VAT na Kodi ya Mauzo (TRA / EFD)' : 'VAT & Sales Tax Settings (TRA / EFD Compliance)'}
+                  </b>
                   <span
                     style={{
                       fontSize: 11,
@@ -339,11 +359,15 @@ export function Manager({ sess, out, setSess, setV }) {
                       color: '#fff'
                     }}
                   >
-                    {vatForm.enabled ? `ACTIVE · ${vatForm.rate || 18}% ${vatForm.inclusive !== false ? 'INCLUSIVE' : 'ADDED'}` : 'DISABLED · 0% (OFF)'}
+                    {vatForm.enabled
+                      ? `${isSw ? 'INATUMIKA' : 'ACTIVE'} · ${vatForm.rate || 18}% ${vatForm.inclusive !== false ? (isSw ? 'IMEJUMUISHWA' : 'INCLUSIVE') : (isSw ? 'IMEONGEZWA' : 'ADDED')}`
+                      : (isSw ? 'IMEZIMWA · 0% (ZIMA)' : 'DISABLED · 0% (OFF)')}
                   </span>
                 </div>
                 <p style={{ fontSize: 13, color: '#cfe8df', margin: 0, maxWidth: 650 }}>
-                  Manage Value Added Tax (VAT) collection across the entire venue. When turned ON, VAT is calculated and displayed on customer QR carts, cashier POS checkouts, and official thermal/digital receipts. When turned OFF, VAT is completely removed and will not show or be included on any cart or receipt.
+                  {isSw
+                    ? 'Simamia ukusanyaji wa Kodi ya Ongezeko la Thamani (VAT) katika tawi zima. Ikiruhusiwa (ON), VAT inahesabiwa na kuonyeshwa kwenye vikapu vya QR, POS ya keshia, na risiti. Ikizimwa (OFF), VAT inaondolewa kabisa.'
+                    : 'Manage Value Added Tax (VAT) collection across the entire venue. When turned ON, VAT is calculated and displayed on customer QR carts, cashier POS checkouts, and official thermal/digital receipts. When turned OFF, VAT is completely removed and will not show or be included on any cart or receipt.'}
                 </p>
               </div>
 
@@ -354,7 +378,7 @@ export function Manager({ sess, out, setSess, setV }) {
                   style={{ background: vatForm.enabled ? '#FF3B30' : '#34C759', color: '#fff', border: 0, fontWeight: 700 }}
                   onClick={() => setVatForm(prev => ({ ...prev, enabled: !prev.enabled }))}
                 >
-                  {vatForm.enabled ? '✕ Turn VAT OFF' : '✓ Turn VAT ON'}
+                  {vatForm.enabled ? (isSw ? '✕ Zima VAT' : '✕ Turn VAT OFF') : (isSw ? '✓ Washa VAT' : '✓ Turn VAT ON')}
                 </button>
                 <button
                   type="button"
@@ -362,7 +386,7 @@ export function Manager({ sess, out, setSess, setV }) {
                   style={{ background: 'var(--o)', color: '#fff', border: 0 }}
                   onClick={handleSaveVat}
                 >
-                  💾 Save Settings
+                  💾 {isSw ? 'Hifadhi Mipangilio' : 'Save Settings'}
                 </button>
               </div>
             </div>
@@ -383,7 +407,11 @@ export function Manager({ sess, out, setSess, setV }) {
               }}
             >
               <span>✓</span>
-              <b>VAT & Tax Settings saved successfully and broadcasted across all POS terminals, QR carts, and receipts!</b>
+              <b>
+                {isSw
+                  ? 'Mipangilio ya VAT na Kodi imehifadhiwa na kusambazwa kwenye POS zote, vikapu vya QR, na risiti!'
+                  : 'VAT & Tax Settings saved successfully and broadcasted across all POS terminals, QR carts, and receipts!'}
+              </b>
             </div>
           )}
 
@@ -403,12 +431,15 @@ export function Manager({ sess, out, setSess, setV }) {
                   <span style={{ fontSize: 24 }}>{vatForm.enabled ? '🟢' : '⚪'}</span>
                   <div>
                     <b style={{ fontSize: 16, color: vatForm.enabled ? '#0E5A47' : 'var(--tx)' }}>
-                      VAT Tax Collection Status: {vatForm.enabled ? 'ENABLED & ENFORCED' : 'DISABLED / TURNED OFF'}
+                      {isSw ? 'Hali ya Ukusanyaji wa Kodi ya VAT:' : 'VAT Tax Collection Status:'}{' '}
+                      {vatForm.enabled
+                        ? (isSw ? 'IMEWASHWA NA INATUMIKA' : 'ENABLED & ENFORCED')
+                        : (isSw ? 'IMEZIMWA' : 'DISABLED / TURNED OFF')}
                     </b>
                     <div style={{ fontSize: 13, color: 'var(--mut)', marginTop: 2 }}>
                       {vatForm.enabled
-                        ? 'VAT is actively calculated, displayed on cart cards, and broken down on customer receipts.'
-                        : 'VAT is completely disabled. No tax is added or deducted. Carts and receipts do not show any VAT line.'}
+                        ? (isSw ? 'VAT inahesabiwa kikamilifu, kuonyeshwa kwenye vikapu na kuchanganuliwa kwenye risiti za wateja.' : 'VAT is actively calculated, displayed on cart cards, and broken down on customer receipts.')
+                        : (isSw ? 'VAT imezimwa kabisa. Hakuna kodi inayoongezwa au kukatwa kwenye vikapu na risiti.' : 'VAT is completely disabled. No tax is added or deducted. Carts and receipts do not show any VAT line.')}
                     </div>
                   </div>
                 </div>
@@ -427,7 +458,7 @@ export function Manager({ sess, out, setSess, setV }) {
                   }}
                   onClick={() => setVatForm(prev => ({ ...prev, enabled: true }))}
                 >
-                  ✓ Enable VAT
+                  {isSw ? '✓ Washa VAT' : '✓ Enable VAT'}
                 </button>
                 <button
                   type="button"
@@ -441,7 +472,7 @@ export function Manager({ sess, out, setSess, setV }) {
                   }}
                   onClick={() => setVatForm(prev => ({ ...prev, enabled: false }))}
                 >
-                  ✕ Disable VAT
+                  {isSw ? '✕ Zima VAT' : '✕ Disable VAT'}
                 </button>
               </div>
             </div>
@@ -451,11 +482,13 @@ export function Manager({ sess, out, setSess, setV }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14, marginBottom: 14 }}>
             {/* Left: Tax Parameters */}
             <div className="card">
-              <b style={{ fontSize: 15, display: 'block', marginBottom: 10 }}>⚙️ Tax Rate & Calculation Parameters</b>
+              <b style={{ fontSize: 15, display: 'block', marginBottom: 10 }}>
+                ⚙️ {isSw ? 'Kiwango cha Kodi na Vigezo vya Mahesabu' : 'Tax Rate & Calculation Parameters'}
+              </b>
 
               <div style={{ marginBottom: 12 }}>
                 <label style={{ fontSize: 13, color: 'var(--mut)', display: 'block', marginBottom: 4 }}>
-                  VAT Rate Percentage (%)
+                  {isSw ? 'Asilimia ya Kiwango cha VAT (%)' : 'VAT Rate Percentage (%)'}
                 </label>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <input
@@ -471,12 +504,14 @@ export function Manager({ sess, out, setSess, setV }) {
                   />
                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--mut)' }}>%</span>
                 </div>
-                <small style={{ color: 'var(--mut)' }}>Default standard rate in Tanzania Mainland is 18%.</small>
+                <small style={{ color: 'var(--mut)' }}>
+                  {isSw ? 'Kiwango cha kawaida Tanzania Bara ni 18%.' : 'Default standard rate in Tanzania Mainland is 18%.'}
+                </small>
               </div>
 
               <div style={{ marginBottom: 12 }}>
                 <label style={{ fontSize: 13, color: 'var(--mut)', display: 'block', marginBottom: 4 }}>
-                  Calculation & Display Mode
+                  {isSw ? 'Mfumo wa Mahesabu na Onyesho' : 'Calculation & Display Mode'}
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <button
@@ -491,7 +526,7 @@ export function Manager({ sess, out, setSess, setV }) {
                     onClick={() => setVatForm(prev => ({ ...prev, inclusive: true }))}
                     disabled={!vatForm.enabled}
                   >
-                    Tax Inclusive (Default)
+                    {isSw ? 'Kodi Imejumuishwa (Chaguo-msingi)' : 'Tax Inclusive (Default)'}
                   </button>
                   <button
                     type="button"
@@ -505,19 +540,19 @@ export function Manager({ sess, out, setSess, setV }) {
                     onClick={() => setVatForm(prev => ({ ...prev, inclusive: false }))}
                     disabled={!vatForm.enabled}
                   >
-                    Tax Added (Add-on)
+                    {isSw ? 'Kodi Inaongezwa Juu' : 'Tax Added (Add-on)'}
                   </button>
                 </div>
                 <small style={{ color: 'var(--mut)', display: 'block', marginTop: 4 }}>
                   {vatForm.inclusive !== false
-                    ? 'Menu prices already include tax. The receipt and cart show the extracted VAT amount.'
-                    : 'Tax is calculated and added on top of menu prices at checkout.'}
+                    ? (isSw ? 'Bei za menyu tayari zinajumuisha kodi. Risiti na kikapu vinaonyesha kiasi cha VAT kilichomo.' : 'Menu prices already include tax. The receipt and cart show the extracted VAT amount.')
+                    : (isSw ? 'Kodi inahesabiwa na kuongezwa juu ya bei za menyu wakati wa malipo.' : 'Tax is calculated and added on top of menu prices at checkout.')}
                 </small>
               </div>
 
               <div style={{ marginBottom: 12 }}>
                 <label style={{ fontSize: 13, color: 'var(--mut)', display: 'block', marginBottom: 4 }}>
-                  Tax Label on Carts & Receipts
+                  {isSw ? 'Lebo ya Kodi Kwenye Vikapu na Risiti' : 'Tax Label on Carts & Receipts'}
                 </label>
                 <input
                   type="text"
@@ -533,7 +568,7 @@ export function Manager({ sess, out, setSess, setV }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <div>
                   <label style={{ fontSize: 12, color: 'var(--mut)', display: 'block', marginBottom: 4 }}>
-                    Tax Identification (TIN)
+                    {isSw ? 'Namba ya Mlipakodi (TIN)' : 'Tax Identification (TIN)'}
                   </label>
                   <input
                     type="text"
@@ -545,7 +580,7 @@ export function Manager({ sess, out, setSess, setV }) {
                 </div>
                 <div>
                   <label style={{ fontSize: 12, color: 'var(--mut)', display: 'block', marginBottom: 4 }}>
-                    VAT Reg Number (VRN)
+                    {isSw ? 'Namba ya Usajili wa VAT (VRN)' : 'VAT Reg Number (VRN)'}
                   </label>
                   <input
                     type="text"
@@ -560,9 +595,13 @@ export function Manager({ sess, out, setSess, setV }) {
 
             {/* Right: Regulatory Presets & Summary */}
             <div className="card">
-              <b style={{ fontSize: 15, display: 'block', marginBottom: 8 }}>⚡ Quick Regulatory & Tax Presets</b>
+              <b style={{ fontSize: 15, display: 'block', marginBottom: 8 }}>
+                ⚡ {isSw ? 'Mipangilio ya Haraka ya Mamlaka za Kodi' : 'Quick Regulatory & Tax Presets'}
+              </b>
               <p style={{ fontSize: 13, color: 'var(--mut)', margin: '0 0 12px' }}>
-                Quickly apply statutory tax templates according to your tax jurisdiction or exempt status:
+                {isSw
+                  ? 'Tumia kwa haraka viwango vya kodi kulingana na mamlaka yako ya kodi:'
+                  : 'Quickly apply statutory tax templates according to your tax jurisdiction or exempt status:'}
               </p>
 
               <div style={{ display: 'grid', gap: 8 }}>
@@ -581,10 +620,12 @@ export function Manager({ sess, out, setSess, setV }) {
                   }))}
                 >
                   <div>
-                    <b>🇹🇿 Tanzania TRA Mainland (18% Inclusive)</b>
-                    <small style={{ display: 'block', color: 'var(--mut)' }}>Standard statutory VAT for restaurants in Dar es Salaam</small>
+                    <b>🇹🇿 {isSw ? 'Tanzania TRA Bara (18% Imejumuishwa)' : 'Tanzania TRA Mainland (18% Inclusive)'}</b>
+                    <small style={{ display: 'block', color: 'var(--mut)' }}>
+                      {isSw ? 'Kiwango rasmi cha VAT kwa migahawa Dar es Salaam' : 'Standard statutory VAT for restaurants in Dar es Salaam'}
+                    </small>
                   </div>
-                  <span style={{ fontSize: 13, color: '#0E5A47', fontWeight: 700 }}>Apply</span>
+                  <span style={{ fontSize: 13, color: '#0E5A47', fontWeight: 700 }}>{isSw ? 'Tumia' : 'Apply'}</span>
                 </button>
 
                 <button
@@ -602,10 +643,12 @@ export function Manager({ sess, out, setSess, setV }) {
                   }))}
                 >
                   <div>
-                    <b>🏝️ Zanzibar Revenue Board / ZRB (15% Inclusive)</b>
-                    <small style={{ display: 'block', color: 'var(--mut)' }}>Applies to Zanzibar and Pemba hospitality outlets</small>
+                    <b>🏝️ {isSw ? 'Bodi ya Mapato Zanzibar / ZRB (15% Imejumuishwa)' : 'Zanzibar Revenue Board / ZRB (15% Inclusive)'}</b>
+                    <small style={{ display: 'block', color: 'var(--mut)' }}>
+                      {isSw ? 'Inatumika kwa matawi ya Zanzibar na Pemba' : 'Applies to Zanzibar and Pemba hospitality outlets'}
+                    </small>
                   </div>
-                  <span style={{ fontSize: 13, color: '#0E5A47', fontWeight: 700 }}>Apply</span>
+                  <span style={{ fontSize: 13, color: '#0E5A47', fontWeight: 700 }}>{isSw ? 'Tumia' : 'Apply'}</span>
                 </button>
 
                 <button
@@ -623,10 +666,12 @@ export function Manager({ sess, out, setSess, setV }) {
                   }))}
                 >
                   <div>
-                    <b>🇰🇪 Kenya Revenue Authority / KRA (16% Inclusive)</b>
-                    <small style={{ display: 'block', color: 'var(--mut)' }}>Standard East Africa regional rate</small>
+                    <b>🇰🇪 {isSw ? 'Mamlaka ya Mapato Kenya / KRA (16% Imejumuishwa)' : 'Kenya Revenue Authority / KRA (16% Inclusive)'}</b>
+                    <small style={{ display: 'block', color: 'var(--mut)' }}>
+                      {isSw ? 'Kiwango cha kawaida cha ukanda wa Afrika Mashariki' : 'Standard East Africa regional rate'}
+                    </small>
                   </div>
-                  <span style={{ fontSize: 13, color: '#0E5A47', fontWeight: 700 }}>Apply</span>
+                  <span style={{ fontSize: 13, color: '#0E5A47', fontWeight: 700 }}>{isSw ? 'Tumia' : 'Apply'}</span>
                 </button>
 
                 <button
@@ -641,10 +686,12 @@ export function Manager({ sess, out, setSess, setV }) {
                   }))}
                 >
                   <div>
-                    <b style={{ color: '#FF3B30' }}>🚫 Turn VAT OFF / Tax Exempt (0%)</b>
-                    <small style={{ display: 'block', color: 'var(--mut)' }}>Completely hides and excludes tax from all carts and receipts</small>
+                    <b style={{ color: '#FF3B30' }}>🚫 {isSw ? 'Zima VAT / Msamaha wa Kodi (0%)' : 'Turn VAT OFF / Tax Exempt (0%)'}</b>
+                    <small style={{ display: 'block', color: 'var(--mut)' }}>
+                      {isSw ? 'Inaficha na kuondoa kodi kabisa kwenye vikapu na risiti zote' : 'Completely hides and excludes tax from all carts and receipts'}
+                    </small>
                   </div>
-                  <span style={{ fontSize: 13, color: '#FF3B30', fontWeight: 700 }}>Disable</span>
+                  <span style={{ fontSize: 13, color: '#FF3B30', fontWeight: 700 }}>{isSw ? 'Zima' : 'Disable'}</span>
                 </button>
               </div>
 
@@ -655,7 +702,7 @@ export function Manager({ sess, out, setSess, setV }) {
                   style={{ background: 'var(--o)', flex: 1 }}
                   onClick={handleSaveVat}
                 >
-                  💾 Save & Enforce VAT Settings
+                  💾 {isSw ? 'Hifadhi na Tekeleza Mipangilio ya VAT' : 'Save & Enforce VAT Settings'}
                 </button>
               </div>
             </div>
@@ -665,9 +712,11 @@ export function Manager({ sess, out, setSess, setV }) {
           <div className="card" style={{ marginBottom: 14 }}>
             <div className="row" style={{ marginBottom: 10 }}>
               <div>
-                <b style={{ fontSize: 16 }}>📱 Live Sale & Receipt Touchpoint Simulator</b>
+                <b style={{ fontSize: 16 }}>📱 {isSw ? 'Kiigaji cha Moja kwa Moja cha Mauzo na Risiti' : 'Live Sale & Receipt Touchpoint Simulator'}</b>
                 <p style={{ fontSize: 13, color: 'var(--mut)', margin: '2px 0 0' }}>
-                  Real-time preview of how a sample order (Roasted Chicken TSh 18,000 + Kilimanjaro Water TSh 2,000 = TSh 20,000) looks on customer/cashier cart cards and thermal customer receipts under the current setting:
+                  {isSw
+                    ? 'Mwonekano wa moja kwa moja wa jinsi oda ya mfano (Roasted Chicken TSh 18,000 + Kilimanjaro Water TSh 2,000 = TSh 20,000) inavyoonekana kwenye kikapu na risiti:'
+                    : 'Real-time preview of how a sample order (Roasted Chicken TSh 18,000 + Kilimanjaro Water TSh 2,000 = TSh 20,000) looks on customer/cashier cart cards and thermal customer receipts under the current setting:'}
                 </p>
               </div>
               <span
@@ -681,7 +730,9 @@ export function Manager({ sess, out, setSess, setV }) {
                   border: '1px solid var(--line)'
                 }}
               >
-                {vatForm.enabled ? '● SIMULATING VAT ON' : '○ SIMULATING VAT OFF'}
+                {vatForm.enabled
+                  ? (isSw ? '● INAIGA VAT IMEWASHWA' : '● SIMULATING VAT ON')
+                  : (isSw ? '○ INAIGA VAT IMEZIMWA' : '○ SIMULATING VAT OFF')}
               </span>
             </div>
 
@@ -699,9 +750,9 @@ export function Manager({ sess, out, setSess, setV }) {
                   {/* Cart Simulator */}
                   <div style={{ background: 'var(--bg)', borderRadius: 14, padding: 14, border: '1px solid var(--line)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <b style={{ fontSize: 14 }}>🛒 Cart View (POS & Customer QR)</b>
+                      <b style={{ fontSize: 14 }}>🛒 {isSw ? 'Mwonekano wa Kikapu (POS & QR)' : 'Cart View (POS & Customer QR)'}</b>
                       <small style={{ color: vatForm.enabled ? '#0E5A47' : 'var(--mut)', fontWeight: 600 }}>
-                        {vatForm.enabled ? '✓ Tax Row Visible' : '✕ Tax Row Omitted'}
+                        {vatForm.enabled ? (isSw ? '✓ Mstari wa Kodi Unaonekana' : '✓ Tax Row Visible') : (isSw ? '✕ Mstari wa Kodi Umefichwa' : '✕ Tax Row Omitted')}
                       </small>
                     </div>
 
@@ -718,23 +769,26 @@ export function Manager({ sess, out, setSess, setV }) {
 
                     <div style={{ background: 'var(--card)', borderRadius: 10, padding: 10 }}>
                       <div className="row" style={{ fontSize: 13, color: 'var(--mut)', padding: '2px 0' }}>
-                        <span>Sub Total</span>
+                        <span>{isSw ? 'Jumla Ndogo' : 'Sub Total'}</span>
                         <b>{fmt(sampleSubTotal)}</b>
                       </div>
 
                       {vatForm.enabled ? (
                         <div className="row" style={{ fontSize: 13, color: 'var(--tx)', padding: '2px 0', background: '#E8F5E9', borderRadius: 6, margin: '2px -4px', paddingLeft: 4, paddingRight: 4 }}>
-                          <span>{vatForm.taxLabel || `VAT (${simRate}%)`} {simIsInclusive ? '(Included)' : '(Added)'}</span>
+                          <span>
+                            {vatForm.taxLabel || `VAT (${simRate}%)`}{' '}
+                            {simIsInclusive ? (isSw ? '(Imejumuishwa)' : '(Included)') : (isSw ? '(Imeongezwa)' : '(Added)')}
+                          </span>
                           <b style={{ color: '#1B5E20' }}>{fmt(simTaxAmt)}</b>
                         </div>
                       ) : (
                         <div style={{ fontSize: 12, color: 'var(--mut)', fontStyle: 'italic', padding: '4px 0' }}>
-                          [VAT is turned off: Tax row is hidden on sale carts]
+                          {isSw ? '[VAT imezimwa: Mstari wa kodi umefichwa kwenye kikapu]' : '[VAT is turned off: Tax row is hidden on sale carts]'}
                         </div>
                       )}
 
                       <div className="row" style={{ borderTop: '1px dashed var(--line)', paddingTop: 6, marginTop: 4 }}>
-                        <b style={{ fontSize: 15 }}>Payable Total</b>
+                        <b style={{ fontSize: 15 }}>{isSw ? 'Jumla ya Kulipa' : 'Payable Total'}</b>
                         <b style={{ fontSize: 18, color: '#15803D' }}>{fmt(simTotal)}</b>
                       </div>
                     </div>
@@ -764,7 +818,7 @@ export function Manager({ sess, out, setSess, setV }) {
 
                     <div style={{ borderTop: '1px solid #1C1C1E', margin: '6px 0', paddingTop: 4 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 14 }}>
-                        <span>TOTAL:</span>
+                        <span>{isSw ? 'JUMLA:' : 'TOTAL:'}</span>
                         <span>{fmtNum(simTotal)}.00 TSh</span>
                       </div>
                     </div>
@@ -773,27 +827,29 @@ export function Manager({ sess, out, setSess, setV }) {
                       {vatForm.enabled ? (
                         <>
                           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#0E5A47', fontWeight: 700 }}>
-                            <span>NET TAXABLE (EXCL. VAT):</span>
+                            <span>{isSw ? 'KIASI BILA VAT:' : 'NET TAXABLE (EXCL. VAT):'}</span>
                             <span>{fmtNum(simNetTaxable)}.00 TSh</span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#0E5A47', fontWeight: 700 }}>
-                            <span>{(vatForm.taxLabel || `VAT ${simRate}%`).toUpperCase()} (INCLUSIVE):</span>
+                            <span>{(vatForm.taxLabel || `VAT ${simRate}%`).toUpperCase()} ({isSw ? 'IMEJUMUISHWA' : 'INCLUSIVE'}):</span>
                             <span>{fmtNum(simTaxAmt)}.00 TSh</span>
                           </div>
                         </>
                       ) : (
                         <div style={{ color: '#888', fontStyle: 'italic', textAlign: 'center', padding: '2px 0' }}>
-                          [VAT is OFF: Tax breakdown lines excluded from receipt]
+                          {isSw ? '[VAT IMEZIMWA: Mistari ya kodi imeondolewa kwenye risiti]' : '[VAT is OFF: Tax breakdown lines excluded from receipt]'}
                         </div>
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
-                        <span>PAYMENT METHOD:</span>
-                        <span>CASH</span>
+                        <span>{isSw ? 'NJIA YA MALIPO:' : 'PAYMENT METHOD:'}</span>
+                        <span>{isSw ? 'TASLIMU' : 'CASH'}</span>
                       </div>
                     </div>
 
                     <div style={{ textAlign: 'center', fontSize: 11, marginTop: 8, color: '#666' }}>
-                      {vatForm.enabled ? '★ OFFICIAL EFD FISCAL RECEIPT ★' : '★ COMMERCIAL BILL / RECEIPT ★'}
+                      {vatForm.enabled
+                        ? (isSw ? '★ RISITI RASMI YA EFD ★' : '★ OFFICIAL EFD FISCAL RECEIPT ★')
+                        : (isSw ? '★ RISITI YA BIASHARA ★' : '★ COMMERCIAL BILL / RECEIPT ★')}
                     </div>
                   </div>
                 </div>
@@ -808,9 +864,11 @@ export function Manager({ sess, out, setSess, setV }) {
           <div className="card" style={{ marginBottom: 14, background: 'linear-gradient(135deg, #093B2F, #0E5A47)', color: '#fff' }}>
             <div className="row">
               <div>
-                <b style={{ fontSize: 17 }}>Site Financial Intelligence & P&L Analysis</b>
+                <b style={{ fontSize: 17 }}>{isSw ? 'Uchambuzi wa Fedha na Faida & Hasara (P&L) ya Tawi' : 'Site Financial Intelligence & P&L Analysis'}</b>
                 <p style={{ fontSize: 13, color: '#cfe8df', margin: '4px 0 0' }}>
-                  Audited financial metrics: Gross Sales, Net Revenue, Cost of Goods Sold (COGS), Operating Expenses (OPEX), and Real-Time Cashflow.
+                  {isSw
+                    ? 'Vipimo vilivyokaguliwa: Mauzo Ghafi, Mapato Halisi, Gharama ya Bidhaa (COGS), Gharama za Uendeshaji (OPEX), na Mtiririko wa Fedha.'
+                    : 'Audited financial metrics: Gross Sales, Net Revenue, Cost of Goods Sold (COGS), Operating Expenses (OPEX), and Real-Time Cashflow.'}
                 </p>
               </div>
               <button
@@ -818,19 +876,19 @@ export function Manager({ sess, out, setSess, setV }) {
                 style={{ background: 'var(--o)', color: '#fff', border: 0 }}
                 onClick={() => setV ? setV('owner') : null}
               >
-                📊 Open Executive HQ
+                📊 {isSw ? 'Fungua Makao Makuu (HQ)' : 'Open Executive HQ'}
               </button>
             </div>
           </div>
 
           <div className="tiles" style={{ marginBottom: 14 }}>
             {[
-              [isVatOn ? 'Gross Sales (incl. VAT)' : 'Gross Sales', fmt(grossSales), `${paid.length} settled tickets`, '#15803D'],
-              [isVatOn ? 'Net Revenue (excl. VAT)' : 'Net Revenue (VAT Off)', fmt(netSales), isVatOn ? `${currentVat.rate || 18}% VAT: ${fmt(taxCollected)}` : 'Tax Exempt (0% VAT)', '#0E5A47'],
-              ['Site Estimated COGS', fmt(Math.round(grossSales * 0.32)), 'Food + Drinks wholesale', '#C2410C'],
-              ['Gross Margin', grossSales > 0 ? `${Math.round(((netSales - grossSales * 0.32) / netSales) * 100)}%` : '0%', `Profit: ${fmt(netSales - Math.round(grossSales * 0.32))}`, '#007AFF'],
-              ['Commission Liability', fmt(commissionAccrued), `${commissionCostPct}% of gross sales`, '#5856D6'],
-              ['Operating Expenses (OPEX)', fmt((S.expenses || []).reduce((a, e) => a + Number(e.amount || 0), 0)), 'Utilities, gas, permits', '#FF9500']
+              [isVatOn ? (isSw ? 'Mauzo Ghafi (pamoja na VAT)' : 'Gross Sales (incl. VAT)') : (isSw ? 'Mauzo Ghafi' : 'Gross Sales'), fmt(grossSales), isSw ? `Tiketi ${paid.length} zilizolipwa` : `${paid.length} settled tickets`, '#15803D'],
+              [isVatOn ? (isSw ? 'Mapato Halisi (bila VAT)' : 'Net Revenue (excl. VAT)') : (isSw ? 'Mapato Halisi (VAT Imezimwa)' : 'Net Revenue (VAT Off)'), fmt(netSales), isVatOn ? `${currentVat.rate || 18}% VAT: ${fmt(taxCollected)}` : (isSw ? 'Msamaha wa Kodi (0% VAT)' : 'Tax Exempt (0% VAT)'), '#0E5A47'],
+              [isSw ? 'Makadirio ya COGS ya Tawi' : 'Site Estimated COGS', fmt(Math.round(grossSales * 0.32)), isSw ? 'Jumla ya Chakula + Vinywaji' : 'Food + Drinks wholesale', '#C2410C'],
+              [isSw ? 'Asilimia ya Faida Ghafi' : 'Gross Margin', grossSales > 0 ? `${Math.round(((netSales - grossSales * 0.32) / netSales) * 100)}%` : '0%', `${isSw ? 'Faida:' : 'Profit:'} ${fmt(netSales - Math.round(grossSales * 0.32))}`, '#007AFF'],
+              [isSw ? 'Deni la Kamisheni' : 'Commission Liability', fmt(commissionAccrued), isSw ? `${commissionCostPct}% ya mauzo ghafi` : `${commissionCostPct}% of gross sales`, '#5856D6'],
+              [isSw ? 'Gharama za Uendeshaji (OPEX)' : 'Operating Expenses (OPEX)', fmt((S.expenses || []).reduce((a, e) => a + Number(e.amount || 0), 0)), isSw ? 'Umeme, gesi, leseni' : 'Utilities, gas, permits', '#FF9500']
             ].map(([lbl, val, sub, c]) => (
               <div key={lbl} className="card">
                 <small>{lbl}</small>
@@ -843,53 +901,53 @@ export function Manager({ sess, out, setSess, setV }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(320px, 1fr)', gap: 14 }}>
             {/* P&L Statement */}
             <div className="card">
-              <b style={{ fontSize: 16 }}>Site Income Statement (P&L)</b>
+              <b style={{ fontSize: 16 }}>{isSw ? 'Taarifa ya Mapato ya Tawi (P&L)' : 'Site Income Statement (P&L)'}</b>
               <table className="fin-statement">
                 <tbody>
                   <tr className="fin-sec-header">
-                    <td><b>1. REVENUE</b></td>
-                    <td style={{ textAlign: 'right' }}><b>Amount (TSh)</b></td>
+                    <td><b>{isSw ? '1. MAPATO' : '1. REVENUE'}</b></td>
+                    <td style={{ textAlign: 'right' }}><b>{isSw ? 'Kiasi (TSh)' : 'Amount (TSh)'}</b></td>
                   </tr>
                   <tr className="fin-subrow">
-                    <td>Gross Sales (Food + Beverages)</td>
+                    <td>{isSw ? 'Mauzo Ghafi (Chakula + Vinywaji)' : 'Gross Sales (Food + Beverages)'}</td>
                     <td style={{ textAlign: 'right' }}>{fmt(grossSales)}</td>
                   </tr>
                   {isVatOn ? (
                     <tr className="fin-subrow" style={{ color: '#C2410C' }}>
-                      <td>Less: {currentVat.taxLabel || `VAT (${currentVat.rate || 18}%)`}</td>
+                      <td>{isSw ? 'Toa:' : 'Less:'} {currentVat.taxLabel || `VAT (${currentVat.rate || 18}%)`}</td>
                       <td style={{ textAlign: 'right', color: '#C2410C' }}>-{fmt(taxCollected)}</td>
                     </tr>
                   ) : (
                     <tr className="fin-subrow" style={{ color: 'var(--mut)' }}>
-                      <td>VAT Collection (Disabled / Off)</td>
-                      <td style={{ textAlign: 'right' }}>TSh 0 (Exempt)</td>
+                      <td>{isSw ? 'Ukusanyaji wa VAT (Imezimwa)' : 'VAT Collection (Disabled / Off)'}</td>
+                      <td style={{ textAlign: 'right' }}>{isSw ? 'TSh 0 (Msamaha)' : 'TSh 0 (Exempt)'}</td>
                     </tr>
                   )}
                   <tr className="fin-total-row">
-                    <td><b>NET REVENUE</b></td>
+                    <td><b>{isSw ? 'MAPATO HALISI' : 'NET REVENUE'}</b></td>
                     <td style={{ textAlign: 'right' }}><b>{fmt(netSales)}</b></td>
                   </tr>
 
                   <tr className="fin-sec-header">
-                    <td><b>2. COST OF GOODS SOLD</b></td>
+                    <td><b>{isSw ? '2. GHARAMA ZA BIDHAA ZILIZOUZWA' : '2. COST OF GOODS SOLD'}</b></td>
                     <td style={{ textAlign: 'right' }}></td>
                   </tr>
                   <tr className="fin-subrow">
-                    <td>Theoretical Kitchen Recipe Usage</td>
+                    <td>{isSw ? 'Matumizi ya Mapishi ya Jikoni' : 'Theoretical Kitchen Recipe Usage'}</td>
                     <td style={{ textAlign: 'right' }}>{fmt(Math.round(grossSales * 0.28))}</td>
                   </tr>
                   <tr className="fin-subrow">
-                    <td>Waste & Spoilage Incident Log</td>
+                    <td>{isSw ? 'Kumbukumbu ya Upotevu na Uharibifu' : 'Waste & Spoilage Incident Log'}</td>
                     <td style={{ textAlign: 'right' }}>{fmt((S.wasteLog || []).reduce((a, w) => a + (w.cost || 0), 0))}</td>
                   </tr>
                   <tr className="fin-total-row">
-                    <td><b>TOTAL COGS</b></td>
+                    <td><b>{isSw ? 'JUMLA YA COGS' : 'TOTAL COGS'}</b></td>
                     <td style={{ textAlign: 'right' }}><b>{fmt(Math.round(grossSales * 0.28) + (S.wasteLog || []).reduce((a, w) => a + (w.cost || 0), 0))}</b></td>
                   </tr>
 
                   <tr style={{ background: '#E0EDFE' }}>
                     <td style={{ padding: '10px 12px', fontWeight: 800, color: '#007AFF' }}>
-                      <b>GROSS OPERATING PROFIT</b>
+                      <b>{isSw ? 'FAIDA GHAFI YA UENDESHAJI' : 'GROSS OPERATING PROFIT'}</b>
                     </td>
                     <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, color: '#007AFF' }}>
                       <b>{fmt(netSales - (Math.round(grossSales * 0.28) + (S.wasteLog || []).reduce((a, w) => a + (w.cost || 0), 0)))}</b>
@@ -901,13 +959,13 @@ export function Manager({ sess, out, setSess, setV }) {
 
             {/* Operating Expenses & Outflows */}
             <div className="card">
-              <b style={{ fontSize: 16 }}>Operational Expenses & Disbursements</b>
+              <b style={{ fontSize: 16 }}>{isSw ? 'Gharama za Uendeshaji na Malipo' : 'Operational Expenses & Disbursements'}</b>
               <table style={{ marginTop: 8 }}>
                 <thead>
                   <tr>
-                    <th>Expense Name</th>
-                    <th>Category</th>
-                    <th style={{ textAlign: 'right' }}>Amount</th>
+                    <th>{isSw ? 'Jina la Gharama' : 'Expense Name'}</th>
+                    <th>{isSw ? 'Aina' : 'Category'}</th>
+                    <th style={{ textAlign: 'right' }}>{isSw ? 'Kiasi' : 'Amount'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -915,7 +973,7 @@ export function Manager({ sess, out, setSess, setV }) {
                     <tr key={exp.id}>
                       <td>
                         <b>{exp.name}</b>
-                        {exp.ref && <div style={{ fontSize: 11, color: 'var(--mut)' }}>Ref: {exp.ref}</div>}
+                        {exp.ref && <div style={{ fontSize: 11, color: 'var(--mut)' }}>{isSw ? 'Kumb:' : 'Ref:'} {exp.ref}</div>}
                       </td>
                       <td><small>{exp.category}</small></td>
                       <td style={{ textAlign: 'right', fontWeight: 700, color: '#FF3B30' }}>
@@ -933,19 +991,21 @@ export function Manager({ sess, out, setSess, setV }) {
       {tab === 'commission' && (
         <div style={{ maxWidth: 840 }}>
           <div className="card" style={{ marginBottom: 14 }}>
-            <b>Waiter Commission Policy Configuration (SRS WCM-01 to WCM-14)</b>
+            <b>{isSw ? 'Mipangilio ya Sera ya Kamisheni ya Wahudumu (SRS WCM-01 hadi WCM-14)' : 'Waiter Commission Policy Configuration (SRS WCM-01 to WCM-14)'}</b>
             <p style={{ fontSize: 13, color: 'var(--mut)', margin: '4px 0 0' }}>
-              Changes take effect on future transactions and store a snapshot on every ledger entry. Previous earnings are never silently altered.
+              {isSw
+                ? 'Mabadiliko yanatumika kwa miamala ijayo na kuhifadhi kumbukumbu kwenye kila ingizo la daftari. Mapato ya awali hayabadilishwi.'
+                : 'Changes take effect on future transactions and store a snapshot on every ledger entry. Previous earnings are never silently altered.'}
             </p>
           </div>
 
           <div className="card">
-            <small style={{ fontWeight: 600 }}>Calculation Method:</small>
+            <small style={{ fontWeight: 600 }}>{isSw ? 'Njia ya Mahesabu:' : 'Calculation Method:'}</small>
             <div className="seg">
               {[
-                ['percent', 'Percentage (%) of Sales'],
-                ['fixed', 'Fixed Amount (TSh per Order)'],
-                ['tiered', 'Tiered Target Matrix']
+                ['percent', isSw ? 'Asilimia (%) ya Mauzo' : 'Percentage (%) of Sales'],
+                ['fixed', isSw ? 'Kiasi Maalum (TSh kwa Oda)' : 'Fixed Amount (TSh per Order)'],
+                ['tiered', isSw ? 'Mfumo wa Ngazi za Malengo' : 'Tiered Target Matrix']
               ].map(([k, l]) => (
                 <button
                   key={k}
@@ -958,7 +1018,11 @@ export function Manager({ sess, out, setSess, setV }) {
             </div>
 
             <div className="fld" style={{ margin: '12px 0' }}>
-              <span>{fx ? 'Fixed Fee per Eligible Order (TSh)' : 'Default Commission Rate (%)'}</span>
+              <span>
+                {fx
+                  ? (isSw ? 'Ada Maalum kwa Kila Oda (TSh)' : 'Fixed Fee per Eligible Order (TSh)')
+                  : (isSw ? 'Kiwango cha Kamisheni (%)' : 'Default Commission Rate (%)')}
+              </span>
               <input
                 className="inp"
                 inputMode="decimal"
@@ -967,11 +1031,13 @@ export function Manager({ sess, out, setSess, setV }) {
               />
             </div>
 
-            <small style={{ fontWeight: 600, display: 'block', marginTop: 12 }}>Commission Calculation Basis:</small>
+            <small style={{ fontWeight: 600, display: 'block', marginTop: 12 }}>
+              {isSw ? 'Msingi wa Mahesabu ya Kamisheni:' : 'Commission Calculation Basis:'}
+            </small>
             <div className="seg">
               {[
-                ['gross', 'Gross Order Total (Standard)'],
-                ['net', 'Net Revenue (Excluding 18% VAT Tax)']
+                ['gross', isSw ? 'Jumla Ghafi ya Oda (Kawaida)' : 'Gross Order Total (Standard)'],
+                ['net', isSw ? 'Mapato Halisi (Bila Kodi ya VAT 18%)' : 'Net Revenue (Excluding 18% VAT Tax)']
               ].map(([k, l]) => (
                 <button
                   key={k}
@@ -983,11 +1049,13 @@ export function Manager({ sess, out, setSess, setV }) {
               ))}
             </div>
 
-            <small style={{ fontWeight: 600, display: 'block', marginTop: 12 }}>Qualification Earning Trigger:</small>
+            <small style={{ fontWeight: 600, display: 'block', marginTop: 12 }}>
+              {isSw ? 'Kichocheo cha Kupata Kamisheni:' : 'Qualification Earning Trigger:'}
+            </small>
             <div className="seg">
               {[
-                ['payment', 'On Verified Customer Payment (Cash / Momo)'],
-                ['served', 'Immediately When Order is Served at Table']
+                ['payment', isSw ? 'Malipo Yanapothibitishwa (Taslimu / Momo)' : 'On Verified Customer Payment (Cash / Momo)'],
+                ['served', isSw ? 'Mara Oda Inapohudumiwa Mezani' : 'Immediately When Order is Served at Table']
               ].map(([k, l]) => (
                 <button
                   key={k}
@@ -1000,11 +1068,11 @@ export function Manager({ sess, out, setSess, setV }) {
             </div>
 
             <div style={{ margin: '14px 0', borderTop: '1px solid var(--line)', paddingTop: 12 }}>
-              <b>Waiter-Specific Override Rates (SRS WCM-04):</b>
+              <b>{isSw ? 'Viwango Maalum vya Mhudumu Mmoja Mmoja (SRS WCM-04):' : 'Waiter-Specific Override Rates (SRS WCM-04):'}</b>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
                 {(S.waiters || []).map(w => (
                   <div key={w.id} className="fld">
-                    <span>{w.name} Rate (%)</span>
+                    <span>{w.name} ({isSw ? 'Kiwango %' : 'Rate %'})</span>
                     <input
                       className="inp"
                       style={{ width: 80 }}
@@ -1021,23 +1089,31 @@ export function Manager({ sess, out, setSess, setV }) {
 
             <div className="card" style={{ background: '#E5F2EE', margin: '14px 0' }}>
               <div className="row">
-                <span>Estimated Commission on Today’s {paid.length} Paid Orders:</span>
+                <span>
+                  {isSw
+                    ? `Makadirio ya Kamisheni kwenye Oda ${paid.length} Zilizolipwa Leo:`
+                    : `Estimated Commission on Today’s ${paid.length} Paid Orders:`}
+                </span>
                 <b style={{ color: 'var(--g)', fontSize: 18 }}>{fmt(previewEst)}</b>
               </div>
-              <small style={{ color: 'var(--g)' }}>Live simulation preview before committing changes (WCM-07)</small>
+              <small style={{ color: 'var(--g)' }}>
+                {isSw ? 'Mwonekano wa moja kwa moja kabla ya kuhifadhi mabadiliko (WCM-07)' : 'Live simulation preview before committing changes (WCM-07)'}
+              </small>
             </div>
 
             <button className="btn o" onClick={handleSavePolicy}>
-              {policySaved ? '✓ Policy Saved & Activated!' : 'Save & Activate Commission Policy'}
+              {policySaved
+                ? (isSw ? '✓ Sera Imehifadhiwa na Kuwashwa!' : '✓ Policy Saved & Activated!')
+                : (isSw ? 'Hifadhi na Washa Sera ya Kamisheni' : 'Save & Activate Commission Policy')}
             </button>
           </div>
 
-          <p className="sec" style={{ marginTop: 24 }}>Commission Payout Liabilities (SRS WCM-09)</p>
+          <p className="sec" style={{ marginTop: 24 }}>{isSw ? 'Madeni ya Malipo ya Kamisheni (SRS WCM-09)' : 'Commission Payout Liabilities (SRS WCM-09)'}</p>
           <div className="tiles">
             {[
-              ['Pending Manager Approval', (S.ledger || []).filter(l => l.st === 'pending').reduce((a, l) => a + l.amt, 0), '#FF9500'],
-              ['Approved for Payout', (S.ledger || []).filter(l => l.st === 'approved').reduce((a, l) => a + l.amt, 0), '#007AFF'],
-              ['Paid Out to Staff', (S.ledger || []).filter(l => l.st === 'paid').reduce((a, l) => a + l.amt, 0), '#15803D']
+              [isSw ? 'Inasubiri Idhini ya Meneja' : 'Pending Manager Approval', (S.ledger || []).filter(l => l.st === 'pending').reduce((a, l) => a + l.amt, 0), '#FF9500'],
+              [isSw ? 'Imeidhinishwa Kulipwa' : 'Approved for Payout', (S.ledger || []).filter(l => l.st === 'approved').reduce((a, l) => a + l.amt, 0), '#007AFF'],
+              [isSw ? 'Imelipwa kwa Wafanyakazi' : 'Paid Out to Staff', (S.ledger || []).filter(l => l.st === 'paid').reduce((a, l) => a + l.amt, 0), '#15803D']
             ].map(([lbl, val, c]) => (
               <div key={lbl} className="card">
                 <small>{lbl}</small>
@@ -1048,10 +1124,10 @@ export function Manager({ sess, out, setSess, setV }) {
 
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <button className="btn sm" onClick={() => A.approve('all', sess?.name || 'Manager')}>
-              ✓ Approve All Pending Commissions
+              {isSw ? '✓ Idhinisha Kamisheni Zote Zinazosubiri' : '✓ Approve All Pending Commissions'}
             </button>
             <button className="btn ghost sm" onClick={() => A.payout('all', sess?.name || 'Manager')}>
-              💵 Record Batch Commission Payout
+              {isSw ? '💵 Rekodi Malipo ya Jumla ya Kamisheni' : '💵 Record Batch Commission Payout'}
             </button>
           </div>
         </div>
@@ -1060,15 +1136,17 @@ export function Manager({ sess, out, setSess, setV }) {
       {tab === 'reconciliation' && (
         <div>
           <div className="card" style={{ marginBottom: 14 }}>
-            <b>Manager Waiter Reconciliation Report (SRS Section 5.7, REC-01 to REC-10)</b>
+            <b>{isSw ? 'Ripoti ya Uhakiki wa Wahudumu (SRS Sehemu 5.7, REC-01 hadi REC-10)' : 'Manager Waiter Reconciliation Report (SRS Section 5.7, REC-01 to REC-10)'}</b>
             <p style={{ fontSize: 13, color: 'var(--mut)', margin: '4px 0 0' }}>
-              Cross-check waiter sales, direct cash collections, order sources (waiter personal links vs dine-in), and commission liabilities.
+              {isSw
+                ? 'Hakiki mauzo ya wahudumu, makusanyo ya taslimu ya moja kwa moja, vyanzo vya oda (viungo binafsi dhidi ya mezani), na kamisheni.'
+                : 'Cross-check waiter sales, direct cash collections, order sources (waiter personal links vs dine-in), and commission liabilities.'}
             </p>
           </div>
 
           <div className="tags" style={{ marginBottom: 14 }}>
             <button className={selWaiterId === 'all' ? 'on' : ''} onClick={() => setSelWaiterId('all')}>
-              Side-by-Side Comparison (All Staff)
+              {isSw ? 'Ulinganisho wa Pamoja (Wafanyakazi Wote)' : 'Side-by-Side Comparison (All Staff)'}
             </button>
             {(S.waiters || []).map(w => (
               <button key={w.id} className={selWaiterId === w.id ? 'on' : ''} onClick={() => setSelWaiterId(w.id)}>
@@ -1081,15 +1159,15 @@ export function Manager({ sess, out, setSess, setV }) {
             <table>
               <thead>
                 <tr>
-                  <th>Waiter</th>
-                  <th>Total Orders</th>
-                  <th>Link Orders (CPT)</th>
-                  <th>Total Sales</th>
-                  <th>Direct Cash</th>
-                  <th>Cashier Momo</th>
-                  <th>Commission Earned</th>
-                  <th>Approved</th>
-                  <th>Status</th>
+                  <th>{isSw ? 'Mhudumu' : 'Waiter'}</th>
+                  <th>{isSw ? 'Jumla ya Oda' : 'Total Orders'}</th>
+                  <th>{isSw ? 'Oda za Kiungo (CPT)' : 'Link Orders (CPT)'}</th>
+                  <th>{isSw ? 'Jumla ya Mauzo' : 'Total Sales'}</th>
+                  <th>{isSw ? 'Taslimu ya Moja kwa Moja' : 'Direct Cash'}</th>
+                  <th>{isSw ? 'Momo ya Keshia' : 'Cashier Momo'}</th>
+                  <th>{isSw ? 'Kamisheni Iliyopatikana' : 'Commission Earned'}</th>
+                  <th>{isSw ? 'Iliyoidhinishwa' : 'Approved'}</th>
+                  <th>{isSw ? 'Hali' : 'Status'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1110,7 +1188,7 @@ export function Manager({ sess, out, setSess, setV }) {
                       <tr key={w.id}>
                         <td>
                           <b>{w.name}</b>
-                          <div style={{ fontSize: 12, color: 'var(--mut)' }}>Token: {w.tok}</div>
+                          <div style={{ fontSize: 12, color: 'var(--mut)' }}>{isSw ? 'Tokeni:' : 'Token:'} {w.tok}</div>
                         </td>
                         <td>{os.length}</td>
                         <td><b style={{ color: 'var(--o)' }}>{linkOrders.length}</b></td>
@@ -1125,7 +1203,7 @@ export function Manager({ sess, out, setSess, setV }) {
                             style={{ fontSize: 11, padding: '4px 8px' }}
                             onClick={() => setSelWaiterId(w.id)}
                           >
-                            Drill Down ▸
+                            {isSw ? 'Chambua ▸' : 'Drill Down ▸'}
                           </button>
                         </td>
                       </tr>
@@ -1138,7 +1216,9 @@ export function Manager({ sess, out, setSess, setV }) {
           {/* Drill-down order details */}
           <div style={{ marginTop: 20 }}>
             <p className="sec">
-              {selWaiterId === 'all' ? 'All Orders Audit Trail' : `Drill Down Orders for ${wn(selWaiterId)}`}
+              {selWaiterId === 'all'
+                ? (isSw ? 'Kumbukumbu ya Ukaguzi wa Oda Zote' : 'All Orders Audit Trail')
+                : (isSw ? `Chambua Oda za ${wn(selWaiterId)}` : `Drill Down Orders for ${wn(selWaiterId)}`)}
             </p>
 
             <div className="cg">
@@ -1147,16 +1227,16 @@ export function Manager({ sess, out, setSess, setV }) {
                 .map(o => (
                   <div key={o.id} className="card">
                     <div className="row">
-                      <b>{o.no} · Table {o.tb}</b>
+                      <b>{o.no} · {isSw ? 'Meza' : 'Table'} {o.tb}</b>
                       <Pill st={o.st} />
                     </div>
                     <small style={{ display: 'block', margin: '4px 0', color: 'var(--mut)' }}>
-                      Waiter: <b>{wn(o.wid)}</b> · Source: {o.src} · Payment: {o.pm || 'unpaid'}
+                      {isSw ? 'Mhudumu:' : 'Waiter:'} <b>{wn(o.wid)}</b> · {isSw ? 'Chanzo:' : 'Source:'} {o.src} · {isSw ? 'Malipo:' : 'Payment:'} {o.pm || (isSw ? 'haijalipwa' : 'unpaid')}
                     </small>
                     <div className="row" style={{ marginTop: 8 }}>
                       <b>{fmt(tot(o))}</b>
                       <button className="btn sm ghost" onClick={() => setDrillOrder(o)}>
-                        Inspect Receipt & Audit
+                        {isSw ? 'Kagua Risiti & Ukaguzi' : 'Inspect Receipt & Audit'}
                       </button>
                     </div>
                   </div>
@@ -1168,7 +1248,7 @@ export function Manager({ sess, out, setSess, setV }) {
 
       {tab === 'checklists' && (
         <div style={{ maxWidth: 740 }}>
-          <p className="sec">Digital Checklists & Quality Standards (SRS QSC-01)</p>
+          <p className="sec">{isSw ? 'Orodha za Ukaguzi wa Kidijitali & Viwango vya Ubora (SRS QSC-01)' : 'Digital Checklists & Quality Standards (SRS QSC-01)'}</p>
           {(S.checklists || []).map(chk => (
             <div key={chk.id} className="card" style={{ marginBottom: 14 }}>
               <div className="row">
@@ -1180,7 +1260,9 @@ export function Manager({ sess, out, setSess, setV }) {
                     color: chk.completed ? '#15803D' : '#C2410C'
                   }}
                 >
-                  {chk.completed ? `Signed: ${chk.signedBy || 'Verified'}` : 'Pending Items'}
+                  {chk.completed
+                    ? `${isSw ? 'Imetiwa Saini:' : 'Signed:'} ${chk.signedBy || (isSw ? 'Imethibitishwa' : 'Verified')}`
+                    : (isSw ? 'Vipengele Vinavyosubiri' : 'Pending Items')}
                 </span>
               </div>
 
@@ -1216,15 +1298,15 @@ export function Manager({ sess, out, setSess, setV }) {
 
       {tab === 'audit' && (
         <div>
-          <p className="sec">Tamper-Evident System Audit Trail (SRS ADM-04, NFR-12)</p>
+          <p className="sec">{isSw ? 'Kumbukumbu ya Ukaguzi wa Mfumo Isiyobadilika (SRS ADM-04, NFR-12)' : 'Tamper-Evident System Audit Trail (SRS ADM-04, NFR-12)'}</p>
           <div className="card" style={{ overflowX: 'auto' }}>
             <table>
               <thead>
                 <tr>
-                  <th>Timestamp</th>
-                  <th>Actor / User</th>
-                  <th>Action Event</th>
-                  <th>Audit Details</th>
+                  <th>{isSw ? 'Muda' : 'Timestamp'}</th>
+                  <th>{isSw ? 'Mtumiaji' : 'Actor / User'}</th>
+                  <th>{isSw ? 'Tukio / Kitendo' : 'Action Event'}</th>
+                  <th>{isSw ? 'Maelezo ya Ukaguzi' : 'Audit Details'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1258,26 +1340,26 @@ export function Manager({ sess, out, setSess, setV }) {
       )}
 
       {drillOrder && (
-        <Sheet title={`Order Audit Details ${drillOrder.no}`} onClose={() => setDrillOrder(null)}>
+        <Sheet title={`${isSw ? 'Maelezo ya Ukaguzi wa Oda' : 'Order Audit Details'} ${drillOrder.no}`} onClose={() => setDrillOrder(null)}>
           <div className="card">
             <div className="row" style={{ marginBottom: 8 }}>
-              <b>{drillOrder.no} · Table {drillOrder.tb}</b>
+              <b>{drillOrder.no} · {isSw ? 'Meza' : 'Table'} {drillOrder.tb}</b>
               <Pill st={drillOrder.st} />
             </div>
 
             <div style={{ fontSize: 13, color: 'var(--mut)', marginBottom: 10 }}>
-              Created: {new Date(drillOrder.t).toLocaleString()} · Waiter: {wn(drillOrder.wid)}
+              {isSw ? 'Iliundwa:' : 'Created:'} {new Date(drillOrder.t).toLocaleString()} · {isSw ? 'Mhudumu:' : 'Waiter:'} {wn(drillOrder.wid)}
             </div>
 
             <div style={{ borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', padding: '8px 0', margin: '8px 0' }}>
               {(drillOrder.it || []).map((l, i) => (
                 <div key={i} className="row" style={{ padding: '3px 0' }}>
-                  <span>{l.q}x Item #{l.id}</span>
+                  <span>{l.q}x {isSw ? 'Bidhaa #' : 'Item #'}{l.id}</span>
                 </div>
               ))}
             </div>
 
-            <p><b>Lifecycle Audit History:</b></p>
+            <p><b>{isSw ? 'Historia ya Hatua za Oda:' : 'Lifecycle Audit History:'}</b></p>
             <ul style={{ paddingLeft: 18, fontSize: 13, color: 'var(--mut)' }}>
               {(drillOrder.log || []).map((entry, idx) => (
                 <li key={idx} style={{ margin: '4px 0' }}>{entry}</li>
@@ -1285,7 +1367,7 @@ export function Manager({ sess, out, setSess, setV }) {
             </ul>
 
             <button className="btn ghost sm" style={{ width: '100%', marginTop: 10 }} onClick={() => setDrillOrder(null)}>
-              Close
+              {isSw ? 'Funga' : 'Close'}
             </button>
           </div>
         </Sheet>
@@ -1295,13 +1377,13 @@ export function Manager({ sess, out, setSess, setV }) {
         cur={tab}
         set={setTab}
         tabs={[
-          ['overview', 'Overview', '📊', 0],
-          ['vat', 'VAT & Tax', '🏛️', 0],
-          ['menu', 'Menu Catalog', '🍽️', unreviewedItems.length],
-          ['commission', 'Commission', '💰', 0],
-          ['reconciliation', 'Waiters (REC)', '👥', 0],
-          ['checklists', 'Checklists', '📋', 0],
-          ['audit', 'Audit Trail', '🛡️', 0]
+          ['overview', isSw ? 'Muhtasari' : 'Overview', '📊', 0],
+          ['vat', isSw ? 'VAT & Kodi' : 'VAT & Tax', '🏛️', 0],
+          ['menu', isSw ? 'Menyu' : 'Menu Catalog', '🍽️', unreviewedItems.length],
+          ['commission', isSw ? 'Kamisheni' : 'Commission', '💰', 0],
+          ['reconciliation', isSw ? 'Wahudumu' : 'Waiters (REC)', '👥', 0],
+          ['checklists', isSw ? 'Ukaguzi' : 'Checklists', '📋', 0],
+          ['audit', isSw ? 'Kumbukumbu' : 'Audit Trail', '🛡️', 0]
         ]}
       />
 

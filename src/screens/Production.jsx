@@ -4,7 +4,8 @@ import { Ctx } from '../store';
 import { TopBar, Sheet } from '../components/ui';
 
 export function Production({ sess, out, setSess, setV }) {
-  const { S, A } = useContext(Ctx);
+  const { S, A, lang } = useContext(Ctx);
+  const isSw = (lang || 'sw') === 'sw';
   const [tab, setTab] = useState('batches');
   const [statusFilter, setStatusFilter] = useState('all');
   const [newBatchModal, setNewBatchModal] = useState(false);
@@ -86,31 +87,31 @@ export function Production({ sess, out, setSess, setV }) {
               className={`kds-nav-tab ${tab === 'batches' ? 'active' : ''}`}
               onClick={() => setTab('batches')}
             >
-              🔥 Work Orders ({inProdBatches.length + plannedBatches.length})
+              🔥 {isSw ? 'Oda za Uzalishaji' : 'Work Orders'} ({inProdBatches.length + plannedBatches.length})
             </button>
             <button
               className={`kds-nav-tab ${tab === 'boms' ? 'active' : ''}`}
               onClick={() => setTab('boms')}
             >
-              📜 Recipes & BOMs ({boms.length})
+              📜 {isSw ? 'Mapishi & BOM' : 'Recipes & BOMs'} ({boms.length})
             </button>
             <button
               className={`kds-nav-tab ${tab === 'finished' ? 'active' : ''}`}
               onClick={() => setTab('finished')}
             >
-              🍱 Finished Sales Goods ({finishedGoods.length})
+              🍱 {isSw ? 'Bidhaa Tayari' : 'Finished Sales Goods'} ({finishedGoods.length})
             </button>
             <button
               className={`kds-nav-tab ${tab === 'requisitions' ? 'active' : ''}`}
               onClick={() => setTab('requisitions')}
             >
-              🚚 Site Requisitions ({siteRequisitions.filter(r => r.status === 'pending').length})
+              🚚 {isSw ? 'Maombi ya Matawi' : 'Site Requisitions'} ({siteRequisitions.filter(r => r.status === 'pending').length})
             </button>
             <button
               className={`kds-nav-tab ${tab === 'traceability' ? 'active' : ''}`}
               onClick={() => setTab('traceability')}
             >
-              🛡️ Traceability Chain
+              🛡️ {isSw ? 'Ufuatiliaji Ubora' : 'Traceability Chain'}
             </button>
           </div>
 
@@ -120,9 +121,9 @@ export function Production({ sess, out, setSess, setV }) {
               style={{ background: '#FF6B2C', padding: '7px 14px', borderRadius: 8, fontWeight: 700 }}
               onClick={() => setNewBatchModal(true)}
             >
-              + Schedule Batch
+              {isSw ? '+ Panga Awamu' : '+ Schedule Batch'}
             </button>
-            <div className="kds-avatar-badge" title="Central Kitchen Manager">
+            <div className="kds-avatar-badge" title={isSw ? 'Meneja wa Jiko Kuu' : 'Central Kitchen Manager'}>
               JM
             </div>
           </div>
@@ -135,12 +136,12 @@ export function Production({ sess, out, setSess, setV }) {
           {/* Quick Filter Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--mut)' }}>Stage Filter:</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--mut)' }}>{isSw ? 'Chuja Hatua:' : 'Stage Filter:'}</span>
               {[
-                ['all', `All (${productionOrders.length})`],
-                ['planned', `Planned Schedule (${plannedBatches.length})`],
-                ['in_production', `In Production (${inProdBatches.length}) 🔥`],
-                ['completed', `Completed & Packaged (${completedBatches.length}) ✓`]
+                ['all', `${isSw ? 'Zote' : 'All'} (${productionOrders.length})`],
+                ['planned', `${isSw ? 'Zilizopangwa' : 'Planned Schedule'} (${plannedBatches.length})`],
+                ['in_production', `${isSw ? 'Zinapikwa' : 'In Production'} (${inProdBatches.length}) 🔥`],
+                ['completed', `${isSw ? 'Zimekamilika' : 'Completed & Packaged'} (${completedBatches.length}) ✓`]
               ].map(([stKey, label]) => (
                 <button
                   key={stKey}
@@ -154,7 +155,7 @@ export function Production({ sess, out, setSess, setV }) {
             </div>
 
             <div style={{ fontSize: 12, color: 'var(--mut)', fontWeight: 600 }}>
-              Central Facility: Masaki Flagship Hub · Cold Room Temp: 2.6°C
+              {isSw ? 'Kituo Kikuu: Masaki Hub · Joto la Chumba Baridi: 2.6°C' : 'Central Facility: Masaki Flagship Hub · Cold Room Temp: 2.6°C'}
             </div>
           </div>
 
@@ -165,13 +166,13 @@ export function Production({ sess, out, setSess, setV }) {
               const isInProd = wo.status === 'in_production';
 
               let headerBg = '#3182CE'; // planned blue
-              let headerTitle = 'PLANNED SCHEDULE';
+              let headerTitle = isSw ? 'RATIBA ILIYOPANGWA' : 'PLANNED SCHEDULE';
               if (isInProd) {
                 headerBg = '#ED8936'; // in production orange
-                headerTitle = 'IN PRODUCTION 🔥';
+                headerTitle = isSw ? 'INAZALISHWA 🔥' : 'IN PRODUCTION 🔥';
               } else if (isCompleted) {
                 headerBg = '#16A34A'; // completed green
-                headerTitle = 'COMPLETED & PACKAGED ✓';
+                headerTitle = isSw ? 'IMEKAMILIKA & IMEFUNGWA ✓' : 'COMPLETED & PACKAGED ✓';
               }
 
               return (
@@ -185,7 +186,7 @@ export function Production({ sess, out, setSess, setV }) {
                       </span>
                     </div>
                     <div style={{ fontSize: 12, opacity: 0.9, marginTop: 2 }}>
-                      Lead Operator: <b>{wo.operator}</b> · WO #{wo.id}
+                      {isSw ? 'Msimamizi:' : 'Lead Operator:'} <b>{wo.operator}</b> · WO #{wo.id}
                     </div>
                   </div>
 
@@ -197,13 +198,13 @@ export function Production({ sess, out, setSess, setV }) {
 
                     <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: 10, fontSize: 13, display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <div className="row">
-                        <span style={{ color: 'var(--mut)' }}>Target Yield:</span>
+                        <span style={{ color: 'var(--mut)' }}>{isSw ? 'Kiwango Lengwa:' : 'Target Yield:'}</span>
                         <b>{wo.plannedYield} {wo.uom}</b>
                       </div>
 
                       {isCompleted && (
                         <div className="row">
-                          <span style={{ color: 'var(--mut)' }}>Actual Output:</span>
+                          <span style={{ color: 'var(--mut)' }}>{isSw ? 'Matokeo Halisi:' : 'Actual Output:'}</span>
                           <b style={{ color: wo.yieldVariancePct < 0 ? '#DC2626' : '#16A34A' }}>
                             {wo.actualYield} {wo.uom} ({wo.yieldVariancePct >= 0 ? '+' : ''}{wo.yieldVariancePct}%)
                           </b>
@@ -211,24 +212,24 @@ export function Production({ sess, out, setSess, setV }) {
                       )}
 
                       <div className="row">
-                        <span style={{ color: 'var(--mut)' }}>Total Batch Cost:</span>
+                        <span style={{ color: 'var(--mut)' }}>{isSw ? 'Gharama ya Awamu:' : 'Total Batch Cost:'}</span>
                         <b>{fmt(wo.totalBatchCost)} ({fmt(wo.unitCost)}/{wo.uom})</b>
                       </div>
 
                       <div className="row">
-                        <span style={{ color: 'var(--mut)' }}>Storage Temp:</span>
+                        <span style={{ color: 'var(--mut)' }}>{isSw ? 'Joto la Uhifadhi:' : 'Storage Temp:'}</span>
                         <span style={{ color: '#0E5A47', fontWeight: 700 }}>{wo.tempLog || '2.8°C'}</span>
                       </div>
 
                       <div className="row">
-                        <span style={{ color: 'var(--mut)' }}>Expiry Date:</span>
+                        <span style={{ color: 'var(--mut)' }}>{isSw ? 'Tarehe ya Mwisho:' : 'Expiry Date:'}</span>
                         <span>{wo.expiryDate}</span>
                       </div>
                     </div>
 
                     {wo.notes && (
                       <div style={{ fontSize: 12, color: 'var(--mut)', fontStyle: 'italic', paddingLeft: 4 }}>
-                        QA Note: {wo.notes}
+                        {isSw ? 'Maelezo ya Ubora:' : 'QA Note:'} {wo.notes}
                       </div>
                     )}
 
@@ -239,7 +240,7 @@ export function Production({ sess, out, setSess, setV }) {
                           className="kds-btn-start"
                           onClick={() => A.startProduction(wo.id, sess?.name || 'Central Kitchen Operator')}
                         >
-                          🔥 START PRODUCTION BATCH
+                          🔥 {isSw ? 'ANZA UZALISHAJI' : 'START PRODUCTION BATCH'}
                         </button>
                       )}
 
@@ -248,7 +249,7 @@ export function Production({ sess, out, setSess, setV }) {
                           className="kds-btn-done-all"
                           onClick={() => handleOpenCompleteModal(wo)}
                         >
-                          ✓ COMPLETE & QA SIGN-OFF
+                          ✓ {isSw ? 'KAMILISHA & THIBITISHA UBORA' : 'COMPLETE & QA SIGN-OFF'}
                         </button>
                       )}
 
@@ -257,7 +258,7 @@ export function Production({ sess, out, setSess, setV }) {
                           className="kds-btn-reopen"
                           onClick={() => setLabelModalWO(wo)}
                         >
-                          🏷️ PRINT BATCH LABEL & TRACE
+                          🏷️ {isSw ? 'CHAPISHA LEBO YA AWAMU' : 'PRINT BATCH LABEL & TRACE'}
                         </button>
                       )}
                     </div>
@@ -273,9 +274,11 @@ export function Production({ sess, out, setSess, setV }) {
       {tab === 'boms' && (
         <div>
           <div className="kds-card" style={{ padding: 14, marginBottom: 14 }}>
-            <b style={{ fontSize: 16 }}>Bill of Materials (BOM) & Industrial Cost Formulation</b>
+            <b style={{ fontSize: 16 }}>{isSw ? 'Orodha ya Viungo (BOM) & Gharama za Uzalishaji' : 'Bill of Materials (BOM) & Industrial Cost Formulation'}</b>
             <p style={{ fontSize: 13, color: 'var(--mut)', margin: '4px 0 0' }}>
-              Standard ingredient recipes, yield conversion factors, labor allocation, and overhead absorption for central kitchen production.
+              {isSw
+                ? 'Mapishi ya kawaida ya viungo, vipimo vya uzalishaji, gharama za wafanyakazi na uendeshaji kwa jiko kuu.'
+                : 'Standard ingredient recipes, yield conversion factors, labor allocation, and overhead absorption for central kitchen production.'}
             </p>
           </div>
 
@@ -294,16 +297,16 @@ export function Production({ sess, out, setSess, setV }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <b style={{ fontSize: 16 }}>{bom.name}</b>
                       <span style={{ fontSize: 11, background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
-                        Yield: {bom.targetYield} {bom.uom}
+                        {isSw ? 'Kiwango:' : 'Yield:'} {bom.targetYield} {bom.uom}
                       </span>
                     </div>
                     <div style={{ fontSize: 12, opacity: 0.9, marginTop: 2 }}>
-                      Output Item: <b>{bom.outputName}</b> · Prep: {bom.prepTimeMins}m
+                      {isSw ? 'Bidhaa:' : 'Output Item:'} <b>{bom.outputName}</b> · {isSw ? 'Maandalizi:' : 'Prep:'} {bom.prepTimeMins}m
                     </div>
                   </div>
 
                   <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                    <b style={{ fontSize: 13, color: '#1E293B' }}>Raw Ingredients Consumed:</b>
+                    <b style={{ fontSize: 13, color: '#1E293B' }}>{isSw ? 'Viungo Ghafi Vinavyotumika:' : 'Raw Ingredients Consumed:'}</b>
                     <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: 8 }}>
                       {bom.ingredients.map((ing, idx) => {
                         const stk = (S.stock || []).find(x => x.id === ing.stockId);
@@ -318,11 +321,11 @@ export function Production({ sess, out, setSess, setV }) {
                     </div>
 
                     <div style={{ background: '#F1F5F9', padding: 8, borderRadius: 8, fontSize: 12 }}>
-                      <div className="row"><span>Materials Cost:</span><span>{fmt(materialsCost)}</span></div>
-                      <div className="row"><span>Labor Cost:</span><span>{fmt(bom.laborCost)}</span></div>
-                      <div className="row"><span>Overhead:</span><span>{fmt(bom.overheadCost)}</span></div>
+                      <div className="row"><span>{isSw ? 'Gharama ya Viungo:' : 'Materials Cost:'}</span><span>{fmt(materialsCost)}</span></div>
+                      <div className="row"><span>{isSw ? 'Gharama ya Kazi:' : 'Labor Cost:'}</span><span>{fmt(bom.laborCost)}</span></div>
+                      <div className="row"><span>{isSw ? 'Gharama za Ziada:' : 'Overhead:'}</span><span>{fmt(bom.overheadCost)}</span></div>
                       <div className="row" style={{ borderTop: '1px solid #CBD5E1', paddingTop: 4, fontWeight: 800 }}>
-                        <span>Unit Cost:</span>
+                        <span>{isSw ? 'Gharama kwa Kipimo:' : 'Unit Cost:'}</span>
                         <b style={{ color: '#16A34A', fontSize: 13 }}>{fmt(costPerUnit)} / {bom.uom}</b>
                       </div>
                     </div>
@@ -336,7 +339,7 @@ export function Production({ sess, out, setSess, setV }) {
                         setNewBatchModal(true);
                       }}
                     >
-                      + Schedule Batch
+                      {isSw ? '+ Panga Awamu' : '+ Schedule Batch'}
                     </button>
                   </div>
                 </div>
@@ -350,9 +353,11 @@ export function Production({ sess, out, setSess, setV }) {
       {tab === 'finished' && (
         <div>
           <div className="kds-card" style={{ padding: 14, marginBottom: 14 }}>
-            <b style={{ fontSize: 16 }}>Finished & Prepared Goods Inventory Storage</b>
+            <b style={{ fontSize: 16 }}>{isSw ? 'Stoo ya Bidhaa Tayari & Zilizopikwa' : 'Finished & Prepared Goods Inventory Storage'}</b>
             <p style={{ fontSize: 13, color: 'var(--mut)', margin: '4px 0 0' }}>
-              Real-time stock of kitchen-manufactured finished and semi-finished food items stored in temperature-controlled chillers.
+              {isSw
+                ? 'Idadi halisi ya vyakula vilivyoandaliwa jikoni na kuhifadhiwa kwenye majokofu yenye udhibiti wa joto.'
+                : 'Real-time stock of kitchen-manufactured finished and semi-finished food items stored in temperature-controlled chillers.'}
             </p>
           </div>
 
@@ -360,15 +365,15 @@ export function Production({ sess, out, setSess, setV }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#F8FAFC', textAlign: 'left', borderBottom: '2px solid #E2E8F0' }}>
-                  <th style={{ padding: 10 }}>Finished Product</th>
-                  <th style={{ padding: 10 }}>Category</th>
-                  <th style={{ padding: 10 }}>On-Hand Stock</th>
-                  <th style={{ padding: 10 }}>PAR Target</th>
-                  <th style={{ padding: 10 }}>Batch Lot</th>
-                  <th style={{ padding: 10 }}>Unit Cost</th>
-                  <th style={{ padding: 10 }}>Expiry Date</th>
-                  <th style={{ padding: 10 }}>Location</th>
-                  <th style={{ padding: 10 }}>Status</th>
+                  <th style={{ padding: 10 }}>{isSw ? 'Bidhaa Tayari' : 'Finished Product'}</th>
+                  <th style={{ padding: 10 }}>{isSw ? 'Kundi' : 'Category'}</th>
+                  <th style={{ padding: 10 }}>{isSw ? 'Stoo Iliyopo' : 'On-Hand Stock'}</th>
+                  <th style={{ padding: 10 }}>{isSw ? 'Kiwango Lengwa (PAR)' : 'PAR Target'}</th>
+                  <th style={{ padding: 10 }}>{isSw ? 'Namba ya Awamu' : 'Batch Lot'}</th>
+                  <th style={{ padding: 10 }}>{isSw ? 'Gharama' : 'Unit Cost'}</th>
+                  <th style={{ padding: 10 }}>{isSw ? 'Tarehe ya Mwisho' : 'Expiry Date'}</th>
+                  <th style={{ padding: 10 }}>{isSw ? 'Mahali' : 'Location'}</th>
+                  <th style={{ padding: 10 }}>{isSw ? 'Hali' : 'Status'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -378,7 +383,7 @@ export function Production({ sess, out, setSess, setV }) {
                     <tr key={fg.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
                       <td style={{ padding: 10 }}>
                         <b>{fg.name}</b>
-                        {fg.menuId && <div style={{ fontSize: 11, color: 'var(--mut)' }}>Linked Sales Item: #{fg.menuId} {M[fg.menuId]?.n}</div>}
+                        {fg.menuId && <div style={{ fontSize: 11, color: 'var(--mut)' }}>{isSw ? 'Imeunganishwa na Menyu:' : 'Linked Sales Item:'} #{fg.menuId} {M[fg.menuId]?.n}</div>}
                       </td>
                       <td style={{ padding: 10 }}>{fg.category}</td>
                       <td style={{ padding: 10 }}><b style={{ fontSize: 14 }}>{fmtNum(fg.onHand)} {fg.uom}</b></td>
@@ -398,7 +403,7 @@ export function Production({ sess, out, setSess, setV }) {
                             borderRadius: 4
                           }}
                         >
-                          {isLow ? 'REORDER NEEDED' : 'IN STOCK ✓'}
+                          {isLow ? (isSw ? 'INAHITAJI KUAGIZWA' : 'REORDER NEEDED') : (isSw ? 'IPO STOO ✓' : 'IN STOCK ✓')}
                         </span>
                       </td>
                     </tr>
@@ -414,9 +419,11 @@ export function Production({ sess, out, setSess, setV }) {
       {tab === 'requisitions' && (
         <div>
           <div className="kds-card" style={{ padding: 14, marginBottom: 14 }}>
-            <b style={{ fontSize: 16 }}>Branch Outlets Internal Requisitions & Temperature-Monitored Dispatch</b>
+            <b style={{ fontSize: 16 }}>{isSw ? 'Maombi ya Matawi & Usafirishaji wa Jokofu' : 'Branch Outlets Internal Requisitions & Temperature-Monitored Dispatch'}</b>
             <p style={{ fontSize: 13, color: 'var(--mut)', margin: '4px 0 0' }}>
-              Transfer requests from satellite branches to Masaki central facility with refrigerated vehicle monitoring.
+              {isSw
+                ? 'Maombi ya uhamisho wa bidhaa kutoka matawi kwenda kituo kikuu cha Masaki kwa magari yenye majokofu.'
+                : 'Transfer requests from satellite branches to Masaki central facility with refrigerated vehicle monitoring.'}
             </p>
           </div>
 
@@ -431,35 +438,35 @@ export function Production({ sess, out, setSess, setV }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <b style={{ fontSize: 15 }}>{req.id} · {req.fromSiteName.split('·')[1] || req.fromSiteName}</b>
                       <span style={{ fontSize: 11, background: 'rgba(0,0,0,0.25)', padding: '2px 8px', borderRadius: 4, fontWeight: 800 }}>
-                        {req.status.toUpperCase()}
+                        {req.status === 'received' ? (isSw ? 'IMEPOKELEWA' : 'RECEIVED') : req.status === 'dispatched' ? (isSw ? 'IMETUMWA' : 'DISPATCHED') : (isSw ? 'INASUBIRI' : 'PENDING')}
                       </span>
                     </div>
                   </div>
 
                   <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
                     <div style={{ fontSize: 12, color: 'var(--mut)' }}>
-                      Requested by: {req.requestedBy}
+                      {isSw ? 'Imeombwa na:' : 'Requested by:'} {req.requestedBy}
                     </div>
 
                     <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: 8 }}>
                       {(req.items || []).map((it, idx) => (
                         <div key={idx} className="row" style={{ fontSize: 13, padding: '3px 0' }}>
                           <span>{it.qty} {it.uom} {it.name}</span>
-                          <span style={{ color: '#16A34A', fontWeight: 700 }}>Allocated ✓</span>
+                          <span style={{ color: '#16A34A', fontWeight: 700 }}>{isSw ? 'Imetengwa ✓' : 'Allocated ✓'}</span>
                         </div>
                       ))}
                     </div>
 
                     {isDispatched && (
                       <div style={{ fontSize: 12, color: '#334155', background: '#EFF6FF', padding: 8, borderRadius: 6 }}>
-                        🚚 Driver: <b>{req.driver}</b> · Van Temp: <b>{req.transportTemp}</b>
+                        🚚 {isSw ? 'Dereva:' : 'Driver:'} <b>{req.driver}</b> · {isSw ? 'Joto la Gari:' : 'Van Temp:'} <b>{req.transportTemp}</b>
                       </div>
                     )}
 
                     <div style={{ marginTop: 'auto', paddingTop: 6 }}>
                       {req.status === 'pending' && (
                         <button className="kds-btn-start" onClick={() => setDispatchModalReq(req)}>
-                          🚚 DISPATCH REFRIGERATED VAN
+                          🚚 {isSw ? 'TUMA GARI LA JOKOFU' : 'DISPATCH REFRIGERATED VAN'}
                         </button>
                       )}
 
@@ -468,7 +475,7 @@ export function Production({ sess, out, setSess, setV }) {
                           className="kds-btn-done-all"
                           onClick={() => A.receiveRequisition(req.id, sess?.name || 'Branch Receiver')}
                         >
-                          ✓ CONFIRM BRANCH RECEIPT
+                          ✓ {isSw ? 'THIBITISHA UPOKEAJI TAWINI' : 'CONFIRM BRANCH RECEIPT'}
                         </button>
                       )}
                     </div>
@@ -484,9 +491,11 @@ export function Production({ sess, out, setSess, setV }) {
       {tab === 'traceability' && (
         <div style={{ maxWidth: 800 }}>
           <div className="kds-card" style={{ padding: 14, marginBottom: 14 }}>
-            <b style={{ fontSize: 16 }}>Farm-to-Table Quality & Batch Traceability Explorer</b>
+            <b style={{ fontSize: 16 }}>{isSw ? 'Ufuatiliaji wa Ubora Kutoka Shambani Hadi Mezani' : 'Farm-to-Table Quality & Batch Traceability Explorer'}</b>
             <p style={{ fontSize: 13, color: 'var(--mut)', margin: '4px 0 0' }}>
-              Search any Customer Ticket # or Production Batch to audit source supplier lots, preparation temperature, and serving logs.
+              {isSw
+                ? 'Tafuta namba ya tiketi ya mteja au awamu ya uzalishaji kukagua msambazaji, joto la maandalizi na kumbukumbu za huduma.'
+                : 'Search any Customer Ticket # or Production Batch to audit source supplier lots, preparation temperature, and serving logs.'}
             </p>
           </div>
 
@@ -494,12 +503,12 @@ export function Production({ sess, out, setSess, setV }) {
             <input
               className="inp"
               style={{ margin: 0, flex: 1 }}
-              placeholder="Search Order # (e.g. #0001, #0009)..."
+              placeholder={isSw ? 'Tafuta Namba ya Oda (mf. #0001, #0009)...' : 'Search Order # (e.g. #0001, #0009)...'}
               value={traceQuery}
               onChange={e => setTraceQuery(e.target.value)}
             />
             <button className="btn sm o" style={{ width: 'auto', background: '#0E5A47' }}>
-              Trace Chain
+              {isSw ? 'Fuatilia Mlolongo' : 'Trace Chain'}
             </button>
           </div>
 
@@ -507,38 +516,38 @@ export function Production({ sess, out, setSess, setV }) {
             <div className="kds-card" style={{ padding: 18 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: 10 }}>
                 <div>
-                  <b style={{ fontSize: 18 }}>Order {searchedOrder.no} · {searchedOrder.tb}</b>
-                  <div style={{ fontSize: 12, color: 'var(--mut)' }}>Server: {searchedOrder.by} · Placed: {fmtTime(searchedOrder.t)}</div>
+                  <b style={{ fontSize: 18 }}>{isSw ? 'Oda' : 'Order'} {searchedOrder.no} · {searchedOrder.tb}</b>
+                  <div style={{ fontSize: 12, color: 'var(--mut)' }}>{isSw ? 'Mhudumu:' : 'Server:'} {searchedOrder.by} · {isSw ? 'Muda:' : 'Placed:'} {fmtTime(searchedOrder.t)}</div>
                 </div>
-                <span className="kds-guests-badge">👥 Guests {searchedOrder.guests}</span>
+                <span className="kds-guests-badge">👥 {isSw ? 'Wageni' : 'Guests'} {searchedOrder.guests}</span>
               </div>
 
               <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ borderLeft: '3px solid #16A34A', paddingLeft: 12 }}>
-                  <b style={{ fontSize: 13, color: '#16A34A' }}>Step 1: Raw Material Receiving</b>
+                  <b style={{ fontSize: 13, color: '#16A34A' }}>{isSw ? 'Hatua 1: Upokeaji wa Malighafi' : 'Step 1: Raw Material Receiving'}</b>
                   <div style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
-                    Supplied by <b>Serengeti Meats & Poultry</b> (Batch LOT-20261028-A) · Received temp: 2.1°C
+                    {isSw ? 'Imesambazwa na' : 'Supplied by'} <b>Serengeti Meats &amp; Poultry</b> ({isSw ? 'Awamu' : 'Batch'} LOT-20261028-A) · {isSw ? 'Joto la upokeaji:' : 'Received temp:'} 2.1°C
                   </div>
                 </div>
 
                 <div style={{ borderLeft: '3px solid #ED8936', paddingLeft: 12 }}>
-                  <b style={{ fontSize: 13, color: '#ED8936' }}>Step 2: Central Kitchen Production</b>
+                  <b style={{ fontSize: 13, color: '#ED8936' }}>{isSw ? 'Hatua 2: Uzalishaji wa Jiko Kuu' : 'Step 2: Central Kitchen Production'}</b>
                   <div style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
-                    Marinated & prepped under <b>WO-101 (BATCH-20261101-01)</b> · Lead: Chef Baraka · HACCP Cold Chain: 2.6°C
+                    {isSw ? 'Imeandaliwa chini ya' : 'Marinated & prepped under'} <b>WO-101 (BATCH-20261101-01)</b> · {isSw ? 'Kiongozi:' : 'Lead:'} Chef Baraka · HACCP: 2.6°C
                   </div>
                 </div>
 
                 <div style={{ borderLeft: '3px solid #3182CE', paddingLeft: 12 }}>
-                  <b style={{ fontSize: 13, color: '#3182CE' }}>Step 3: Station Cooking & Pass Expo</b>
+                  <b style={{ fontSize: 13, color: '#3182CE' }}>{isSw ? 'Hatua 3: Upikaji & Utoaji Mezani' : 'Step 3: Station Cooking & Pass Expo'}</b>
                   <div style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
-                    Fired on Charcoal Grill Station · Checked out by <b>Ammie</b> at POS
+                    {isSw ? 'Imepikwa kwenye Jiko la Mkaa · Imethibitishwa na' : 'Fired on Charcoal Grill Station · Checked out by'} <b>Ammie</b> {isSw ? 'kwenye POS' : 'at POS'}
                   </div>
                 </div>
               </div>
             </div>
           ) : (
             <div className="kds-card" style={{ padding: 24, textAlign: 'center', color: 'var(--mut)' }}>
-              No order found matching "{traceQuery}". Try searching #0001 or #0009.
+              {isSw ? `Hakuna oda iliyopatikana kwa "${traceQuery}". Jaribu kutafuta #0001 au #0009.` : `No order found matching "${traceQuery}". Try searching #0001 or #0009.`}
             </div>
           )}
         </div>
@@ -546,10 +555,10 @@ export function Production({ sess, out, setSess, setV }) {
 
       {/* New Batch Modal */}
       {newBatchModal && (
-        <Sheet t="Schedule Central Kitchen Batch" c={() => setNewBatchModal(false)}>
+        <Sheet t={isSw ? 'Panga Awamu ya Uzalishaji Jiko Kuu' : 'Schedule Central Kitchen Batch'} c={() => setNewBatchModal(false)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700 }}>Select Recipe BOM</label>
+              <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Chagua Kichocheo (BOM)' : 'Select Recipe BOM'}</label>
               <select
                 className="inp"
                 value={selBomId}
@@ -561,14 +570,14 @@ export function Production({ sess, out, setSess, setV }) {
               >
                 {boms.map(b => (
                   <option key={b.id} value={b.id}>
-                    {b.name} (Output: {b.outputName})
+                    {b.name} ({isSw ? 'Matokeo:' : 'Output:'} {b.outputName})
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700 }}>Target Planned Yield</label>
+              <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Kiwango Lengwa Kinachotarajiwa' : 'Target Planned Yield'}</label>
               <input
                 className="inp"
                 type="number"
@@ -578,7 +587,7 @@ export function Production({ sess, out, setSess, setV }) {
             </div>
 
             <button className="kds-btn-start" style={{ marginTop: 8 }} onClick={handleCreateBatch}>
-              Schedule Production Work Order
+              {isSw ? 'Panga Oda ya Uzalishaji' : 'Schedule Production Work Order'}
             </button>
           </div>
         </Sheet>
@@ -586,10 +595,10 @@ export function Production({ sess, out, setSess, setV }) {
 
       {/* Complete Batch Modal */}
       {completeModalWO && (
-        <Sheet t={`Complete & QA Audit · ${completeModalWO.batchNo}`} c={() => setCompleteModalWO(null)}>
+        <Sheet t={`${isSw ? 'Kamilisha & Ukaguzi wa Ubora' : 'Complete & QA Audit'} · ${completeModalWO.batchNo}`} c={() => setCompleteModalWO(null)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700 }}>Actual Yield Output ({completeModalWO.uom})</label>
+              <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Matokeo Halisi Yaliyopatikana' : 'Actual Yield Output'} ({completeModalWO.uom})</label>
               <input
                 className="inp"
                 type="number"
@@ -599,7 +608,7 @@ export function Production({ sess, out, setSess, setV }) {
             </div>
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700 }}>Cold Chain Temperature Log</label>
+              <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Kumbukumbu ya Joto la Jokofu' : 'Cold Chain Temperature Log'}</label>
               <input
                 className="inp"
                 value={tempLogInput}
@@ -608,7 +617,7 @@ export function Production({ sess, out, setSess, setV }) {
             </div>
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700 }}>QA Quality & Sensory Notes</label>
+              <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Maelezo ya Ubora (QA)' : 'QA Quality & Sensory Notes'}</label>
               <textarea
                 className="inp"
                 rows={2}
@@ -618,7 +627,7 @@ export function Production({ sess, out, setSess, setV }) {
             </div>
 
             <button className="kds-btn-done-all" onClick={handleConfirmComplete}>
-              Confirm QA Pass & Add to Finished Goods Stock
+              {isSw ? 'Thibitisha Ubora & Ongeza Kwenye Stoo' : 'Confirm QA Pass & Add to Finished Goods Stock'}
             </button>
           </div>
         </Sheet>
@@ -626,10 +635,10 @@ export function Production({ sess, out, setSess, setV }) {
 
       {/* Dispatch Modal */}
       {dispatchModalReq && (
-        <Sheet t={`Refrigerated Van Dispatch · ${dispatchModalReq.id}`} c={() => setDispatchModalReq(null)}>
+        <Sheet t={`${isSw ? 'Usafirishaji wa Gari la Jokofu' : 'Refrigerated Van Dispatch'} · ${dispatchModalReq.id}`} c={() => setDispatchModalReq(null)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700 }}>Driver Name & Vehicle Plate</label>
+              <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Jina la Dereva & Namba ya Gari' : 'Driver Name & Vehicle Plate'}</label>
               <input
                 className="inp"
                 value={driverName}
@@ -638,7 +647,7 @@ export function Production({ sess, out, setSess, setV }) {
             </div>
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700 }}>Refrigerated Cargo Temp Log</label>
+              <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Joto la Shehena Kwenye Gari' : 'Refrigerated Cargo Temp Log'}</label>
               <input
                 className="inp"
                 value={transportTemp}
@@ -647,7 +656,7 @@ export function Production({ sess, out, setSess, setV }) {
             </div>
 
             <button className="kds-btn-start" onClick={handleConfirmDispatch}>
-              Sign-Off Dispatch & Print Manifest
+              {isSw ? 'Thibitisha Safari & Chapisha Orodha' : 'Sign-Off Dispatch & Print Manifest'}
             </button>
           </div>
         </Sheet>
@@ -655,12 +664,12 @@ export function Production({ sess, out, setSess, setV }) {
 
       {/* Batch Label Modal */}
       {labelModalWO && (
-        <Sheet t="Print Industrial Batch Label" c={() => setLabelModalWO(null)}>
+        <Sheet t={isSw ? 'Chapisha Lebo ya Awamu ya Uzalishaji' : 'Print Industrial Batch Label'} c={() => setLabelModalWO(null)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div className="receipt-paper" style={{ padding: 20 }}>
               <div style={{ textAlign: 'center', borderBottom: '2px solid #000', paddingBottom: 8, marginBottom: 8 }}>
                 <b style={{ fontSize: 16 }}>SAFARI GRILL MANUFACTURING</b>
-                <div style={{ fontSize: 12 }}>Masaki Central Food Production Hub</div>
+                <div style={{ fontSize: 12 }}>{isSw ? 'Kituo Kikuu cha Uzalishaji Chakula Masaki' : 'Masaki Central Food Production Hub'}</div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
@@ -669,11 +678,11 @@ export function Production({ sess, out, setSess, setV }) {
               </div>
 
               <div style={{ fontSize: 12, marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <div>Batch Lot: <code>{labelModalWO.batchNo}</code></div>
-                <div>Storage: <b>Chiller 0°C to 3°C</b> (Logged: {labelModalWO.tempLog})</div>
-                <div>Prep Date: <b>{new Date().toLocaleDateString()}</b></div>
-                <div>Best Before: <b>{labelModalWO.expiryDate}</b></div>
-                <div>Operator: <b>{labelModalWO.operator}</b></div>
+                <div>{isSw ? 'Namba ya Awamu:' : 'Batch Lot:'} <code>{labelModalWO.batchNo}</code></div>
+                <div>{isSw ? 'Uhifadhi:' : 'Storage:'} <b>{isSw ? 'Jokofu 0°C hadi 3°C' : 'Chiller 0°C to 3°C'}</b> ({isSw ? 'Imerekodiwa:' : 'Logged:'} {labelModalWO.tempLog})</div>
+                <div>{isSw ? 'Tarehe ya Maandalizi:' : 'Prep Date:'} <b>{new Date().toLocaleDateString()}</b></div>
+                <div>{isSw ? 'Matumizi Kabla ya:' : 'Best Before:'} <b>{labelModalWO.expiryDate}</b></div>
+                <div>{isSw ? 'Msimamizi:' : 'Operator:'} <b>{labelModalWO.operator}</b></div>
               </div>
 
               <div style={{ textAlign: 'center', marginTop: 14, paddingTop: 10, borderTop: '1px dashed #000' }}>
@@ -691,10 +700,10 @@ export function Production({ sess, out, setSess, setV }) {
                   setLabelModalWO(null);
                 }}
               >
-                🖨️ Print Label Sticker
+                🖨️ {isSw ? 'Chapisha Lebo' : 'Print Label Sticker'}
               </button>
               <button className="btn sm ghost" onClick={() => setLabelModalWO(null)}>
-                Close
+                {isSw ? 'Funga' : 'Close'}
               </button>
             </div>
           </div>

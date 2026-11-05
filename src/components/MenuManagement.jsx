@@ -373,7 +373,7 @@ export function MenuManagementView({
                         fontWeight: 800
                       }}
                     >
-                      📦 {item.packMultiplier}x Pack
+                      📦 {item.packMultiplier}x {isSw ? 'Pakiti' : 'Pack'}
                     </span>
                   )}
                   <span

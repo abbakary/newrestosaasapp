@@ -115,15 +115,15 @@ export function Cashier({ sess, out, setSess, setV }) {
                     payMethod === 'card' ? 'TX' + Math.random().toString(36).slice(2, 7).toUpperCase() :
                     'CSH' + Math.random().toString(36).slice(2, 7).toUpperCase();
 
-    A.pay(order.id, payMethod, refCode, sess?.name || 'Cashier');
-    showToast(`✓ Order ${order.no} marked as PAID via ${payMethod.toUpperCase()} (${fmt(totalDue)})`);
+    A.pay(order.id, payMethod, refCode, sess?.name || (isSw ? 'Keshia' : 'Cashier'));
+    showToast(isSw ? `✓ Oda ${order.no} imelipwa kwa ${payMethod.toUpperCase()} (${fmt(totalDue)})` : `✓ Order ${order.no} marked as PAID via ${payMethod.toUpperCase()} (${fmt(totalDue)})`);
     setPaymentModalOrder(null);
     setTenderAmt('');
   };
 
   const handleAcceptOnlineOrder = orderId => {
-    A.st(orderId, 'accepted', sess?.name || 'Cashier');
-    showToast(`✓ Online order #${orderId} accepted and forwarded to kitchen!`);
+    A.st(orderId, 'accepted', sess?.name || (isSw ? 'Keshia' : 'Cashier'));
+    showToast(isSw ? `✓ Oda ya mtandaoni #${orderId} imekubaliwa na kutumwa jikoni!` : `✓ Online order #${orderId} accepted and forwarded to kitchen!`);
   };
 
   const handleApplyDiscount = () => {
@@ -131,7 +131,7 @@ export function Cashier({ sess, out, setSess, setV }) {
     const pct = +discountType || 10;
     discountOrder.discountPct = pct;
     discountOrder.discountReason = discountReason;
-    showToast(`✓ Applied ${pct}% discount to ${discountOrder.no}`);
+    showToast(isSw ? `✓ Punguzo la ${pct}% limewekwa kwenye oda ${discountOrder.no}` : `✓ Applied ${pct}% discount to ${discountOrder.no}`);
     setDiscountOrder(null);
   };
 
@@ -183,10 +183,14 @@ export function Cashier({ sess, out, setSess, setV }) {
             <span style={{ fontSize: 24 }}>📱</span>
             <div>
               <b style={{ fontSize: 15 }}>
-                {pendingOnlineOrders.length} New Customer Online Order{pendingOnlineOrders.length > 1 ? 's' : ''} Received!
+                {isSw
+                  ? `Oda ${pendingOnlineOrders.length} Mpya ya Mtandaoni Imepokelewa!`
+                  : `${pendingOnlineOrders.length} New Customer Online Order${pendingOnlineOrders.length > 1 ? 's' : ''} Received!`}
               </b>
               <div style={{ fontSize: 12, opacity: 0.9 }}>
-                Diners placed orders via customer web portal awaiting cashier review.
+                {isSw
+                  ? 'Wateja wameweka oda mtandaoni zinazosubiri uthibitisho wa keshia.'
+                  : 'Diners placed orders via customer web portal awaiting cashier review.'}
               </div>
             </div>
           </div>
@@ -199,7 +203,7 @@ export function Cashier({ sess, out, setSess, setV }) {
               setFilterTab('online');
             }}
           >
-            Review Online Orders ➔
+            {isSw ? 'Kagua Oda za Mtandaoni ➔' : 'Review Online Orders ➔'}
           </button>
         </div>
       )}
@@ -350,12 +354,14 @@ export function Cashier({ sess, out, setSess, setV }) {
           {!filteredOrders.length && (
             <div className="card" style={{ textAlign: 'center', padding: '60px 20px', borderRadius: 24 }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>🧾</div>
-              <h3 style={{ fontSize: 20, fontWeight: 800 }}>No Orders Found</h3>
+              <h3 style={{ fontSize: 20, fontWeight: 800 }}>{isSw ? 'Hakuna Oda Zilizopatikana' : 'No Orders Found'}</h3>
               <p style={{ color: 'var(--mut)', maxWidth: 400, margin: '6px auto 16px' }}>
-                There are no orders matching this filter. Place an order via Desk POS or the customer web portal to see it here live.
+                {isSw
+                  ? 'Hakuna oda zinazolingana na kichujio hiki. Weka oda kupitia POS ya Kaunta au menyu ya mteja.'
+                  : 'There are no orders matching this filter. Place an order via Desk POS or the customer web portal to see it here live.'}
               </p>
               <button className="btn o sm" style={{ background: '#FF5A43' }} onClick={() => setCashierView('pos')}>
-                Open Desk POS
+                {isSw ? 'Fungua POS ya Kaunta' : 'Open Desk POS'}
               </button>
             </div>
           )}
@@ -369,25 +375,25 @@ export function Cashier({ sess, out, setSess, setV }) {
               const orderTotal = tot(o);
 
               let statusTagClass = 'process';
-              let statusLabel = 'In Progress';
-              let statusSub = 'Cooking Now';
+              let statusLabel = isSw ? 'Inaendelea' : 'In Progress';
+              let statusSub = isSw ? 'Inapikwa Sasa' : 'Cooking Now';
 
               if (o.paid || o.st === 'closed') {
                 statusTagClass = 'completed';
-                statusLabel = 'Completed';
-                statusSub = 'Paid & Closed';
+                statusLabel = isSw ? 'Imelipwa' : 'Completed';
+                statusSub = isSw ? 'Imelipwa na Kufungwa' : 'Paid & Closed';
               } else if (o.st === 'ready') {
                 statusTagClass = 'ready';
-                statusLabel = 'Ready';
-                statusSub = 'Ready to serve';
+                statusLabel = isSw ? 'Tayari' : 'Ready';
+                statusSub = isSw ? 'Tayari kupelekwa' : 'Ready to serve';
               } else if (o.st === 'billreq') {
                 statusTagClass = 'process';
-                statusLabel = 'Bill Requested';
-                statusSub = 'Waiting For Payment';
+                statusLabel = isSw ? 'Bili Imeombwa' : 'Bill Requested';
+                statusSub = isSw ? 'Inasubiri Malipo' : 'Waiting For Payment';
               } else if (o.st === 'placed') {
                 statusTagClass = 'pending';
-                statusLabel = isOnline ? 'Online Alert' : 'Pending';
-                statusSub = 'Awaiting Kitchen';
+                statusLabel = isOnline ? (isSw ? 'Oda ya Mtandaoni' : 'Online Alert') : (isSw ? 'Inasubiri' : 'Pending');
+                statusSub = isSw ? 'Inasubiri Jiko' : 'Awaiting Kitchen';
               }
 
               return (
@@ -400,10 +406,10 @@ export function Cashier({ sess, out, setSess, setV }) {
 
                     <div>
                       <div className="bite-customer-name">
-                        {o.by || 'Guest Customer'}
+                        {o.by || (isSw ? 'Mteja Mgeni' : 'Guest Customer')}
                       </div>
                       <div className="bite-order-type">
-                        Order {o.no} / {o.orderType || (isOnline ? 'Online Order' : o.tb === 'Takeaway' ? 'Takeaway' : 'Dine In')}
+                        {isSw ? 'Oda' : 'Order'} {o.no} / {o.orderType || (isOnline ? (isSw ? 'Mtandaoni' : 'Online Order') : o.tb === 'Takeaway' ? (isSw ? 'Pakiti' : 'Takeaway') : (isSw ? 'Kula Hapa' : 'Dine In'))}
                       </div>
                     </div>
 
@@ -422,23 +428,24 @@ export function Cashier({ sess, out, setSess, setV }) {
                   {/* Items breakdown list */}
                   <div className="bite-items-box">
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--mut)', fontWeight: 700, marginBottom: 4 }}>
-                      <span>Items</span>
+                      <span>{isSw ? 'Vyakula' : 'Items'}</span>
                       <div style={{ display: 'flex', gap: 20 }}>
-                        <span>Qty</span>
-                        <span>Price</span>
+                        <span>{isSw ? 'Idadi' : 'Qty'}</span>
+                        <span>{isSw ? 'Bei' : 'Price'}</span>
                       </div>
                     </div>
 
                     {(o.it || []).slice(0, 3).map((line, idx) => {
-                      const item = M[line.id] || { n: `Item #${line.id}`, p: 0 };
+                      const rawItem = M[line.id] || { n: `Item #${line.id}`, p: 0 };
+                      const itemTitle = getMenuName ? getMenuName(rawItem) : rawItem.n;
                       return (
                         <div key={idx} className="bite-item-row">
                           <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 6 }}>
-                            {item.n}
+                            {itemTitle}
                           </span>
                           <div style={{ display: 'flex', gap: 24, flexShrink: 0 }}>
                             <span style={{ color: 'var(--mut)' }}>{line.q}</span>
-                            <span style={{ fontWeight: 700 }}>{fmt(item.p * line.q)}</span>
+                            <span style={{ fontWeight: 700 }}>{fmt(rawItem.p * line.q)}</span>
                           </div>
                         </div>
                       );
@@ -446,13 +453,13 @@ export function Cashier({ sess, out, setSess, setV }) {
 
                     {(o.it || []).length > 3 && (
                       <div style={{ fontSize: 11, color: '#FF5A43', fontWeight: 700, marginTop: 4 }}>
-                        +{o.it.length - 3} more item{o.it.length - 3 > 1 ? 's' : ''}
+                        {isSw ? `+vitu ${o.it.length - 3} zaidi` : `+${o.it.length - 3} more item${o.it.length - 3 > 1 ? 's' : ''}`}
                       </div>
                     )}
 
                     {/* Total row */}
                     <div className="bite-total-row">
-                      <span style={{ fontSize: 13, fontWeight: 700 }}>Total</span>
+                      <span style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Jumla' : 'Total'}</span>
                       <span className="bite-total-amt">{fmt(orderTotal)}</span>
                     </div>
                   </div>
@@ -464,7 +471,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                       style={{ flex: 1, justifyContent: 'center', padding: '9px 12px' }}
                       onClick={() => setDetailsOrder(o)}
                     >
-                      See Details
+                      {isSw ? 'Maelezo' : 'See Details'}
                     </button>
 
                     {/* Online Order Quick Acceptance */}
@@ -474,7 +481,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                         style={{ flex: 1, background: '#FF5A43', fontSize: 12.5 }}
                         onClick={() => handleAcceptOnlineOrder(o.id)}
                       >
-                        ✓ Accept Online
+                        ✓ {isSw ? 'Kubali Oda' : 'Accept Online'}
                       </button>
                     ) : !o.paid ? (
                       <button
@@ -484,7 +491,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                           setTenderAmt(String(orderTotal));
                         }}
                       >
-                        Pay Bills
+                        {isSw ? 'Lipa Bili' : 'Pay Bills'}
                       </button>
                     ) : (
                       <button
@@ -492,7 +499,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                         style={{ flex: 1, justifyContent: 'center' }}
                         onClick={() => setRc(o)}
                       >
-                        Receipt ✓
+                        {isSw ? 'Risiti ✓' : 'Receipt ✓'}
                       </button>
                     )}
                   </div>
@@ -546,10 +553,10 @@ export function Cashier({ sess, out, setSess, setV }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <div>
                     <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: -0.4 }}>
-                      Restaurant Floor Plan & Seating Status
+                      {isSw ? 'Ramani ya Ukumbi na Hali ya Meza' : 'Restaurant Floor Plan & Seating Status'}
                     </h2>
                     <small style={{ color: 'var(--mut)', display: 'block', marginTop: 2 }}>
-                      Live table occupancy, active bills, waiter assignments, and floor operations
+                      {isSw ? 'Ufuatiliaji wa meza zilizojaa, bili zinazoendelea, na wahudumu' : 'Live table occupancy, active bills, waiter assignments, and floor operations'}
                     </small>
                   </div>
 
@@ -561,7 +568,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                       onClick={() => setShowFloorSlide(true)}
                     >
                       <span>🪑</span>
-                      <span>Open Slide Table Selector ➔</span>
+                      <span>{isSw ? 'Chagua Meza (Slide) ➔' : 'Open Slide Table Selector ➔'}</span>
                     </button>
                     <button
                       type="button"
@@ -569,7 +576,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                       style={{ background: '#FF5A43' }}
                       onClick={() => setCashierView('pos')}
                     >
-                      + Create Desk Order
+                      + {isSw ? 'Weka Oda ya Kaunta' : 'Create Desk Order'}
                     </button>
                   </div>
                 </div>
@@ -584,23 +591,23 @@ export function Cashier({ sess, out, setSess, setV }) {
                   borderTop: '1px solid var(--line)'
                 }}>
                   <div style={{ background: 'var(--bg)', padding: '10px 14px', borderRadius: 14 }}>
-                    <small style={{ color: 'var(--mut)', fontWeight: 600 }}>Total Floor Tables</small>
-                    <b style={{ fontSize: 20, display: 'block', color: 'var(--tx)' }}>{dineTables.length} Tables</b>
+                    <small style={{ color: 'var(--mut)', fontWeight: 600 }}>{isSw ? 'Jumla ya Meza' : 'Total Floor Tables'}</small>
+                    <b style={{ fontSize: 20, display: 'block', color: 'var(--tx)' }}>{dineTables.length} {isSw ? 'Meza' : 'Tables'}</b>
                   </div>
                   <div style={{ background: 'var(--bg)', padding: '10px 14px', borderRadius: 14 }}>
-                    <small style={{ color: 'var(--mut)', fontWeight: 600 }}>Available (Vacant)</small>
-                    <b style={{ fontSize: 20, display: 'block', color: '#16a34a' }}>{availableTables.length} Free</b>
+                    <small style={{ color: 'var(--mut)', fontWeight: 600 }}>{isSw ? 'Meza Zilizo Wazi' : 'Available (Vacant)'}</small>
+                    <b style={{ fontSize: 20, display: 'block', color: '#16a34a' }}>{availableTables.length} {isSw ? 'Wazi' : 'Free'}</b>
                   </div>
                   <div style={{ background: 'var(--bg)', padding: '10px 14px', borderRadius: 14 }}>
-                    <small style={{ color: 'var(--mut)', fontWeight: 600 }}>Occupied (Seated)</small>
-                    <b style={{ fontSize: 20, display: 'block', color: '#ef4444' }}>{occupiedTables.length} Occupied</b>
+                    <small style={{ color: 'var(--mut)', fontWeight: 600 }}>{isSw ? 'Meza Zinazotumika' : 'Occupied (Seated)'}</small>
+                    <b style={{ fontSize: 20, display: 'block', color: '#ef4444' }}>{occupiedTables.length} {isSw ? 'Zimejaa' : 'Occupied'}</b>
                   </div>
                   <div style={{ background: 'var(--bg)', padding: '10px 14px', borderRadius: 14 }}>
-                    <small style={{ color: 'var(--mut)', fontWeight: 600 }}>Total Guests Seated</small>
-                    <b style={{ fontSize: 20, display: 'block', color: '#007AFF' }}>{totalSeatedGuests} Diners</b>
+                    <small style={{ color: 'var(--mut)', fontWeight: 600 }}>{isSw ? 'Wageni Walioketi' : 'Total Guests Seated'}</small>
+                    <b style={{ fontSize: 20, display: 'block', color: '#007AFF' }}>{totalSeatedGuests} {isSw ? 'Wageni' : 'Diners'}</b>
                   </div>
                   <div style={{ background: 'var(--bg)', padding: '10px 14px', borderRadius: 14 }}>
-                    <small style={{ color: 'var(--mut)', fontWeight: 600 }}>Active Floor Bill</small>
+                    <small style={{ color: 'var(--mut)', fontWeight: 600 }}>{isSw ? 'Bili za Ukumbini' : 'Active Floor Bill'}</small>
                     <b style={{ fontSize: 20, display: 'block', color: '#0E5A47' }}>{fmt(floorRevenue)}</b>
                   </div>
                 </div>
@@ -617,8 +624,7 @@ export function Cashier({ sess, out, setSess, setV }) {
               const activeForTable = orders.filter(o => o.tb === floorTable && !['paid', 'closed', 'cancelled'].includes(o.st));
               const isOccupied = activeForTable.length > 0;
               const cap = SEATS[floorTable] || 4;
-              const waiterName = wn(TW?.[floorTable]) || 'Staff';
-              const activeTotal = activeForTable.reduce((acc, o) => acc + tot(o), 0);
+              const waiterName = wn(TW?.[floorTable]) || (isSw ? 'Mhudumu' : 'Staff');
 
               return (
                 <div style={{
@@ -632,7 +638,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <b style={{ fontSize: 20, color: 'var(--tx)' }}>
-                          {floorTable === 'Takeaway' ? '🛵 Takeaway Counter' : `Table ${floorTable}`}
+                          {floorTable === 'Takeaway' ? (isSw ? '🛵 Kaunta ya Kuchukua' : '🛵 Takeaway Counter') : (isSw ? `Meza ${floorTable}` : `Table ${floorTable}`)}
                         </b>
                         <span style={{
                           fontSize: 12,
@@ -642,13 +648,13 @@ export function Cashier({ sess, out, setSess, setV }) {
                           background: isOccupied ? '#FEE2E2' : '#DCFCE7',
                           color: isOccupied ? '#DC2626' : '#166534'
                         }}>
-                          {isOccupied ? '🔴 OCCUPIED' : '🟢 AVAILABLE'}
+                          {isOccupied ? (isSw ? '🔴 IMEJAA' : '🔴 OCCUPIED') : (isSw ? '🟢 WAZI' : '🟢 AVAILABLE')}
                         </span>
                       </div>
                       <span style={{ fontSize: 13, color: 'var(--mut)', display: 'block', marginTop: 3 }}>
                         {floorTable === 'Takeaway'
-                          ? 'Counter Service & Pickup'
-                          : `Capacity: ${cap} Seats · Assigned Waiter: ${waiterName}`}
+                          ? (isSw ? 'Huduma ya Kaunta na Kuchukua' : 'Counter Service & Pickup')
+                          : (isSw ? `Uwezo: Viti ${cap} · Mhudumu: ${waiterName}` : `Capacity: ${cap} Seats · Assigned Waiter: ${waiterName}`)}
                       </span>
                     </div>
 
@@ -656,7 +662,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                       {isOccupied ? (
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                           <span style={{ fontSize: 13, color: '#DC2626', fontWeight: 700 }}>
-                            🔒 Occupied (Cannot Select)
+                            🔒 {isSw ? 'Imejaa (Haiwezi Kuchaguliwa)' : 'Occupied (Cannot Select)'}
                           </span>
                         </div>
                       ) : (
@@ -667,7 +673,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                             setCashierView('pos');
                           }}
                         >
-                          + Seat Diners & Open POS Order ➔
+                          + {isSw ? 'Weka Wageni & Fungua Oda ➔' : 'Seat Diners & Open POS Order ➔'}
                         </button>
                       )}
                     </div>
@@ -686,11 +692,14 @@ export function Cashier({ sess, out, setSess, setV }) {
                         fontSize: 12.5,
                         lineHeight: 1.4
                       }}>
-                        <b>⚠️ Operational Rule:</b> Table {floorTable} currently has active dining in progress. You cannot seat new guests until the open order is paid and closed.
+                        <b>⚠️ {isSw ? 'Kanuni ya Uendeshaji:' : 'Operational Rule:'}</b>{' '}
+                        {isSw
+                          ? `Meza ${floorTable} ina wageni wanaotumia huduma kwa sasa. Huwezi kuweka wageni wapya hadi bili iliyopo ilipwe.`
+                          : `Table ${floorTable} currently has active dining in progress. You cannot seat new guests until the open order is paid and closed.`}
                       </div>
 
                       <p style={{ margin: '8px 0 6px', fontSize: 13, fontWeight: 700, color: 'var(--mut)' }}>
-                        Active Dining Ticket{activeForTable.length > 1 ? 's' : ''} ({activeForTable.length}):
+                        {isSw ? `Oda Zinazoendelea (${activeForTable.length}):` : `Active Dining Ticket${activeForTable.length > 1 ? 's' : ''} (${activeForTable.length}):`}
                       </p>
 
                       {activeForTable.map(o => (
@@ -711,13 +720,16 @@ export function Cashier({ sess, out, setSess, setV }) {
                         >
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <b style={{ fontSize: 15 }}>Ticket {o.no}</b>
+                              <b style={{ fontSize: 15 }}>{isSw ? 'Tiketi' : 'Ticket'} {o.no}</b>
                               <span>·</span>
-                              <span style={{ fontWeight: 600 }}>{o.by || 'Guest'}</span>
+                              <span style={{ fontWeight: 600 }}>{o.by || (isSw ? 'Mgeni' : 'Guest')}</span>
                               <Pill st={o.st} />
                             </div>
                             <small style={{ color: 'var(--mut)', display: 'block', marginTop: 3 }}>
-                              Seated {Math.max(1, Math.round((Date.now() - o.t) / 60000))} min ago · {(o.it || []).length} items · Total: <b style={{ color: '#15803D' }}>{fmt(tot(o))}</b>
+                              {isSw
+                                ? `Dakika ${Math.max(1, Math.round((Date.now() - o.t) / 60000))} zilizopita · Vitu ${(o.it || []).length} · Jumla: `
+                                : `Seated ${Math.max(1, Math.round((Date.now() - o.t) / 60000))} min ago · ${(o.it || []).length} items · Total: `}
+                              <b style={{ color: '#15803D' }}>{fmt(tot(o))}</b>
                             </small>
                           </div>
 
@@ -726,7 +738,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                               className="action-btn"
                               onClick={() => setDetailsOrder(o)}
                             >
-                              See Details
+                              {isSw ? 'Maelezo' : 'See Details'}
                             </button>
                             <button
                               className="bite-btn-pay"
@@ -736,7 +748,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                                 setTenderAmt(String(tot(o)));
                               }}
                             >
-                              Pay Bill ({fmt(tot(o))})
+                              {isSw ? `Lipa Bili (${fmt(tot(o))})` : `Pay Bill (${fmt(tot(o))})`}
                             </button>
                           </div>
                         </div>
@@ -753,13 +765,13 @@ export function Cashier({ sess, out, setSess, setV }) {
                       alignItems: 'center',
                       justifyContent: 'space-between'
                     }}>
-                      <span>✓ Table {floorTable} is clean, vacant, and available for seating.</span>
+                      <span>✓ {isSw ? `Meza ${floorTable} ni safi, iko wazi, na tayari kwa wageni.` : `Table ${floorTable} is clean, vacant, and available for seating.`}</span>
                       <button
                         className="btn sm o"
                         style={{ background: '#15803D', fontSize: 12 }}
                         onClick={() => setCashierView('pos')}
                       >
-                        Start Order Now
+                        {isSw ? 'Anza Oda Sasa' : 'Start Order Now'}
                       </button>
                     </div>
                   )}
@@ -776,28 +788,30 @@ export function Cashier({ sess, out, setSess, setV }) {
       {cashierView === 'cash' && (
         <div>
           <div className="card" style={{ marginBottom: 16 }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: 18, fontWeight: 800 }}>Cash Drawer & Shift Float Reconciliation</h3>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: 18, fontWeight: 800 }}>
+              {isSw ? 'Droo ya Pesa na Uhakiki wa Zamu' : 'Cash Drawer & Shift Float Reconciliation'}
+            </h3>
             <div className="tiles" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: 16 }}>
               <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 14 }}>
-                <small style={{ color: 'var(--mut)' }}>Opening Float:</small>
+                <small style={{ color: 'var(--mut)' }}>{isSw ? 'Pesa ya Kuanzia (Float):' : 'Opening Float:'}</small>
                 <b style={{ fontSize: 20, display: 'block', color: 'var(--tx)' }}>{fmt(+fl || 0)}</b>
               </div>
               <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 14 }}>
-                <small style={{ color: 'var(--mut)' }}>Cash Sales Recorded:</small>
+                <small style={{ color: 'var(--mut)' }}>{isSw ? 'Mauzo ya Taslimu (Cash):' : 'Cash Sales Recorded:'}</small>
                 <b style={{ fontSize: 20, display: 'block', color: '#15803D' }}>{fmt(byPayment('cash'))}</b>
               </div>
               <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 14 }}>
-                <small style={{ color: 'var(--mut)' }}>Mobile Money Sales:</small>
+                <small style={{ color: 'var(--mut)' }}>{isSw ? 'Mauzo ya Pesa za Simu:' : 'Mobile Money Sales:'}</small>
                 <b style={{ fontSize: 20, display: 'block', color: '#007AFF' }}>{fmt(byPayment('momo'))}</b>
               </div>
               <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 14 }}>
-                <small style={{ color: 'var(--mut)' }}>Debit Card Sales:</small>
+                <small style={{ color: 'var(--mut)' }}>{isSw ? 'Mauzo ya Kadi ya Benki:' : 'Debit Card Sales:'}</small>
                 <b style={{ fontSize: 20, display: 'block', color: '#E67E22' }}>{fmt(byPayment('card'))}</b>
               </div>
             </div>
 
             <div className="fld" style={{ marginBottom: 12 }}>
-              <span>Opening Shift Float:</span>
+              <span>{isSw ? 'Pesa ya Kuanzia Zamu:' : 'Opening Shift Float:'}</span>
               <input
                 className="inp"
                 value={fl}
@@ -810,11 +824,11 @@ export function Cashier({ sess, out, setSess, setV }) {
             </div>
 
             <div className="fld">
-              <span>Counted Drawer Cash:</span>
+              <span>{isSw ? 'Pesa Iliyohesabiwa Kwenye Droo:' : 'Counted Drawer Cash:'}</span>
               <input
                 className="inp"
                 value={cnt}
-                placeholder="Count drawer bills"
+                placeholder={isSw ? 'Hesabu noti za droo' : 'Count drawer bills'}
                 onChange={e => {
                   setCnt(e.target.value);
                   A.updateFloat(+fl, e.target.value);
@@ -825,7 +839,7 @@ export function Cashier({ sess, out, setSess, setV }) {
 
             {cnt !== '' && (
               <div className="row" style={{ marginTop: 12, borderTop: '1px solid var(--line)', paddingTop: 10 }}>
-                <b>Over / Short Balance Discrepancy:</b>
+                <b>{isSw ? 'Tofauti ya Pesa (Ziada / Upungufu):' : 'Over / Short Balance Discrepancy:'}</b>
                 <b style={{ color: (+cnt) - ((+fl || 0) + byPayment('cash')) < 0 ? '#FF3B30' : '#15803D', fontSize: 18 }}>
                   {fmt((+cnt) - ((+fl || 0) + byPayment('cash')))}
                 </b>
@@ -838,7 +852,7 @@ export function Cashier({ sess, out, setSess, setV }) {
             style={{ background: '#FF5A43' }}
             onClick={() => setZReportOpen(true)}
           >
-            Review Shift & Generate Official Z-Report
+            {isSw ? 'Kagua Zamu & Tengeneza Ripoti ya Z-Report' : 'Review Shift & Generate Official Z-Report'}
           </button>
         </div>
       )}
@@ -852,7 +866,7 @@ export function Cashier({ sess, out, setSess, setV }) {
             {/* Left Receipt Side (with serrated bottom edge) */}
             <div className="numpad-receipt-side">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <b style={{ fontSize: 18, color: '#111827' }}>Payment</b>
+                <b style={{ fontSize: 18, color: '#111827' }}>{isSw ? 'Malipo' : 'Payment'}</b>
                 <button
                   onClick={() => setPaymentModalOrder(null)}
                   style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--mut)' }}
@@ -863,7 +877,7 @@ export function Cashier({ sess, out, setSess, setV }) {
 
               {/* Customer Information */}
               <div style={{ marginBottom: 12, fontSize: 13, borderBottom: '1px solid var(--line)', paddingBottom: 10 }}>
-                <small style={{ color: 'var(--mut)', fontWeight: 700 }}>Customer Information</small>
+                <small style={{ color: 'var(--mut)', fontWeight: 700 }}>{isSw ? 'Taarifa za Mteja' : 'Customer Information'}</small>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
                   <div
                     className="bite-avatar green"
@@ -872,9 +886,9 @@ export function Cashier({ sess, out, setSess, setV }) {
                     {paymentModalOrder.tb?.slice(0, 3) || 'A4'}
                   </div>
                   <div>
-                    <b style={{ fontSize: 14 }}>{paymentModalOrder.by || 'Guest Customer'}</b>
+                    <b style={{ fontSize: 14 }}>{paymentModalOrder.by || (isSw ? 'Mteja Mgeni' : 'Guest Customer')}</b>
                     <div style={{ fontSize: 11, color: 'var(--mut)' }}>
-                      Order {paymentModalOrder.no} · {paymentModalOrder.tb}
+                      {isSw ? 'Oda' : 'Order'} {paymentModalOrder.no} · {paymentModalOrder.tb}
                     </div>
                   </div>
                 </div>
@@ -882,16 +896,17 @@ export function Cashier({ sess, out, setSess, setV }) {
 
               {/* Transaction items */}
               <small style={{ color: 'var(--mut)', fontWeight: 700, marginBottom: 6, display: 'block' }}>
-                Transaction Items
+                {isSw ? 'Vyakula Vilivyoagizwa' : 'Transaction Items'}
               </small>
               <div style={{ flex: 1, maxHeight: 180, overflowY: 'auto', marginBottom: 12 }}>
                 {(paymentModalOrder.it || []).map((l, idx) => {
-                  const item = M[l.id] || { n: `Item #${l.id}`, p: 0 };
+                  const rawItem = M[l.id] || { n: `Item #${l.id}`, p: 0 };
+                  const itemTitle = getMenuName ? getMenuName(rawItem) : rawItem.n;
                   return (
                     <div key={idx} className="row" style={{ padding: '4px 0', fontSize: 13 }}>
                       <div>
-                        <b>{item.n}</b>
-                        <div style={{ fontSize: 11, color: 'var(--mut)' }}>{fmt(item.p)}</div>
+                        <b>{itemTitle}</b>
+                        <div style={{ fontSize: 11, color: 'var(--mut)' }}>{fmt(rawItem.p)}</div>
                       </div>
                       <b style={{ color: '#111827' }}>{l.q}x</b>
                     </div>
@@ -902,7 +917,7 @@ export function Cashier({ sess, out, setSess, setV }) {
               {/* Financial Totals */}
               <div style={{ borderTop: '1px dashed var(--line)', paddingTop: 8, fontSize: 13 }}>
                 <div className="row" style={{ padding: '2px 0', color: 'var(--mut)' }}>
-                  <span>Items ({paymentModalOrder.it?.reduce((a, l) => a + l.q, 0) || 0})</span>
+                  <span>{isSw ? 'Vitu' : 'Items'} ({paymentModalOrder.it?.reduce((a, l) => a + l.q, 0) || 0})</span>
                   <span>{fmt(tot(paymentModalOrder))}</span>
                 </div>
                 {S?.vatSettings?.enabled !== false && (
@@ -913,12 +928,12 @@ export function Cashier({ sess, out, setSess, setV }) {
                 )}
                 {paymentModalOrder.discountPct && (
                   <div className="row" style={{ padding: '2px 0', color: '#FF3B30' }}>
-                    <span>Discount ({paymentModalOrder.discountPct}%)</span>
+                    <span>{isSw ? 'Punguzo' : 'Discount'} ({paymentModalOrder.discountPct}%)</span>
                     <span>-{fmt(tot(paymentModalOrder) * (paymentModalOrder.discountPct / 100))}</span>
                   </div>
                 )}
                 <div className="row" style={{ borderTop: '1px solid var(--line)', paddingTop: 6, marginTop: 4, alignItems: 'baseline' }}>
-                  <b style={{ fontSize: 16 }}>Total</b>
+                  <b style={{ fontSize: 16 }}>{isSw ? 'Jumla' : 'Total'}</b>
                   <b style={{ fontSize: 24, fontWeight: 800, color: '#15803D' }}>{fmt(tot(paymentModalOrder))}</b>
                 </div>
               </div>
@@ -929,9 +944,9 @@ export function Cashier({ sess, out, setSess, setV }) {
               {/* Payment Mode Segment */}
               <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
                 {[
-                  ['cash', '💵 Cash'],
-                  ['card', '💳 Debit Card'],
-                  ['momo', '📱 Mobile Money']
+                  ['cash', isSw ? '💵 Taslimu' : '💵 Cash'],
+                  ['card', isSw ? '💳 Kadi' : '💳 Debit Card'],
+                  ['momo', isSw ? '📱 Simu' : '📱 Mobile Money']
                 ].map(([m, label]) => (
                   <button
                     key={m}
@@ -969,7 +984,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                   alignItems: 'center'
                 }}
               >
-                <small style={{ color: 'var(--mut)', fontWeight: 700 }}>Tendered:</small>
+                <small style={{ color: 'var(--mut)', fontWeight: 700 }}>{isSw ? 'Kiasi Kilichotolewa:' : 'Tendered:'}</small>
                 <b style={{ fontSize: 22, color: 'var(--tx)' }}>
                   {tenderAmt ? fmt(+tenderAmt) : fmt(tot(paymentModalOrder))}
                 </b>
@@ -991,7 +1006,7 @@ export function Cashier({ sess, out, setSess, setV }) {
               {/* Change calculation */}
               {parseFloat(tenderAmt) > tot(paymentModalOrder) && (
                 <div className="row" style={{ fontSize: 13, color: '#15803D', fontWeight: 700, marginBottom: 8 }}>
-                  <span>Change Due to Diner:</span>
+                  <span>{isSw ? 'Chenji ya Mteja:' : 'Change Due to Diner:'}</span>
                   <b>{fmt(parseFloat(tenderAmt) - tot(paymentModalOrder))}</b>
                 </div>
               )}
@@ -1009,7 +1024,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                 }}
                 onClick={handleSettlePayment}
               >
-                Pay Now
+                {isSw ? 'Lipa Sasa' : 'Pay Now'}
               </button>
             </div>
           </div>
@@ -1024,50 +1039,54 @@ export function Cashier({ sess, out, setSess, setV }) {
           menuList={S.menu && S.menu.length ? S.menu : MENU}
           stockList={S.stock || []}
           outOfStockIds={S.outOfStockIds || []}
-          onToggle86={(id, actor) => A.toggle86(id, actor || sess?.name || 'Cashier')}
+          onToggle86={(id, actor) => A.toggle86(id, actor || sess?.name || (isSw ? 'Keshia' : 'Cashier'))}
           onCreateItem={(data, actor) => {
-            A.createMenuItem(data, actor || sess?.name || 'Cashier');
-            showToast(`✓ Created dish "${data.n}" in menu catalog!`);
+            A.createMenuItem(data, actor || sess?.name || (isSw ? 'Keshia' : 'Cashier'));
+            showToast(isSw ? `✓ Chakula "${data.n}" kimeongezwa kwenye menyu!` : `✓ Created dish "${data.n}" in menu catalog!`);
           }}
           onUpdateItem={(id, data, actor) => {
-            A.updateMenuItem(id, data, actor || sess?.name || 'Cashier');
-            showToast(`✓ Updated "${data.n || 'Dish'}" details!`);
+            A.updateMenuItem(id, data, actor || sess?.name || (isSw ? 'Keshia' : 'Cashier'));
+            showToast(isSw ? `✓ Taarifa za "${data.n || 'Chakula'}" zimesasishwa!` : `✓ Updated "${data.n || 'Dish'}" details!`);
           }}
           onDeleteItem={(id, actor) => {
-            A.deleteMenuItem(id, actor || sess?.name || 'Cashier');
-            showToast(`✓ Dish removed from menu.`);
+            A.deleteMenuItem(id, actor || sess?.name || (isSw ? 'Keshia' : 'Cashier'));
+            showToast(isSw ? '✓ Chakula kimeondolewa kwenye menyu.' : '✓ Dish removed from menu.');
           }}
-          actor={sess?.name || 'Cashier'}
+          actor={sess?.name || (isSw ? 'Keshia' : 'Cashier')}
         />
       )}
 
       {/* Order Details Drawer */}
       {detailsOrder && (
-        <Sheet title={`Order Details: ${detailsOrder.no}`} onClose={() => setDetailsOrder(null)}>
+        <Sheet title={isSw ? `Maelezo ya Oda: ${detailsOrder.no}` : `Order Details: ${detailsOrder.no}`} onClose={() => setDetailsOrder(null)}>
           <div className="card" style={{ marginBottom: 12 }}>
             <div className="row" style={{ marginBottom: 8 }}>
-              <b style={{ fontSize: 18 }}>Table: {detailsOrder.tb}</b>
+              <b style={{ fontSize: 18 }}>{isSw ? 'Meza:' : 'Table:'} {detailsOrder.tb}</b>
               <Pill st={detailsOrder.st} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontSize: 13, color: 'var(--mut)', marginBottom: 10 }}>
-              <div>Guest: <b>{detailsOrder.by}</b></div>
-              <div>Source: <b>{detailsOrder.src}</b></div>
-              <div>Waiter: <b>{wn(detailsOrder.wid)}</b></div>
-              <div>Placed: <b>{new Date(detailsOrder.t).toLocaleTimeString()}</b></div>
+              <div>{isSw ? 'Mgeni:' : 'Guest:'} <b>{detailsOrder.by}</b></div>
+              <div>{isSw ? 'Chanzo:' : 'Source:'} <b>{detailsOrder.src}</b></div>
+              <div>{isSw ? 'Mhudumu:' : 'Waiter:'} <b>{wn(detailsOrder.wid)}</b></div>
+              <div>{isSw ? 'Muda:' : 'Placed:'} <b>{new Date(detailsOrder.t).toLocaleTimeString()}</b></div>
             </div>
 
             <div style={{ borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', padding: '8px 0', margin: '8px 0' }}>
-              {(detailsOrder.it || []).map((l, i) => (
-                <div key={i} className="row" style={{ padding: '4px 0' }}>
-                  <span>{l.q}× {M[l.id]?.n}</span>
-                  <b>{fmt((M[l.id]?.p || 0) * l.q)}</b>
-                </div>
-              ))}
+              {(detailsOrder.it || []).map((l, i) => {
+                const rawItem = M[l.id] || { n: `Item #${l.id}`, p: 0 };
+                const itemTitle = getMenuName ? getMenuName(rawItem) : rawItem.n;
+                return (
+                  <div key={i} className="row" style={{ padding: '4px 0' }}>
+                    <span>{l.q}× {itemTitle}</span>
+                    <b>{fmt((rawItem.p || 0) * l.q)}</b>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="row">
-              <b>Total Amount:</b>
+              <b>{isSw ? 'Jumla Kuu:' : 'Total Amount:'}</b>
               <b style={{ fontSize: 20, color: '#15803D' }}>{fmt(tot(detailsOrder))}</b>
             </div>
           </div>
@@ -1083,7 +1102,7 @@ export function Cashier({ sess, out, setSess, setV }) {
                   setDetailsOrder(null);
                 }}
               >
-                Pay Bills
+                {isSw ? 'Lipa Bili' : 'Pay Bills'}
               </button>
             )}
             <button
@@ -1094,14 +1113,14 @@ export function Cashier({ sess, out, setSess, setV }) {
                 setDetailsOrder(null);
               }}
             >
-              % Discount
+              % {isSw ? 'Punguzo' : 'Discount'}
             </button>
             <button
               className="btn ghost sm"
               style={{ flex: 1 }}
               onClick={() => setDetailsOrder(null)}
             >
-              Close
+              {isSw ? 'Funga' : 'Close'}
             </button>
           </div>
         </Sheet>
@@ -1109,14 +1128,14 @@ export function Cashier({ sess, out, setSess, setV }) {
 
       {/* Discount Modal */}
       {discountOrder && (
-        <Sheet title={`Apply Discount to ${discountOrder.no}`} onClose={() => setDiscountOrder(null)}>
+        <Sheet title={isSw ? `Weka Punguzo kwenye ${discountOrder.no}` : `Apply Discount to ${discountOrder.no}`} onClose={() => setDiscountOrder(null)}>
           <div className="card">
             <div className="row" style={{ marginBottom: 10 }}>
-              <span>Order Total:</span>
+              <span>{isSw ? 'Jumla ya Oda:' : 'Order Total:'}</span>
               <b>{fmt(tot(discountOrder))}</b>
             </div>
 
-            <small style={{ fontWeight: 700 }}>Discount Percentage:</small>
+            <small style={{ fontWeight: 700 }}>{isSw ? 'Asilimia ya Punguzo:' : 'Discount Percentage:'}</small>
             <div className="seg">
               {['5', '10', '15', '20', '50'].map(p => (
                 <button key={p} className={discountType === p ? 'on' : ''} onClick={() => setDiscountType(p)}>
@@ -1126,17 +1145,17 @@ export function Cashier({ sess, out, setSess, setV }) {
             </div>
 
             <div style={{ margin: '10px 0' }}>
-              <small style={{ fontWeight: 700 }}>Authorization Reason:</small>
+              <small style={{ fontWeight: 700 }}>{isSw ? 'Sababu ya Idhini:' : 'Authorization Reason:'}</small>
               <select className="inp" value={discountReason} onChange={e => setDiscountReason(e.target.value)}>
-                <option value="Manager Goodwill">Manager Goodwill / VIP Guest</option>
-                <option value="Staff Dining">Staff Dining (20%)</option>
-                <option value="Kitchen Delay Apology">Kitchen Delay Apology</option>
-                <option value="Special Online Promo">Special Online Promo</option>
+                <option value="Manager Goodwill">{isSw ? 'Hisani ya Meneja / Mgeni Maalum (VIP)' : 'Manager Goodwill / VIP Guest'}</option>
+                <option value="Staff Dining">{isSw ? 'Chakula cha Wafanyakazi (20%)' : 'Staff Dining (20%)'}</option>
+                <option value="Kitchen Delay Apology">{isSw ? 'Ucheleweshaji wa Jiko' : 'Kitchen Delay Apology'}</option>
+                <option value="Special Online Promo">{isSw ? 'Ofa Maalum ya Mtandaoni' : 'Special Online Promo'}</option>
               </select>
             </div>
 
             <button className="btn o" style={{ background: '#FF5A43' }} onClick={handleApplyDiscount}>
-              Apply {discountType}% Discount
+              {isSw ? `Weka Punguzo la ${discountType}%` : `Apply ${discountType}% Discount`}
             </button>
           </div>
         </Sheet>
@@ -1144,30 +1163,30 @@ export function Cashier({ sess, out, setSess, setV }) {
 
       {/* Z-Report Modal */}
       {zReportOpen && (
-        <Sheet title="Day End Shift Z-Report" onClose={() => setZReportOpen(false)}>
+        <Sheet title={isSw ? 'Ripoti ya Funga Zamu (Z-Report)' : 'Day End Shift Z-Report'} onClose={() => setZReportOpen(false)}>
           <div className="card receipt-paper" style={{ fontFamily: 'monospace', fontSize: 13 }}>
             <div style={{ textAlign: 'center', marginBottom: 10 }}>
               <b>SAFARI GRILL & LOUNGE</b>
               <br />
-              <small>Z-REPORT · OFFICIAL REGISTER CLOSING</small>
+              <small>{isSw ? 'RIPOTI YA Z-REPORT · KUFUNGA ZAMU RASMI' : 'Z-REPORT · OFFICIAL REGISTER CLOSING'}</small>
             </div>
 
             <div style={{ borderTop: '1px dashed var(--line)', borderBottom: '1px dashed var(--line)', padding: '6px 0', margin: '6px 0' }}>
-              <div className="row"><span>Date: {new Date().toLocaleDateString()}</span><span>Time: {new Date().toLocaleTimeString()}</span></div>
-              <div className="row"><span>Cashier: {sess?.name || 'Cashier Desk'}</span><span>Status: BALANCED</span></div>
+              <div className="row"><span>{isSw ? 'Tarehe:' : 'Date:'} {new Date().toLocaleDateString()}</span><span>{isSw ? 'Muda:' : 'Time:'} {new Date().toLocaleTimeString()}</span></div>
+              <div className="row"><span>{isSw ? 'Keshia:' : 'Cashier:'} {sess?.name || (isSw ? 'Kaunta ya Keshia' : 'Cashier Desk')}</span><span>{isSw ? 'Hali: SAWA' : 'Status: BALANCED'}</span></div>
             </div>
 
             {[
-              ['Paid Orders Settled', paidOrders.length],
-              ['Gross Cash Sales', fmt(byPayment('cash'))],
-              ['Mobile Money (M-Pesa/Tigo)', fmt(byPayment('momo'))],
-              ['Debit Card Sales', fmt(byPayment('card'))],
-              ['Total Net Revenue', fmt(byPayment('cash') + byPayment('momo') + byPayment('card'))],
+              [isSw ? 'Oda Zilizolipwa' : 'Paid Orders Settled', paidOrders.length],
+              [isSw ? 'Mauzo ya Taslimu (Cash)' : 'Gross Cash Sales', fmt(byPayment('cash'))],
+              [isSw ? 'Pesa za Simu (M-Pesa/Tigo)' : 'Mobile Money (M-Pesa/Tigo)', fmt(byPayment('momo'))],
+              [isSw ? 'Mauzo ya Kadi ya Benki' : 'Debit Card Sales', fmt(byPayment('card'))],
+              [isSw ? 'Jumla ya Mapato Halisi' : 'Total Net Revenue', fmt(byPayment('cash') + byPayment('momo') + byPayment('card'))],
               ...(S?.vatSettings?.enabled !== false
-                ? [[S?.vatSettings?.taxLabel ? `${S.vatSettings.taxLabel} Collected` : `VAT (${S?.vatSettings?.rate || 18}% Collected)`, fmt(calcTax(byPayment('cash') + byPayment('momo') + byPayment('card'), S?.vatSettings))]]
+                ? [[S?.vatSettings?.taxLabel ? `${S.vatSettings.taxLabel}` : `VAT (${S?.vatSettings?.rate || 18}%)`, fmt(calcTax(byPayment('cash') + byPayment('momo') + byPayment('card'), S?.vatSettings))]]
                 : []),
-              ['Opening Cash Float', fmt(+fl || 0)],
-              ['Counted Drawer Cash', fmt(+cnt || 0)]
+              [isSw ? 'Pesa ya Kuanzia Zamu (Float)' : 'Opening Cash Float', fmt(+fl || 0)],
+              [isSw ? 'Pesa Iliyohesabiwa Drooni' : 'Counted Drawer Cash', fmt(+cnt || 0)]
             ].map(([k, v]) => (
               <div key={k} className="row" style={{ padding: '3px 0' }}>
                 <span>{k}:</span>
@@ -1177,7 +1196,7 @@ export function Cashier({ sess, out, setSess, setV }) {
           </div>
 
           <button className="btn o" style={{ marginTop: 12, background: '#FF5A43' }} onClick={() => setZReportOpen(false)}>
-            Close & Lock Shift
+            {isSw ? 'Funga & Kufunga Zamu' : 'Close & Lock Shift'}
           </button>
         </Sheet>
       )}
@@ -1202,11 +1221,11 @@ export function Cashier({ sess, out, setSess, setV }) {
         cur={cashierView}
         set={setCashierView}
         tabs={[
-          ['orders', 'Bill Queue', '🧾', billReqOrders.length],
-          ['pos', 'Desk Order', '➕', 0],
-          ['menu', 'Menu Catalog', '📖', 0],
-          ['floor', 'Floor Plan', '🪑', 0],
-          ['cash', 'Cash Drawer', '💵', 0]
+          ['orders', isSw ? 'Foleni ya Bili' : 'Bill Queue', '🧾', billReqOrders.length],
+          ['pos', isSw ? 'Oda Mpya' : 'Desk Order', '➕', 0],
+          ['menu', isSw ? 'Menyu' : 'Menu Catalog', '📖', 0],
+          ['floor', isSw ? 'Meza' : 'Floor Plan', '🪑', 0],
+          ['cash', isSw ? 'Droo ya Pesa' : 'Cash Drawer', '💵', 0]
         ]}
       />
 
@@ -1215,10 +1234,10 @@ export function Cashier({ sess, out, setSess, setV }) {
         isOpen={quickAddModal}
         onClose={() => setQuickAddModal(false)}
         onSave={item => {
-          A.quickAddMenuItem(item, sess?.name || 'Cashier');
-          showToast(`✓ Added "${item.n}" to POS live menu (marked Needs Review)`);
+          A.quickAddMenuItem(item, sess?.name || (isSw ? 'Keshia' : 'Cashier'));
+          showToast(isSw ? `✓ "${item.n}" imeongezwa kwenye menyu ya POS (Inasubiri Mapitio)` : `✓ Added "${item.n}" to POS live menu (marked Needs Review)`);
         }}
-        actor={sess?.name || 'Cashier'}
+        actor={sess?.name || (isSw ? 'Keshia' : 'Cashier')}
       />
     </div>
   );

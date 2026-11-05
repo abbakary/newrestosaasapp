@@ -54,6 +54,8 @@ export function Sheet({ onClose, c, children, title, t, subtitle, maxWidth = 580
 }
 
 export function Install({ cls }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [sh, setSh] = useState(false);
   const go = async () => {
     if (DP) {
@@ -70,14 +72,14 @@ export function Install({ cls }) {
   return (
     <>
       <button className={cls || 'btn ghost'} onClick={go}>
-        ⬇︎ Install App (PWA)
+        ⬇︎ {isSw ? 'Sakinisha Kwenye Simu (App)' : 'Install App (PWA)'}
       </button>
       {sh && (
-        <Sheet title="Install Safari Grill & Lounge" onClose={() => setSh(false)}>
+        <Sheet title={isSw ? 'Sakinisha Safari Grill & Lounge' : 'Install Safari Grill & Lounge'} onClose={() => setSh(false)}>
           <div className="card" style={{ lineHeight: 1.6 }}>
-            <p><b>iPhone / iPad (Safari):</b> Tap the Share button at bottom, then scroll and select <b>Add to Home Screen</b>.</p>
-            <p><b>Android (Chrome):</b> Tap the 3 dots menu and select <b>Install app</b> or <b>Add to Home Screen</b>.</p>
-            <p><small>Launches instantly in full-screen standalone mode with offline order caching.</small></p>
+            <p><b>iPhone / iPad (Safari):</b> {isSw ? <>Bonyeza kitufe cha Share chini, kisha shuka chini na uchague <b>Add to Home Screen</b>.</> : <>Tap the Share button at bottom, then scroll and select <b>Add to Home Screen</b>.</>}</p>
+            <p><b>Android (Chrome):</b> {isSw ? <>Bonyeza nukta 3 juu kulia na uchague <b>Install app</b> au <b>Add to Home Screen</b>.</> : <>Tap the 3 dots menu and select <b>Install app</b> or <b>Add to Home Screen</b>.</>}</p>
+            <p><small>{isSw ? 'Inafunguka haraka kama app kamili hata bila mtandao.' : 'Launches instantly in full-screen standalone mode with offline order caching.'}</small></p>
           </div>
         </Sheet>
       )}
@@ -420,7 +422,8 @@ export const Tabs = ({ tabs, cur, set }) => {
 };
 
 export const OC = ({ o, children }) => {
-  const { wn } = useContext(Ctx);
+  const { wn, lang, getMenuName } = useContext(Ctx);
+  const isSw = (lang || 'sw') === 'sw';
   const gross = tot(o);
   const minutesAgo = Math.max(1, Math.round((Date.now() - o.t) / 60000));
 
@@ -435,13 +438,13 @@ export const OC = ({ o, children }) => {
       </div>
 
       <small>
-        Waiter: <b>{wn(o.wid)}</b> · {minutesAgo} min ago · By {o.by || 'Guest'}
+        {isSw ? 'Mhudumu:' : 'Waiter:'} <b>{wn(o.wid)}</b> · {isSw ? `dakika ${minutesAgo} zilizopita` : `${minutesAgo} min ago`} · {isSw ? 'Na' : 'By'} {o.by || (isSw ? 'Mgeni' : 'Guest')}
       </small>
 
       <div style={{ margin: '8px 0', borderLeft: '3px solid var(--line)', paddingLeft: 8 }}>
         {(o.it || []).map((l, i) => (
           <div key={i} style={{ fontSize: 14, margin: '2px 0' }}>
-            {l.q}× {M[l.id]?.n || `Item #${l.id}`}
+            {l.q}× {getMenuName ? getMenuName(M[l.id]) : (M[l.id]?.n || `Item #${l.id}`)}
             {l.note && <span style={{ color: 'var(--o)', fontSize: 12, marginLeft: 6 }}>({l.note})</span>}
           </div>
         ))}
@@ -450,7 +453,7 @@ export const OC = ({ o, children }) => {
       <div className="row" style={{ marginTop: 8 }}>
         <div>
           <b style={{ fontSize: 18 }}>{fmt(gross)}</b>
-          {o.paid && <span style={{ fontSize: 12, color: '#15803D', marginLeft: 6 }}>✓ Paid ({o.pm})</span>}
+          {o.paid && <span style={{ fontSize: 12, color: '#15803D', marginLeft: 6 }}>✓ {isSw ? 'Imelipwa' : 'Paid'} ({o.pm})</span>}
         </div>
         <div className="acts">{children}</div>
       </div>

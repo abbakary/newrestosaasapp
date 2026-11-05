@@ -621,7 +621,7 @@ export function MenuItemDetailModal({
                     <option value="">{isSw ? '-- Hakuna muunganisho wa stoo --' : '-- No inventory link --'}</option>
                     {stockList.map(s => (
                       <option key={s.id} value={s.id}>
-                        {s.name} ({s.stock || s.qty || 0} {s.baseUnit || s.uom || 'pcs'} in stock)
+                        {s.name} ({s.stock || s.qty || 0} {s.baseUnit || s.uom || 'pcs'} {isSw ? 'kwenye stoo' : 'in stock'})
                       </option>
                     ))}
                   </select>
@@ -681,12 +681,12 @@ export function MenuItemDetailModal({
                       <span style={{ fontSize: 11, color: 'var(--mut)' }}>⏱️ {prepTime}m</span>
                       {isSpecial && (
                         <span style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 99, background: '#FFEDD5', color: '#C2410C', fontWeight: 800 }}>
-                          ★ Special
+                          ★ {isSw ? 'Maalum' : 'Special'}
                         </span>
                       )}
                     </div>
                     <b style={{ fontSize: 15, color: 'var(--tx)', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {name || 'Item Name'}
+                      {name || (isSw ? 'Jina la Chakula' : 'Item Name')}
                     </b>
                     <span style={{ fontSize: 16, fontWeight: 800, color: '#0E5A47' }}>
                       TSh {fmtNum(numPrice)}

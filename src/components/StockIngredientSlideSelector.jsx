@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import { fmt, fmtNum } from '../data';
 import { getItemLocations } from '../screens/Inventory';
+import { Ctx } from '../store';
 
 export const CATEGORY_ICONS = {
   Poultry: '🍗',
@@ -37,10 +38,14 @@ export function StockIngredientSlideSelector({
   selectedId,
   onSelect,
   onClose,
-  title = 'Required Stock Ingredients Catalog',
-  subtitle = 'Click any card to select for the active form',
+  title,
+  subtitle,
   itemTypeFilter = 'all' // 'all' | 'raw_material' | 'direct_resale'
 }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
+  const displayTitle = title || (isSw ? 'Orodha ya Viungo na Bidhaa za Stoo' : 'Required Stock Ingredients Catalog');
+  const displaySubtitle = subtitle || (isSw ? 'Bonyeza kadi yoyote kuchagua kwenye fomu' : 'Click any card to select for the active form');
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('All');
   const [stockStatusFilter, setStockStatusFilter] = useState('all'); // 'all' | 'low' | 'optimal'
@@ -92,12 +97,12 @@ export function StockIngredientSlideSelector({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 18 }}>🍱</span>
-              <b style={{ fontSize: 15, color: 'var(--tx)' }}>{title}</b>
+              <b style={{ fontSize: 15, color: 'var(--tx)' }}>{displayTitle}</b>
               <span className="inv-tab-badge" style={{ background: '#E5F2EE', color: 'var(--g)' }}>
-                {filteredItems.length} items
+                {filteredItems.length} {isSw ? 'bidhaa' : 'items'}
               </span>
             </div>
-            <small style={{ color: 'var(--mut)', display: 'block', marginTop: 2 }}>{subtitle}</small>
+            <small style={{ color: 'var(--mut)', display: 'block', marginTop: 2 }}>{displaySubtitle}</small>
           </div>
 
           {onClose && (
@@ -105,10 +110,10 @@ export function StockIngredientSlideSelector({
               type="button"
               className="action-btn"
               onClick={onClose}
-              title="Close catalog drawer"
+              title={isSw ? 'Funga orodha' : 'Close catalog drawer'}
               style={{ fontSize: 12, padding: '4px 10px', background: 'var(--card)' }}
             >
-              ✕ Hide Cards
+              ✕ {isSw ? 'Funga Kadi' : 'Hide Cards'}
             </button>
           )}
         </div>
@@ -118,7 +123,7 @@ export function StockIngredientSlideSelector({
           <span>🔍</span>
           <input
             type="text"
-            placeholder="Search ingredients by name, bin, category, or code..."
+            placeholder={isSw ? 'Tafuta viungo kwa jina, sehemu, aina, au msimbo...' : 'Search ingredients by name, bin, category, or code...'}
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ width: '100%', fontSize: 13 }}
@@ -169,7 +174,7 @@ export function StockIngredientSlideSelector({
                 }}
               >
                 <span>{icon}</span>
-                <span>{cat}</span>
+                <span>{cat === 'All' && isSw ? 'Vyote' : cat}</span>
               </button>
             );
           })}
@@ -181,8 +186,8 @@ export function StockIngredientSlideSelector({
         {filteredItems.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--mut)' }}>
             <span style={{ fontSize: 36, display: 'block', marginBottom: 8 }}>🔍</span>
-            <b>No matching stock ingredients found</b>
-            <p style={{ fontSize: 13, marginTop: 4 }}>Try clearing search keywords or choosing another category.</p>
+            <b>{isSw ? 'Hakuna viungo vilivyopatikana' : 'No matching stock ingredients found'}</b>
+            <p style={{ fontSize: 13, marginTop: 4 }}>{isSw ? 'Jaribu kubadilisha utafutaji au chagua aina nyingine.' : 'Try clearing search keywords or choosing another category.'}</p>
             <button
               type="button"
               className="btn sm ghost"
@@ -193,7 +198,7 @@ export function StockIngredientSlideSelector({
                 setStockStatusFilter('all');
               }}
             >
-              Reset Filters
+              {isSw ? 'Safisha Vichujio' : 'Reset Filters'}
             </button>
           </div>
         ) : (
@@ -242,7 +247,7 @@ export function StockIngredientSlideSelector({
                           </b>
                           {isSelected && (
                             <span className="stock-selected-badge">
-                              ✓ Selected
+                              ✓ {isSw ? 'Imechaguliwa' : 'Selected'}
                             </span>
                           )}
                         </div>
@@ -261,7 +266,7 @@ export function StockIngredientSlideSelector({
                             {item.cat}
                           </span>
                           <span style={{ fontSize: 11, color: 'var(--mut)' }}>
-                            📍 {item.loc || 'Main Store'}
+                            📍 {item.loc || (isSw ? 'Stoo Kuu' : 'Main Store')}
                           </span>
                         </div>
                       </div>
@@ -282,15 +287,15 @@ export function StockIngredientSlideSelector({
                       }}
                     >
                       <div>
-                        <small style={{ color: 'var(--mut)', display: 'block', fontSize: 10 }}>Store</small>
+                        <small style={{ color: 'var(--mut)', display: 'block', fontSize: 10 }}>{isSw ? 'Stoo' : 'Store'}</small>
                         <b style={{ color: 'var(--tx)' }}>{fmtNum(locs.storeQty)} {item.uom}</b>
                       </div>
                       <div>
-                        <small style={{ color: 'var(--mut)', display: 'block', fontSize: 10 }}>Kitchen</small>
+                        <small style={{ color: 'var(--mut)', display: 'block', fontSize: 10 }}>{isSw ? 'Jikoni' : 'Kitchen'}</small>
                         <b style={{ color: 'var(--tx)' }}>{fmtNum(locs.kitchenQty)} {item.uom}</b>
                       </div>
                       <div>
-                        <small style={{ color: 'var(--mut)', display: 'block', fontSize: 10 }}>Total Stock</small>
+                        <small style={{ color: 'var(--mut)', display: 'block', fontSize: 10 }}>{isSw ? 'Jumla Stoo' : 'Total Stock'}</small>
                         <b style={{ color: isLow ? '#C2410C' : 'var(--g)', fontWeight: 800 }}>
                           {fmtNum(item.onHand)} {item.uom}
                         </b>
@@ -300,7 +305,7 @@ export function StockIngredientSlideSelector({
                     {/* Financial Cost & Status Row */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, marginBottom: 8 }}>
                       <div>
-                        <small style={{ color: 'var(--mut)', display: 'block', fontSize: 10 }}>Unit Cost</small>
+                        <small style={{ color: 'var(--mut)', display: 'block', fontSize: 10 }}>{isSw ? 'Gharama' : 'Unit Cost'}</small>
                         <b style={{ color: 'var(--tx)' }}>{fmt(item.unitCost)} / {item.uom}</b>
                       </div>
 
@@ -314,7 +319,7 @@ export function StockIngredientSlideSelector({
                             color: isLow ? '#C2410C' : '#15803D'
                           }}
                         >
-                          {isLow ? `Low (PAR ${item.par})` : `Optimal`}
+                          {isLow ? (isSw ? `Chini (PAR ${item.par})` : `Low (PAR ${item.par})`) : (isSw ? 'Bora' : 'Optimal')}
                         </span>
                       </div>
                     </div>
@@ -337,7 +342,7 @@ export function StockIngredientSlideSelector({
                       onSelect(item);
                     }}
                   >
-                    {isSelected ? '✓ Chosen for Recipe / Tender' : 'Select This Ingredient →'}
+                    {isSelected ? (isSw ? '✓ Imechaguliwa kwa Mapishi' : '✓ Chosen for Recipe / Tender') : (isSw ? 'Chagua Kiungo Hiki →' : 'Select This Ingredient →')}
                   </button>
                 </div>
               );

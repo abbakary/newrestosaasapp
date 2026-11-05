@@ -3,8 +3,9 @@ import { Ctx } from '../store';
 import { SaaS } from '../saasStore';
 import { fmt, USERS } from '../data';
 import { BIZ_TYPES, REGIONS, MODULE_CATALOG, PAY_METHODS, planOf, calcInvoice, slugify, limitTxt } from '../data_saas';
+import { LanguageToggle } from '../components/ui';
 
-const STEPS = [
+const STEPS_EN = [
   ['Your account',  'Owner details & password'],
   ['Your business', 'Name, location & web address'],
   ['Operations',    'Outlets, tables & order types'],
@@ -13,10 +14,25 @@ const STEPS = [
   ['Review',        'Confirm & create'],
 ];
 
-const ORDER_TYPES = [
+const STEPS_SW = [
+  ['Akaunti Yako',  'Taarifa za mmiliki na nenosiri'],
+  ['Biashara Yako', 'Jina, eneo na anwani ya tovuti'],
+  ['Uendeshaji',    'Matawi, meza na aina za oda'],
+  ['Kifurushi',     'Chagua mpango unaokufaa'],
+  ['Malipo',        'Jaribio la bure au lipa sasa'],
+  ['Hakiki',        'Thibitisha na ufungue'],
+];
+
+const ORDER_TYPES_EN = [
   ['dine-in',  '🍽️', 'Dine-in'],
   ['takeaway', '🥡', 'Takeaway'],
   ['delivery', '🛵', 'Delivery'],
+];
+
+const ORDER_TYPES_SW = [
+  ['dine-in',  '🍽️', 'Kula Mezani'],
+  ['takeaway', '🥡', 'Kuchukua Nje'],
+  ['delivery', '🛵', 'Usafirishaji'],
 ];
 
 const normPhone = p => p.replace(/[\s\-]/g, '').replace(/^\+?255/, '0');
@@ -36,8 +52,11 @@ function pwStrength(pw) {
    6-step registration wizard
    ───────────────────────────────────────────────────────── */
 function Wizard({ done, back, goLogin }) {
-  const { S, A }   = useContext(Ctx);
+  const { S, A, lang } = useContext(Ctx);
   const { SS, SA } = useContext(SaaS);
+  const isSw = (lang || 'sw') === 'sw';
+  const STEPS = isSw ? STEPS_SW : STEPS_EN;
+  const ORDER_TYPES = isSw ? ORDER_TYPES_SW : ORDER_TYPES_EN;
 
   const pick = useMemo(() => {
     try { return JSON.parse(sessionStorage.getItem('resto_plan_pick')) || {}; } catch { return {}; }
@@ -83,23 +102,23 @@ function Wizard({ done, back, goLogin }) {
 
   const validate = n => {
     if (n === 0) {
-      if (f.ownerName.trim().split(/\s+/).length < 2) return 'Enter your full name (first and last name).';
-      if (!PHONE_RE.test(phone))  return 'Enter a valid mobile number, e.g. 0712 345 678.';
-      if (phoneTaken)              return 'This phone number is already registered. Log in instead.';
-      if (!EMAIL_RE.test(f.email)) return 'Enter a valid email address.';
-      if (f.pw.length < 6)        return 'Password must be at least 6 characters.';
-      if (f.pw !== f.pw2)         return 'Passwords do not match.';
+      if (f.ownerName.trim().split(/\s+/).length < 2) return isSw ? 'Ingiza majina yako kamili (jina la kwanza na la mwisho).' : 'Enter your full name (first and last name).';
+      if (!PHONE_RE.test(phone))  return isSw ? 'Ingiza namba sahihi ya simu, mf. 0712 345 678.' : 'Enter a valid mobile number, e.g. 0712 345 678.';
+      if (phoneTaken)              return isSw ? 'Namba hii ya simu tayari imesajiliwa. Ingia badala yake.' : 'This phone number is already registered. Log in instead.';
+      if (!EMAIL_RE.test(f.email)) return isSw ? 'Ingiza barua pepe sahihi.' : 'Enter a valid email address.';
+      if (f.pw.length < 6)        return isSw ? 'Nenosiri lazima liwe na angalau herufi 6.' : 'Password must be at least 6 characters.';
+      if (f.pw !== f.pw2)         return isSw ? 'Manenosiri hayafanani.' : 'Passwords do not match.';
     }
     if (n === 1) {
-      if (f.name.trim().length < 3) return 'Enter your business name.';
-      if (!f.address.trim())        return 'Enter the business address or area.';
-      if (f.slug.length < 3)        return 'Web address must be at least 3 characters.';
-      if (slugTaken)                return 'That web address is taken. Please choose another.';
+      if (f.name.trim().length < 3) return isSw ? 'Ingiza jina la biashara yako.' : 'Enter your business name.';
+      if (!f.address.trim())        return isSw ? 'Ingiza anwani au eneo la biashara.' : 'Enter the business address or area.';
+      if (f.slug.length < 3)        return isSw ? 'Anwani ya tovuti lazima iwe na angalau herufi 3.' : 'Web address must be at least 3 characters.';
+      if (slugTaken)                return isSw ? 'Anwani hiyo tayari inatumika. Tafadhali chagua nyingine.' : 'That web address is taken. Please choose another.';
     }
-    if (n === 2 && !f.orderTypes.length) return 'Select at least one order type.';
-    if (n === 3 && !plan)                return 'Choose a package.';
-    if (n === 4 && !f.trial && !f.ref.trim()) return 'Enter the transaction reference, or choose the free trial.';
-    if (n === 5 && !f.terms) return 'Please accept the terms to continue.';
+    if (n === 2 && !f.orderTypes.length) return isSw ? 'Chagua angalau aina moja ya oda.' : 'Select at least one order type.';
+    if (n === 3 && !plan)                return isSw ? 'Chagua kifurushi.' : 'Choose a package.';
+    if (n === 4 && !f.trial && !f.ref.trim()) return isSw ? 'Ingiza namba ya muamala, au chagua jaribio la bure.' : 'Enter the transaction reference, or choose the free trial.';
+    if (n === 5 && !f.terms) return isSw ? 'Tafadhali kubali vigezo na masharti ili kuendelea.' : 'Please accept the terms to continue.';
     return '';
   };
 
@@ -143,9 +162,9 @@ function Wizard({ done, back, goLogin }) {
     return (
       <div className="au-card" style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 44 }}>🚧</div>
-        <h2>Sign-ups are paused</h2>
-        <p>Please contact us on {SS.settings.supportPhone}.</p>
-        <button className="btn" onClick={back}>Back to home</button>
+        <h2>{isSw ? 'Usajili umesitishwa kwa muda' : 'Sign-ups are paused'}</h2>
+        <p>{isSw ? `Tafadhali wasiliana nasi kupitia ${SS.settings.supportPhone}.` : `Please contact us on ${SS.settings.supportPhone}.`}</p>
+        <button className="btn" onClick={back}>{isSw ? 'Rudi mwanzo' : 'Back to home'}</button>
       </div>
     );
   }
@@ -156,29 +175,30 @@ function Wizard({ done, back, goLogin }) {
     return (
       <div className="au-card au-done">
         <div className="au-tick">✓</div>
-        <h2>Welcome, {user.name.split(' ')[0]}! 🎉</h2>
-        <p>Your restaurant account <b>{t.name}</b> is ready.</p>
+        <h2>{isSw ? `Karibu, ${user.name.split(' ')[0]}! 🎉` : `Welcome, ${user.name.split(' ')[0]}! 🎉`}</h2>
+        <p>{isSw ? <>Akaunti yako ya mgahawa <b>{t.name}</b> iko tayari.</> : <>Your restaurant account <b>{t.name}</b> is ready.</>}</p>
         <div className="au-box">
-          <div><small>Customer ordering portal</small><b>{t.slug}.{SS.settings.domain}</b></div>
-          <div><small>Your login</small><b>{user.ph}</b></div>
-          <div><small>Package</small><b>{plan?.name} · {f.cycle}</b></div>
-          <div><small>Status</small><b>{payNow ? 'Awaiting payment confirmation' : `Free trial · ${plan?.trialDays} days`}</b></div>
+          <div><small>{isSw ? 'Tovuti ya wateja kuagiza' : 'Customer ordering portal'}</small><b>{t.slug}.{SS.settings.domain}</b></div>
+          <div><small>{isSw ? 'Namba yako ya kuingia' : 'Your login'}</small><b>{user.ph}</b></div>
+          <div><small>{isSw ? 'Kifurushi' : 'Package'}</small><b>{plan?.name} · {f.cycle}</b></div>
+          <div><small>{isSw ? 'Hali' : 'Status'}</small><b>{payNow ? (isSw ? 'Inasubiri uthibitisho wa malipo' : 'Awaiting payment confirmation') : (isSw ? `Jaribio la bure · siku ${plan?.trialDays}` : `Free trial · ${plan?.trialDays} days`)}</b></div>
         </div>
         {payNow && (
           <p className="au-note">
-            We received your payment reference <b>{f.ref}</b>. Our team will confirm it shortly.
-            You can already explore your workspace.
+            {isSw
+              ? <>Tumepokea namba yako ya muamala <b>{f.ref}</b>. Timu yetu itathibitisha hivi punde. Unaweza kuanza kutumia mfumo wako sasa.</>
+              : <>We received your payment reference <b>{f.ref}</b>. Our team will confirm it shortly. You can already explore your workspace.</>}
           </p>
         )}
         <div className="au-todo">
-          <b>Next steps</b>
+          <b>{isSw ? 'Hatua zinazofuata' : 'Next steps'}</b>
           <ol>
-            <li>Open your dashboard and add your menu and tables.</li>
-            <li>Add your staff: waiters, cashier, chef and storekeeper.</li>
-            <li>Print the table QR codes so guests can order from their phones.</li>
+            <li>{isSw ? 'Fungua dashibodi yako na uongeze menyu na meza zako.' : 'Open your dashboard and add your menu and tables.'}</li>
+            <li>{isSw ? 'Ongeza wafanyakazi wako: wahudumu, keshia, mpishi na mtunza stoo.' : 'Add your staff: waiters, cashier, chef and storekeeper.'}</li>
+            <li>{isSw ? 'Chapisha misimbo ya QR ya meza ili wageni waagize kutoka kwenye simu zao.' : 'Print the table QR codes so guests can order from their phones.'}</li>
           </ol>
         </div>
-        <button className="btn" onClick={() => done(user)}>Enter my dashboard →</button>
+        <button className="btn" onClick={() => done(user)}>{isSw ? 'Ingia kwenye dashibodi yangu →' : 'Enter my dashboard →'}</button>
       </div>
     );
   }
@@ -189,8 +209,11 @@ function Wizard({ done, back, goLogin }) {
     <div className="au-wiz">
       {/* left rail */}
       <aside className="au-rail">
-        <button className="au-back" onClick={back}>‹ Home</button>
-        <h3>Create your restaurant account</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <button className="au-back" onClick={back}>‹ {isSw ? 'Mwanzo' : 'Home'}</button>
+          <LanguageToggle isLight={true} />
+        </div>
+        <h3>{isSw ? 'Fungua akaunti ya mgahawa wako' : 'Create your restaurant account'}</h3>
         <ol>
           {STEPS.map(([t, d], i) => (
             <li key={t} className={i === step ? 'on' : i < step ? 'ok' : ''}>
@@ -200,38 +223,38 @@ function Wizard({ done, back, goLogin }) {
           ))}
         </ol>
         <div className="au-rail-foot">
-          Already have an account? <button onClick={goLogin}>Log in</button>
+          {isSw ? 'Tayari una akaunti?' : 'Already have an account?'} <button onClick={goLogin}>{isSw ? 'Ingia' : 'Log in'}</button>
         </div>
       </aside>
 
       {/* main pane */}
       <section className="au-pane">
         <div className="au-prog"><i style={{ width: ((step + 1) / STEPS.length) * 100 + '%' }} /></div>
-        <small className="au-stepno">Step {step + 1} of {STEPS.length}</small>
+        <small className="au-stepno">{isSw ? `Hatua ya ${step + 1} kati ya ${STEPS.length}` : `Step ${step + 1} of ${STEPS.length}`}</small>
         <h2>{si[0]}</h2>
 
         {/* ── Step 0: Account ── */}
         {step === 0 && (
           <div className="au-fields">
-            <label>Full name
-              <input className="inp" autoFocus value={f.ownerName} onChange={e => set('ownerName', e.target.value)} placeholder="e.g. Amina Juma" />
+            <label>{isSw ? 'Jina kamili' : 'Full name'}
+              <input className="inp" autoFocus value={f.ownerName} onChange={e => set('ownerName', e.target.value)} placeholder={isSw ? 'mf. Amina Juma' : 'e.g. Amina Juma'} />
             </label>
-            <label>Mobile number <small>(this is your login)</small>
+            <label>{isSw ? 'Namba ya simu' : 'Mobile number'} <small>({isSw ? 'hii ndiyo namba ya kuingia' : 'this is your login'})</small>
               <input className="inp" inputMode="tel" value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="0712 345 678" />
             </label>
-            <label>Email address
+            <label>{isSw ? 'Barua pepe' : 'Email address'}
               <input className="inp" type="email" value={f.email} onChange={e => set('email', e.target.value)} placeholder="you@business.co.tz" />
             </label>
-            <label>Password
+            <label>{isSw ? 'Nenosiri' : 'Password'}
               <div className="au-pw">
-                <input className="inp" type={f.showPw ? 'text' : 'password'} value={f.pw} onChange={e => set('pw', e.target.value)} placeholder="At least 6 characters" />
-                <button type="button" onClick={() => set('showPw', !f.showPw)}>{f.showPw ? 'Hide' : 'Show'}</button>
+                <input className="inp" type={f.showPw ? 'text' : 'password'} value={f.pw} onChange={e => set('pw', e.target.value)} placeholder={isSw ? 'Angalau herufi 6' : 'At least 6 characters'} />
+                <button type="button" onClick={() => set('showPw', !f.showPw)}>{f.showPw ? (isSw ? 'Ficha' : 'Hide') : (isSw ? 'Onyesha' : 'Show')}</button>
               </div>
               <div className="au-meter">
                 <i style={{ width: pwStrength(f.pw) * 25 + '%', background: ['#dc2626','#dc2626','#f59e0b','#16a34a','#15803d'][pwStrength(f.pw)] }} />
               </div>
             </label>
-            <label>Confirm password
+            <label>{isSw ? 'Thibitisha nenosiri' : 'Confirm password'}
               <input className="inp" type={f.showPw ? 'text' : 'password'} value={f.pw2} onChange={e => set('pw2', e.target.value)} />
             </label>
           </div>
@@ -240,40 +263,40 @@ function Wizard({ done, back, goLogin }) {
         {/* ── Step 1: Business ── */}
         {step === 1 && (
           <div className="au-fields">
-            <label>Business name
+            <label>{isSw ? 'Jina la biashara' : 'Business name'}
               <input className="inp" autoFocus value={f.name}
                 onChange={e => {
                   const v = e.target.value;
                   setF(x => ({ ...x, name: v, slug: x.slugEdited ? x.slug : slugify(v) }));
                   setErr('');
                 }}
-                placeholder="e.g. Safari Grill & Lounge"
+                placeholder={isSw ? 'mf. Safari Grill & Lounge' : 'e.g. Safari Grill & Lounge'}
               />
             </label>
             <div className="au-2">
-              <label>Business type
+              <label>{isSw ? 'Aina ya biashara' : 'Business type'}
                 <select className="inp" value={f.bizType} onChange={e => set('bizType', e.target.value)}>
                   {BIZ_TYPES.map(b => <option key={b}>{b}</option>)}
                 </select>
               </label>
-              <label>City / region
+              <label>{isSw ? 'Mji / Mkoa' : 'City / region'}
                 <select className="inp" value={f.city} onChange={e => set('city', e.target.value)}>
                   {REGIONS.map(b => <option key={b}>{b}</option>)}
                 </select>
               </label>
             </div>
-            <label>Address / area
-              <input className="inp" value={f.address} onChange={e => set('address', e.target.value)} placeholder="e.g. Masaki, Toure Drive" />
+            <label>{isSw ? 'Anwani / Eneo' : 'Address / area'}
+              <input className="inp" value={f.address} onChange={e => set('address', e.target.value)} placeholder={isSw ? 'mf. Masaki, Toure Drive' : 'e.g. Masaki, Toure Drive'} />
             </label>
             <div className="au-2">
-              <label>TIN <small>(optional)</small>
+              <label>TIN <small>({isSw ? 'si lazima' : 'optional'})</small>
                 <input className="inp" value={f.tin} onChange={e => set('tin', e.target.value)} placeholder="123-456-789" />
               </label>
               <label className="au-check">
-                <input type="checkbox" checked={f.vat} onChange={e => set('vat', e.target.checked)} /> We are VAT registered
+                <input type="checkbox" checked={f.vat} onChange={e => set('vat', e.target.checked)} /> {isSw ? 'Tumesajiliwa na VAT' : 'We are VAT registered'}
               </label>
             </div>
-            <label>Your web address
+            <label>{isSw ? 'Anwani yako ya tovuti' : 'Your web address'}
               <div className="au-slug">
                 <input className="inp" value={f.slug}
                   onChange={e => { setF(x => ({ ...x, slug: slugify(e.target.value), slugEdited: true })); setErr(''); }}
@@ -281,9 +304,9 @@ function Wizard({ done, back, goLogin }) {
                 <span>.{SS.settings.domain}</span>
               </div>
               <small className={f.slug.length >= 3 ? (slugTaken ? 'au-bad' : 'au-good') : ''}>
-                {f.slug.length < 3 ? 'Used for your customer ordering portal.'
-                  : slugTaken ? '✕ Already taken'
-                  : '✓ Available — customers will order at ' + f.slug + '.' + SS.settings.domain}
+                {f.slug.length < 3 ? (isSw ? 'Inatumika kwa tovuti yako ya wateja kuagiza.' : 'Used for your customer ordering portal.')
+                  : slugTaken ? (isSw ? '✕ Tayari imechukuliwa' : '✕ Already taken')
+                  : (isSw ? '✓ Inapatikana — wateja wataagiza kupitia ' : '✓ Available — customers will order at ') + f.slug + '.' + SS.settings.domain}
               </small>
             </label>
           </div>
@@ -293,7 +316,7 @@ function Wizard({ done, back, goLogin }) {
         {step === 2 && (
           <div className="au-fields">
             <div className="au-3">
-              {[['outlets','Outlets',1,50], ['tables','Tables',0,500], ['staff','Staff users',1,500]].map(([k,l,mn,mx]) => (
+              {[['outlets', isSw ? 'Matawi' : 'Outlets',1,50], ['tables', isSw ? 'Meza' : 'Tables',0,500], ['staff', isSw ? 'Wafanyakazi' : 'Staff users',1,500]].map(([k,l,mn,mx]) => (
                 <div key={k} className="au-stepper">
                   <small>{l}</small>
                   <div>
@@ -306,7 +329,7 @@ function Wizard({ done, back, goLogin }) {
             </div>
 
             <div>
-              <b className="au-lbl">How do customers order?</b>
+              <b className="au-lbl">{isSw ? 'Wateja wanaagiza vipi?' : 'How do customers order?'}</b>
               <div className="au-tiles">
                 {ORDER_TYPES.map(([k, ic, l]) => (
                   <button key={k} className={f.orderTypes.includes(k) ? 'on' : ''} onClick={() => toggle('orderTypes', k)}>
@@ -317,16 +340,16 @@ function Wizard({ done, back, goLogin }) {
             </div>
 
             <div>
-              <b className="au-lbl">Which modules do you need?</b>
+              <b className="au-lbl">{isSw ? 'Unahitaji moduli zipi?' : 'Which modules do you need?'}</b>
               <div className="au-mods">
                 {MODULE_CATALOG.map(m => (
                   <label key={m.id} className={f.modules.includes(m.id) ? 'on' : ''}>
                     <input type="checkbox" checked={f.modules.includes(m.id)} onChange={() => toggle('modules', m.id)} />
-                    {m.icon} {m.label}
+                    {m.icon} {isSw && m.labelSw ? m.labelSw : m.label}
                   </label>
                 ))}
               </div>
-              <small>We use this to recommend the right package in the next step. You can change it later.</small>
+              <small>{isSw ? 'Tunatumia hii kukupendekezea kifurushi bora katika hatua inayofuata. Unaweza kubadilisha baadaye.' : 'We use this to recommend the right package in the next step. You can change it later.'}</small>
             </div>
           </div>
         )}
@@ -337,7 +360,7 @@ function Wizard({ done, back, goLogin }) {
             <div className="seg" style={{ margin: 0 }}>
               {['monthly','yearly'].map(c => (
                 <button key={c} className={f.cycle === c ? 'on' : ''} onClick={() => set('cycle', c)}>
-                  {c === 'yearly' ? 'Yearly · 2 months free' : 'Monthly'}
+                  {c === 'yearly' ? (isSw ? 'Kwa Mwaka · miezi 2 bure' : 'Yearly · 2 months free') : (isSw ? 'Kwa Mwezi' : 'Monthly')}
                 </button>
               ))}
             </div>
@@ -348,26 +371,26 @@ function Wizard({ done, back, goLogin }) {
                 const miss = missingMods(p);
                 return (
                   <button key={p.id} className={'au-plan' + (f.plan === p.id ? ' on' : '')} onClick={() => set('plan', p.id)}>
-                    {recommended?.id === p.id && <em>Recommended for you</em>}
+                    {recommended?.id === p.id && <em>{isSw ? 'Inapendekezwa kwako' : 'Recommended for you'}</em>}
                     <b>{p.name}</b><small>{p.tag}</small>
-                    <strong>{fmt(f.cycle === 'yearly' ? p.priceY : p.priceM)}<small> / {f.cycle === 'yearly' ? 'yr' : 'mo'}</small></strong>
+                    <strong>{fmt(f.cycle === 'yearly' ? p.priceY : p.priceM)}<small> / {f.cycle === 'yearly' ? (isSw ? 'mwk' : 'yr') : (isSw ? 'mwz' : 'mo')}</small></strong>
                     <ul>
-                      <li>{limitTxt(p.outlets)} outlets · {limitTxt(p.users)} users · {limitTxt(p.tables)} tables</li>
-                      <li>{p.modules.length} modules · {p.trialDays}-day trial</li>
+                      <li>{limitTxt(p.outlets)} {isSw ? 'matawi' : 'outlets'} · {limitTxt(p.users)} {isSw ? 'watumiaji' : 'users'} · {limitTxt(p.tables)} {isSw ? 'meza' : 'tables'}</li>
+                      <li>{isSw ? `Moduli ${p.modules.length} · Jaribio siku ${p.trialDays}` : `${p.modules.length} modules · ${p.trialDays}-day trial`}</li>
                     </ul>
                     {(bad || miss.length > 0) && (
-                      <span className="au-warn">{bad ? 'Below your size needs' : miss.length + ' wanted module(s) not included'}</span>
+                      <span className="au-warn">{bad ? (isSw ? 'Chini ya mahitaji yako' : 'Below your size needs') : (isSw ? `Moduli ${miss.length} hazipo` : miss.length + ' wanted module(s) not included')}</span>
                     )}
                   </button>
                 );
               })}
             </div>
 
-            <label>Promo code <small>(optional)</small>
+            <label>{isSw ? 'Msimbo wa punguzo' : 'Promo code'} <small>({isSw ? 'si lazima' : 'optional'})</small>
               <input className="inp" value={f.promo} onChange={e => set('promo', e.target.value.toUpperCase())} placeholder="WELCOME10" />
               {f.promo && (
                 <small className={promoObj ? 'au-good' : 'au-bad'}>
-                  {promoObj ? `✓ ${promoObj.pct}% off your first invoice` : '✕ Code not valid'}
+                  {promoObj ? (isSw ? `✓ Punguzo la ${promoObj.pct}% kwenye ankara yako ya kwanza` : `✓ ${promoObj.pct}% off your first invoice`) : (isSw ? '✕ Msimbo si sahihi' : '✕ Code not valid')}
                 </small>
               )}
             </label>
@@ -379,12 +402,12 @@ function Wizard({ done, back, goLogin }) {
           <div className="au-fields">
             <div className="au-opts">
               <button className={f.trial ? 'on' : ''} onClick={() => set('trial', true)}>
-                <b>🎁 Start free trial</b>
-                <small>{plan?.trialDays} days, no payment now. Pay when you are ready.</small>
+                <b>🎁 {isSw ? 'Anza jaribio la bure' : 'Start free trial'}</b>
+                <small>{isSw ? `Siku ${plan?.trialDays}, bila malipo sasa. Lipa ukiwa tayari.` : `${plan?.trialDays} days, no payment now. Pay when you are ready.`}</small>
               </button>
               <button className={!f.trial ? 'on' : ''} onClick={() => set('trial', false)}>
-                <b>💳 Pay now</b>
-                <small>Activate immediately after we confirm your payment.</small>
+                <b>💳 {isSw ? 'Lipa sasa' : 'Pay now'}</b>
+                <small>{isSw ? 'Washa akaunti mara moja baada ya kuthibitisha malipo.' : 'Activate immediately after we confirm your payment.'}</small>
               </button>
             </div>
 
@@ -392,9 +415,9 @@ function Wizard({ done, back, goLogin }) {
               <>
                 <div className="au-sum">
                   <span>{plan?.name} · {f.cycle}</span><b>{fmt(price.base)}</b>
-                  {price.disc > 0 && <><span>Promo {promoObj.code}</span><b>− {fmt(price.disc)}</b></>}
+                  {price.disc > 0 && <><span>{isSw ? 'Punguzo' : 'Promo'} {promoObj.code}</span><b>− {fmt(price.disc)}</b></>}
                   <span>VAT {SS.settings.vatPct}%</span><b>{fmt(price.vat)}</b>
-                  <span><b>Total to pay</b></span><b style={{ fontSize: 18 }}>{fmt(price.total)}</b>
+                  <span><b>{isSw ? 'Jumla ya kulipa' : 'Total to pay'}</b></span><b style={{ fontSize: 18 }}>{fmt(price.total)}</b>
                 </div>
                 <div className="tags" style={{ marginTop: 0 }}>
                   {PAY_METHODS.slice(0, 5).map(m => (
@@ -404,15 +427,15 @@ function Wizard({ done, back, goLogin }) {
                   ))}
                 </div>
                 <div className="au-box">
-                  <div><small>Send {fmt(price.total)} to</small><b>{SS.settings.payInfo[f.method]}</b></div>
+                  <div><small>{isSw ? `Tuma ${fmt(price.total)} kwenda` : `Send ${fmt(price.total)} to`}</small><b>{SS.settings.payInfo[f.method]}</b></div>
                 </div>
-                <label>Transaction ID / reference
+                <label>{isSw ? 'Namba ya Muamala / Kumbukumbu' : 'Transaction ID / reference'}
                   <input className="inp" value={f.ref} onChange={e => set('ref', e.target.value)} placeholder="e.g. QK7H2P9LM1" />
                 </label>
               </>
             )}
             {f.trial && (
-              <p className="au-note">No card or payment needed. We will remind you before the trial ends.</p>
+              <p className="au-note">{isSw ? 'Hakuna kadi wala malipo yanayohitajika. Tutakukumbusha kabla jaribio halijaisha.' : 'No card or payment needed. We will remind you before the trial ends.'}</p>
             )}
           </div>
         )}
@@ -421,20 +444,20 @@ function Wizard({ done, back, goLogin }) {
         {step === 5 && (
           <div className="au-fields">
             {[
-              [0, 'Owner',      [f.ownerName, f.phone, f.email]],
-              [1, 'Business',   [f.name + ' · ' + f.bizType, f.address + ', ' + f.city, f.slug + '.' + SS.settings.domain]],
-              [2, 'Operations', [`${f.outlets} outlet(s) · ${f.tables} tables · ${f.staff} staff`, f.orderTypes.join(', '), f.modules.length + ' module(s) requested']],
-              [3, 'Package',    [plan?.name + ' · ' + f.cycle + ' · ' + fmt(price.base), promoObj ? 'Promo ' + promoObj.code + ' applied' : 'No promo code']],
-              [4, 'Payment',    [f.trial ? `Free ${plan?.trialDays}-day trial` : 'Pay now · ' + fmt(price.total) + ' via ' + (PAY_METHODS.find(m => m.id === f.method)?.label || f.method)]],
+              [0, isSw ? 'Mmiliki' : 'Owner',      [f.ownerName, f.phone, f.email]],
+              [1, isSw ? 'Biashara' : 'Business',  [f.name + ' · ' + f.bizType, f.address + ', ' + f.city, f.slug + '.' + SS.settings.domain]],
+              [2, isSw ? 'Uendeshaji' : 'Operations', [isSw ? `Matawi ${f.outlets} · Meza ${f.tables} · Wafanyakazi ${f.staff}` : `${f.outlets} outlet(s) · ${f.tables} tables · ${f.staff} staff`, f.orderTypes.join(', '), isSw ? `Moduli ${f.modules.length} zimeombwa` : f.modules.length + ' module(s) requested']],
+              [3, isSw ? 'Kifurushi' : 'Package',  [plan?.name + ' · ' + f.cycle + ' · ' + fmt(price.base), promoObj ? (isSw ? 'Punguzo ' : 'Promo ') + promoObj.code : (isSw ? 'Hakuna msimbo wa punguzo' : 'No promo code')]],
+              [4, isSw ? 'Malipo' : 'Payment',     [f.trial ? (isSw ? `Jaribio la bure siku ${plan?.trialDays}` : `Free ${plan?.trialDays}-day trial`) : (isSw ? 'Lipa sasa · ' : 'Pay now · ') + fmt(price.total) + (isSw ? ' kupitia ' : ' via ') + (PAY_METHODS.find(m => m.id === f.method)?.label || f.method)]],
             ].map(([i, t, lines]) => (
               <div key={t} className="au-rev">
                 <div><b>{t}</b>{lines.filter(Boolean).map(l => <small key={l}>{l}</small>)}</div>
-                <button onClick={() => setStep(i)}>Edit</button>
+                <button onClick={() => setStep(i)}>{isSw ? 'Hariri' : 'Edit'}</button>
               </div>
             ))}
             <label className="au-check">
               <input type="checkbox" checked={f.terms} onChange={e => set('terms', e.target.checked)} />
-              {' '}I agree to the Terms of Service and Privacy Policy of {SS.settings.platformName}.
+              {' '}{isSw ? `Nakubaliana na Vigezo vya Huduma na Sera ya Faragha ya ${SS.settings.platformName}.` : `I agree to the Terms of Service and Privacy Policy of ${SS.settings.platformName}.`}
             </label>
           </div>
         )}
@@ -442,10 +465,10 @@ function Wizard({ done, back, goLogin }) {
         {err && <p className="err" role="alert">{err}</p>}
 
         <div className="au-nav">
-          {step > 0 ? <button className="btn ghost" onClick={prev}>‹ Back</button> : <span />}
+          {step > 0 ? <button className="btn ghost" onClick={prev}>‹ {isSw ? 'Rudi' : 'Back'}</button> : <span />}
           {step < STEPS.length - 1
-            ? <button className="btn" onClick={next}>Continue ›</button>
-            : <button className="btn o" onClick={submit}>Create my account</button>}
+            ? <button className="btn" onClick={next}>{isSw ? 'Endelea ›' : 'Continue ›'}</button>
+            : <button className="btn o" onClick={submit}>{isSw ? 'Fungua akaunti yangu' : 'Create my account'}</button>}
         </div>
       </section>
     </div>
@@ -456,8 +479,9 @@ function Wizard({ done, back, goLogin }) {
    Main Auth screen (login / wizard / customer sign-up)
    ───────────────────────────────────────────────────────── */
 export function Auth({ mode0, done, back }) {
-  const { S, A }  = useContext(Ctx);
-  const { SS }    = useContext(SaaS);
+  const { S, A, lang } = useContext(Ctx);
+  const { SS }         = useContext(SaaS);
+  const isSw = (lang || 'sw') === 'sw';
 
   const [m,   setM]   = useState(mode0 === 'login' ? 'login' : mode0 === 'customer' ? 'customer' : 'register');
   const [name, setName] = useState('');
@@ -481,19 +505,21 @@ export function Auth({ mode0, done, back }) {
     if (adm) {
       return adm.active
         ? done({ id: adm.id, role: 'superadmin', platformRole: adm.role, name: adm.name, title: adm.title })
-        : setErr('This platform account is disabled.');
+        : setErr(isSw ? 'Akaunti hii ya msimamizi imezimwa.' : 'This platform account is disabled.');
     }
 
     /* Tenant user check */
     const u = (S.users || USERS).find(x => x.ph === p && (x.pw === pw || pw === 'demo'));
-    if (!u) return setErr('Phone or password is wrong. Tap a demo account below to try.');
+    if (!u) return setErr(isSw ? 'Namba ya simu au nenosiri si sahihi. Gusa akaunti ya mfano hapa chini.' : 'Phone or password is wrong. Tap a demo account below to try.');
 
-    if (SS.settings.maintenance) return setErr('The platform is under maintenance. Please try again shortly.');
+    if (SS.settings.maintenance) return setErr(isSw ? 'Mfumo upo kwenye matengenezo. Tafadhali jaribu tena baada ya muda mfupi.' : 'The platform is under maintenance. Please try again shortly.');
 
     const tid = u.tenantId || (u.role !== 'customer' ? 't1' : null);
     const t   = tid && SS.tenants.find(x => x.id === tid);
     if (t && (t.status === 'suspended' || t.status === 'cancelled')) {
-      return setErr(`This business account is ${t.status}${t.suspendReason ? ' (' + t.suspendReason + ')' : ''}. Contact support on ${SS.settings.supportPhone}.`);
+      return setErr(isSw
+        ? `Akaunti hii ya biashara imesitishwa (${t.status})${t.suspendReason ? ' (' + t.suspendReason + ')' : ''}. Wasiliana na msaada kupitia ${SS.settings.supportPhone}.`
+        : `This business account is ${t.status}${t.suspendReason ? ' (' + t.suspendReason + ')' : ''}. Contact support on ${SS.settings.supportPhone}.`);
     }
     return done(t ? { ...u, tenantId: t.id, tenantName: t.name } : u);
   };
@@ -502,9 +528,9 @@ export function Auth({ mode0, done, back }) {
     setErr('');
     const p = normPhone(ph);
     if (!name.trim() || !PHONE_RE.test(p) || pw.length < 4) {
-      return setErr('Enter your full name, a valid phone number and a password of 4+ characters.');
+      return setErr(isSw ? 'Ingiza jina lako kamili, namba sahihi ya simu na nenosiri la angalau herufi 4.' : 'Enter your full name, a valid phone number and a password of 4+ characters.');
     }
-    if ((S.users || []).some(u => u.ph === p)) return setErr('This phone number is already registered. Log in instead.');
+    if ((S.users || []).some(u => u.ph === p)) return setErr(isSw ? 'Namba hii ya simu tayari imesajiliwa. Ingia badala yake.' : 'This phone number is already registered. Log in instead.');
     const u = { id: 'u' + Date.now(), role: 'customer', name: name.trim(), ph: p, pw, title: 'Guest Member' };
     A.addUser(u);
     done(u);
@@ -515,24 +541,29 @@ export function Auth({ mode0, done, back }) {
   return (
     <div className="au">
       <div className="au-card">
-        <button className="au-back" onClick={back}>‹ Back to home</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button className="au-back" onClick={back}>‹ {isSw ? 'Rudi mwanzo' : 'Back to home'}</button>
+          <LanguageToggle />
+        </div>
         <div className="au-logo">🍽️ {SS.settings.platformName}</div>
-        <h2>{m === 'login' ? 'Welcome back' : 'Customer sign-up'}</h2>
+        <h2>{m === 'login' ? (isSw ? 'Karibu tena' : 'Welcome back') : (isSw ? 'Usajili wa Mteja' : 'Customer sign-up')}</h2>
         <p className="au-sub">
-          {m === 'login' ? 'Log in to your restaurant workspace.' : 'Create a customer account to order and track your meals.'}
+          {m === 'login'
+            ? (isSw ? 'Ingia kwenye mfumo wa mgahawa wako.' : 'Log in to your restaurant workspace.')
+            : (isSw ? 'Fungua akaunti ya mteja ili kuagiza na kufuatilia chakula chako.' : 'Create a customer account to order and track your meals.')}
         </p>
 
         <div className="seg">
-          {[['login','Log in'], ['customer','I\'m a customer']].map(([k, l]) => (
+          {[['login', isSw ? 'Ingia' : 'Log in'], ['customer', isSw ? 'Mimi ni mteja' : 'I\'m a customer']].map(([k, l]) => (
             <button key={k} className={m === k ? 'on' : ''} onClick={() => { setM(k); setErr(''); }}>{l}</button>
           ))}
         </div>
 
         {m === 'customer' && (
-          <input className="inp" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} />
+          <input className="inp" placeholder={isSw ? 'Jina kamili' : 'Full name'} value={name} onChange={e => setName(e.target.value)} />
         )}
-        <input className="inp" placeholder="Phone number (e.g. 0713 000 222)" inputMode="tel" value={ph} onChange={e => setPh(e.target.value)} />
-        <input className="inp" placeholder="Password" type="password" value={pw}
+        <input className="inp" placeholder={isSw ? 'Namba ya simu (mf. 0713 000 222)' : 'Phone number (e.g. 0713 000 222)'} inputMode="tel" value={ph} onChange={e => setPh(e.target.value)} />
+        <input className="inp" placeholder={isSw ? 'Nenosiri' : 'Password'} type="password" value={pw}
           onChange={e => setPw(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && (m === 'login' ? login() : joinCustomer())}
         />
@@ -540,26 +571,33 @@ export function Auth({ mode0, done, back }) {
         {err && <p className="err" role="alert">{err}</p>}
 
         <button className="btn" style={{ marginTop: 10 }} onClick={m === 'login' ? login : joinCustomer}>
-          {m === 'login' ? 'Log in' : 'Create account'}
+          {m === 'login' ? (isSw ? 'Ingia' : 'Log in') : (isSw ? 'Fungua akaunti' : 'Create account')}
         </button>
 
         {m === 'login' && SS.settings.registrationOpen && (
           <p className="au-sub" style={{ textAlign: 'center', marginTop: 14 }}>
-            New restaurant? <button className="au-linkb" onClick={() => setM('register')}>Create a business account</button>
+            {isSw ? 'Mgahawa mpya?' : 'New restaurant?'} <button className="au-linkb" onClick={() => setM('register')}>{isSw ? 'Fungua akaunti ya biashara' : 'Create a business account'}</button>
           </p>
         )}
 
         {m === 'login' && (
           <div style={{ marginTop: 16 }}>
             <small style={{ fontWeight: 600, color: 'var(--mut)', display: 'block', marginBottom: 6 }}>
-              1-tap demo accounts (password "demo"):
+              {isSw ? 'Akaunti za mfano kwa kubonyeza mara moja (nenosiri "demo"):' : '1-tap demo accounts (password "demo"):'}
             </small>
             <div className="tags">
               {[
-                ['superadmin','🛡️ Super Admin'], ['billing','💰 Billing'],   ['support','🎧 Support'],
-                ['owner','🏢 Owner'],             ['manager','👔 Manager'],    ['cashier','💳 Cashier'],
-                ['waiter','🧑‍🍳 Waiter'],          ['chef','🍳 Chef'],           ['storekeeper','📦 Store'],
-                ['production','🏭 CK'],           ['customer','🍽️ Customer'],
+                ['superadmin', isSw ? '🛡️ Msimamizi Mkuu' : '🛡️ Super Admin'],
+                ['billing',    isSw ? '💰 Malipo' : '💰 Billing'],
+                ['support',    isSw ? '🎧 Msaada' : '🎧 Support'],
+                ['owner',      isSw ? '🏢 Mmiliki' : '🏢 Owner'],
+                ['manager',    isSw ? '👔 Meneja' : '👔 Manager'],
+                ['cashier',    isSw ? '💳 Keshia' : '💳 Cashier'],
+                ['waiter',     isSw ? '🧑‍🍳 Mhudumu' : '🧑‍🍳 Waiter'],
+                ['chef',       isSw ? '🍳 Mpishi' : '🍳 Chef'],
+                ['storekeeper',isSw ? '📦 Stoo' : '📦 Store'],
+                ['production', isSw ? '🏭 Uzalishaji' : '🏭 CK'],
+                ['customer',   isSw ? '🍽️ Mteja' : '🍽️ Customer'],
               ].map(([r, l]) => (
                 <button key={r} onClick={() => demo(r)}>{l}</button>
               ))}

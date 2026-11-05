@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { fmt, fmtNum, SUPPLIERS, CATEGORY_PRESETS } from '../data';
+import { Ctx } from '../store';
 
 /* ── 1. Fast Drink Purchase Modal ── */
 export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = [], suppliers = SUPPLIERS }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   if (!isOpen) return null;
 
   const drinkItems = stockList.filter(s => s.cat === 'Drinks' || s.itemType === 'direct_resale');
@@ -98,10 +101,10 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 22 }}>⚡</span>
-              <h3 style={{ margin: 0, color: '#fff', fontSize: 18, fontWeight: 700 }}>Fast Drink Purchase</h3>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: 18, fontWeight: 700 }}>{isSw ? 'Manunuzi ya Haraka ya Vinywaji' : 'Fast Drink Purchase'}</h3>
             </div>
             <small style={{ color: '#cfe8df', fontSize: 12 }}>
-              One base unit · Multi-unit conversion · Moving average cost · Direct into Main Store
+              {isSw ? 'Kipimo kimoja cha msingi · Kubadilisha vipimo · Moja kwa moja Stoo Kuu' : 'One base unit · Multi-unit conversion · Moving average cost · Direct into Main Store'}
             </small>
           </div>
           <button className="modal-close-btn" style={{ color: '#fff', background: 'rgba(255,255,255,0.2)' }} onClick={onClose}>✕</button>
@@ -111,7 +114,7 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
           {/* Step 1: Supplier */}
           <div>
             <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)', display: 'block', marginBottom: 4 }}>
-              1. Choose Supplier:
+              {isSw ? '1. Chagua Msambazaji:' : '1. Choose Supplier:'}
             </label>
             <select
               className="inp"
@@ -121,7 +124,7 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
             >
               {suppliers.map(s => (
                 <option key={s.id} value={s.id}>
-                  {s.name} ({s.terms || 'Net 15'}) {s.returnableSupported ? '· 🍾 Empty Crates Accepted' : ''}
+                  {s.name} ({s.terms || 'Net 15'}) {s.returnableSupported ? (isSw ? '· 🍾 Kreti za Kurudisha Zinakubaliwa' : '· 🍾 Empty Crates Accepted') : ''}
                 </option>
               ))}
             </select>
@@ -131,10 +134,10 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)' }}>
-                2. Select Item (Quick Pick or Search):
+                {isSw ? '2. Chagua Kinywaji (Chagua Haraka au Tafuta):' : '2. Select Item (Quick Pick or Search):'}
               </label>
               <span style={{ fontSize: 11, color: 'var(--mut)' }}>
-                Base unit: <b>{selectedItem?.baseUnit || selectedItem?.uom || 'bottle'}</b>
+                {isSw ? 'Kipimo cha msingi:' : 'Base unit:'} <b>{selectedItem?.baseUnit || selectedItem?.uom || 'bottle'}</b>
               </span>
             </div>
 
@@ -142,7 +145,7 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
               <input
                 type="text"
                 className="inp"
-                placeholder="🔍 Search drinks (Coke, Safari, Water, Wine...)"
+                placeholder={isSw ? '🔍 Tafuta vinywaji (Coke, Safari, Maji, Mvinyo...)' : '🔍 Search drinks (Coke, Safari, Water, Wine...)'}
                 value={searchFilter}
                 onChange={e => setSearchFilter(e.target.value)}
                 style={{ margin: 0, padding: '8px 12px', fontSize: 13 }}
@@ -181,7 +184,7 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
           <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 14, padding: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)' }}>
-                3. Purchase Unit (One-Tap Switch):
+                {isSw ? '3. Kipimo cha Ununuzi (Bonyeza Kubadili):' : '3. Purchase Unit (One-Tap Switch):'}
               </label>
               <span style={{ fontSize: 11.5, color: 'var(--mut)' }}>
                 1 {selectedUnit} = <b>{factor} {selectedItem?.baseUnit || 'bottles'}</b>
@@ -227,7 +230,7 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)', display: 'block', marginBottom: 4 }}>
-                Quantity ({selectedUnit}s):
+                {isSw ? `Idadi (${selectedUnit}):` : `Quantity (${selectedUnit}s):`}
               </label>
               <input
                 type="number"
@@ -246,7 +249,7 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
             </div>
             <div>
               <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)', display: 'block', marginBottom: 4 }}>
-                Price per {selectedUnit} (TSh):
+                {isSw ? `Bei kwa ${selectedUnit} (TSh):` : `Price per ${selectedUnit} (TSh):`}
               </label>
               <input
                 type="number"
@@ -272,16 +275,16 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
             }}
           >
             <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--mut)', fontWeight: 700 }}>
-              Live Conversion Preview
+              {isSw ? 'Muhtasari wa Vipimo Papo Hapo' : 'Live Conversion Preview'}
             </div>
             <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--g)', margin: '4px 0' }}>
               = {totalBaseUnits.toLocaleString()} {selectedItem?.baseUnit || 'bottles'}
             </div>
             <div style={{ fontSize: 13, color: 'var(--tx)' }}>
-              Total: <b>{fmt(totalCost)}</b> &nbsp;·&nbsp; Unit Cost: <b>{fmt(costPerBaseUnit)} / {selectedItem?.baseUnit || 'bottle'}</b>
+              {isSw ? 'Jumla:' : 'Total:'} <b>{fmt(totalCost)}</b> &nbsp;·&nbsp; {isSw ? 'Bei ya Kimoja:' : 'Unit Cost:'} <b>{fmt(costPerBaseUnit)} / {selectedItem?.baseUnit || 'bottle'}</b>
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--mut)', marginTop: 4 }}>
-              Current Main Store stock: {selectedItem?.storeQty || 0} → Will become{' '}
+              {isSw ? 'Stoo Kuu ya sasa:' : 'Current Main Store stock:'} {selectedItem?.storeQty || 0} → {isSw ? 'Itakuwa' : 'Will become'}{' '}
               <b>{((selectedItem?.storeQty || 0) + totalBaseUnits).toLocaleString()} {selectedItem?.baseUnit || 'bottles'}</b>
             </div>
           </div>
@@ -291,12 +294,12 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
             <div style={{ background: '#FFF9ED', border: '1px solid #FFE2A8', borderRadius: 12, padding: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                 <span>🍾</span>
-                <b style={{ fontSize: 13, color: '#B45309' }}>Returnable Glass Crates &amp; Empty Bottles:</b>
+                <b style={{ fontSize: 13, color: '#B45309' }}>{isSw ? 'Kreti za Kioo & Chupa Tupu za Kurudisha:' : 'Returnable Glass Crates & Empty Bottles:'}</b>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={{ fontSize: 11.5, color: '#92400E', display: 'block', marginBottom: 2 }}>
-                    Crates Received (Owed):
+                    {isSw ? 'Kreti Zilizopokelewa (Deni):' : 'Crates Received (Owed):'}
                   </label>
                   <input
                     type="number"
@@ -309,7 +312,7 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
                 </div>
                 <div>
                   <label style={{ fontSize: 11.5, color: '#92400E', display: 'block', marginBottom: 2 }}>
-                    Empty Crates Returned Now:
+                    {isSw ? 'Kreti Tupu Zilizorudishwa Sasa:' : 'Empty Crates Returned Now:'}
                   </label>
                   <input
                     type="number"
@@ -332,14 +335,14 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
               style={{ flex: 1 }}
               onClick={onClose}
             >
-              Cancel
+              {isSw ? 'Ghairi' : 'Cancel'}
             </button>
             <button
               type="submit"
               className="btn o sm"
               style={{ flex: 2, padding: '12px 18px', fontSize: 15 }}
             >
-              ⚡ Receive {totalBaseUnits} {selectedItem?.baseUnit || 'Bottles'} into Main Store
+              ⚡ {isSw ? `Pokea ${totalBaseUnits} ${selectedItem?.baseUnit || 'Chupa'} Stoo Kuu` : `Receive ${totalBaseUnits} ${selectedItem?.baseUnit || 'Bottles'} into Main Store`}
             </button>
           </div>
         </form>
@@ -350,6 +353,8 @@ export function FastDrinkPurchaseModal({ isOpen, onClose, onSave, stockList = []
 
 /* ── 2. Fast Item Setup (Spreadsheet Grid + Presets + Duplicate + CSV Import) ── */
 export function FastRegistryModal({ isOpen, onClose, onBatchSave, stockList = [] }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   if (!isOpen) return null;
 
   const [mode, setMode] = useState('grid'); // 'grid' | 'preset' | 'csv'
@@ -507,10 +512,10 @@ Uhuru Peak Mineral Water 500ml,Drinks,bottle,Carton,12,9600,2000,8`
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 22 }}>⚡</span>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Fast Item Registry &amp; Bulk Setup</h3>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{isSw ? 'Usajili wa Haraka wa Bidhaa' : 'Fast Item Registry & Bulk Setup'}</h3>
             </div>
             <small style={{ color: 'var(--mut)', fontSize: 12 }}>
-              Add 10–20 drinks in one screen · Category presets auto-fill · Instant POS link
+              {isSw ? 'Ongeza vinywaji 10–20 kwa skrini moja · Unganisha na POS papo hapo' : 'Add 10–20 drinks in one screen · Category presets auto-fill · Instant POS link'}
             </small>
           </div>
           <button className="modal-close-btn" onClick={onClose}>✕</button>
@@ -519,9 +524,9 @@ Uhuru Peak Mineral Water 500ml,Drinks,bottle,Carton,12,9600,2000,8`
         {/* Sub-modes */}
         <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', background: 'var(--bg)', padding: '0 18px' }}>
           {[
-            ['grid', '📊 Spreadsheet Grid Entry (Fastest)'],
-            ['preset', '⚡ Category Preset (1-Tap Setup)'],
-            ['csv', '📁 Excel / CSV Batch Import']
+            ['grid', isSw ? '📊 Jedwali la Haraka (Haraka Zaidi)' : '📊 Spreadsheet Grid Entry (Fastest)'],
+            ['preset', isSw ? '⚡ Kiolezo cha Kundi (Bonyeza 1)' : '⚡ Category Preset (1-Tap Setup)'],
+            ['csv', isSw ? '📁 Ingiza kwa Excel / CSV' : '📁 Excel / CSV Batch Import']
           ].map(([k, l]) => (
             <button
               key={k}
@@ -546,7 +551,7 @@ Uhuru Peak Mineral Water 500ml,Drinks,bottle,Carton,12,9600,2000,8`
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <small style={{ color: 'var(--mut)', fontSize: 12.5 }}>
-                  Fill in names, prices and crates below. All items are automatically linked to POS drinks menu!
+                  {isSw ? 'Jaza majina, bei na kreti hapa chini. Bidhaa zote zitaunganishwa na menyu ya POS!' : 'Fill in names, prices and crates below. All items are automatically linked to POS drinks menu!'}
                 </small>
                 <button
                   type="button"
@@ -554,7 +559,7 @@ Uhuru Peak Mineral Water 500ml,Drinks,bottle,Carton,12,9600,2000,8`
                   style={{ fontSize: 12, padding: '4px 10px' }}
                   onClick={addGridRow}
                 >
-                  + Add Row
+                  {isSw ? '+ Ongeza Mstari' : '+ Add Row'}
                 </button>
               </div>
 
@@ -562,14 +567,14 @@ Uhuru Peak Mineral Water 500ml,Drinks,bottle,Carton,12,9600,2000,8`
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ background: 'var(--bg)', textAlign: 'left' }}>
-                      <th style={{ padding: '8px 6px' }}>Item Name</th>
-                      <th style={{ padding: '8px 6px' }}>Category Preset</th>
-                      <th style={{ padding: '8px 6px' }}>Base Unit</th>
-                      <th style={{ padding: '8px 6px' }}>Pack Unit</th>
-                      <th style={{ padding: '8px 6px' }}>Pack Cost</th>
-                      <th style={{ padding: '8px 6px' }}>Base Cost</th>
-                      <th style={{ padding: '8px 6px' }}>Selling (POS)</th>
-                      <th style={{ padding: '8px 6px' }}>Init Crates</th>
+                      <th style={{ padding: '8px 6px' }}>{isSw ? 'Jina la Bidhaa' : 'Item Name'}</th>
+                      <th style={{ padding: '8px 6px' }}>{isSw ? 'Aina / Kundi' : 'Category Preset'}</th>
+                      <th style={{ padding: '8px 6px' }}>{isSw ? 'Kipimo' : 'Base Unit'}</th>
+                      <th style={{ padding: '8px 6px' }}>{isSw ? 'Kifungashio' : 'Pack Unit'}</th>
+                      <th style={{ padding: '8px 6px' }}>{isSw ? 'Bei ya Kreti' : 'Pack Cost'}</th>
+                      <th style={{ padding: '8px 6px' }}>{isSw ? 'Bei ya Kimoja' : 'Base Cost'}</th>
+                      <th style={{ padding: '8px 6px' }}>{isSw ? 'Bei ya Kuuzia' : 'Selling (POS)'}</th>
+                      <th style={{ padding: '8px 6px' }}>{isSw ? 'Kreti za Mwanzo' : 'Init Crates'}</th>
                       <th style={{ padding: '8px 6px' }}></th>
                     </tr>
                   </thead>
@@ -582,7 +587,7 @@ Uhuru Peak Mineral Water 500ml,Drinks,bottle,Carton,12,9600,2000,8`
                             <input
                               type="text"
                               className="inp"
-                              placeholder="e.g. Fanta Passion 500ml"
+                              placeholder={isSw ? 'mf. Fanta Passion 500ml' : 'e.g. Fanta Passion 500ml'}
                               value={row.name}
                               onChange={e => updateGridRow(idx, 'name', e.target.value)}
                               style={{ margin: 0, padding: '6px 8px', fontSize: 12.5, minWidth: 140 }}
@@ -595,11 +600,11 @@ Uhuru Peak Mineral Water 500ml,Drinks,bottle,Carton,12,9600,2000,8`
                               onChange={e => updateGridRow(idx, 'preset', e.target.value)}
                               style={{ margin: 0, padding: '6px 6px', fontSize: 12 }}
                             >
-                              <option value="soda">Soda (24/crate)</option>
-                              <option value="beer">Beer (20/crate)</option>
-                              <option value="water">Water (12/carton)</option>
-                              <option value="energy">Energy Can (24/box)</option>
-                              <option value="spirits">Wine/Spirit (6/case)</option>
+                              <option value="soda">{isSw ? 'Soda (24/kreti)' : 'Soda (24/crate)'}</option>
+                              <option value="beer">{isSw ? 'Bia (20/kreti)' : 'Beer (20/crate)'}</option>
+                              <option value="water">{isSw ? 'Maji (12/katoni)' : 'Water (12/carton)'}</option>
+                              <option value="energy">{isSw ? 'Energy (24/boksi)' : 'Energy Can (24/box)'}</option>
+                              <option value="spirits">{isSw ? 'Mvinyo/Pombe Kali (6/kesi)' : 'Wine/Spirit (6/case)'}</option>
                             </select>
                           </td>
                           <td style={{ padding: '6px 4px', color: 'var(--mut)', fontSize: 12 }}>
@@ -658,10 +663,10 @@ Uhuru Peak Mineral Water 500ml,Drinks,bottle,Carton,12,9600,2000,8`
 
               <div style={{ display: 'flex', gap: 10 }}>
                 <button type="button" className="btn ghost sm" onClick={addGridRow}>
-                  + Add Another Drink Row
+                  {isSw ? '+ Ongeza Mstari Mwingine' : '+ Add Another Drink Row'}
                 </button>
                 <button type="button" className="btn o sm" onClick={handleSaveGrid} style={{ flex: 1 }}>
-                  ⚡ Save All {rows.filter(r => r.name.trim()).length} Drinks to Inventory &amp; POS
+                  ⚡ {isSw ? `Hifadhi Vinywaji ${rows.filter(r => r.name.trim()).length} Kwenye Stoo & POS` : `Save All ${rows.filter(r => r.name.trim()).length} Drinks to Inventory & POS`}
                 </button>
               </div>
             </div>
@@ -817,6 +822,8 @@ Water 500ml,Drinks,bottle,Carton,12,9600,2000,15`
 
 /* ── 3. Returnable Crates & Empty Bottles Tracker (Design Requirement 7) ── */
 export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIERS, onReturnEmpties }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [returnModal, setReturnModal] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState(crateLedger[0]?.supplierId || 'sup_coca');
   const [cratesToReturn, setCratesToReturn] = useState('5');
@@ -847,8 +854,8 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 24 }}>🍾</span>
             <div>
-              <small style={{ color: '#92400E', fontWeight: 600 }}>Empty Crates Owed to Suppliers</small>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#B45309' }}>{totalOwed} crates</div>
+              <small style={{ color: '#92400E', fontWeight: 600 }}>{isSw ? 'Kreti Tupu Zinazodaiwa na Wasambazaji' : 'Empty Crates Owed to Suppliers'}</small>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#B45309' }}>{totalOwed} {isSw ? 'kreti' : 'crates'}</div>
             </div>
           </div>
         </div>
@@ -857,7 +864,7 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 24 }}>💰</span>
             <div>
-              <small style={{ color: 'var(--g)', fontWeight: 600 }}>Deposit Value at Risk</small>
+              <small style={{ color: 'var(--g)', fontWeight: 600 }}>{isSw ? 'Thamani ya Dhamana ya Kreti' : 'Deposit Value at Risk'}</small>
               <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--g)' }}>{fmt(totalDepositValue)}</div>
             </div>
           </div>
@@ -868,13 +875,13 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div>
-            <b style={{ fontSize: 16 }}>Returnable Glass Crates &amp; Empties Ledger</b>
+            <b style={{ fontSize: 16 }}>{isSw ? 'Daftari la Kreti za Kioo & Chupa Tupu' : 'Returnable Glass Crates & Empties Ledger'}</b>
             <p style={{ margin: '2px 0 0', fontSize: 12.5, color: 'var(--mut)' }}>
-              Tracks full crates received vs empty crates returned to distributors (Coca-Cola, Serengeti, TBL)
+              {isSw ? 'Inafuatilia kreti zilizojaa zilizopokelewa dhidi ya kreti tupu zilizorudishwa (Coca-Cola, Serengeti, TBL)' : 'Tracks full crates received vs empty crates returned to distributors (Coca-Cola, Serengeti, TBL)'}
             </p>
           </div>
           <button className="btn sm o" onClick={() => setReturnModal(true)}>
-            🍾 Return Empties to Supplier
+            🍾 {isSw ? 'Rudisha Kreti Tupu' : 'Return Empties to Supplier'}
           </button>
         </div>
 
@@ -882,14 +889,14 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
             <thead>
               <tr style={{ background: 'var(--bg)', textAlign: 'left' }}>
-                <th style={{ padding: '9px 10px' }}>Supplier / Distributor</th>
-                <th style={{ padding: '9px 10px' }}>Drink Brand</th>
-                <th style={{ padding: '9px 10px' }}>Crates Received</th>
-                <th style={{ padding: '9px 10px' }}>Crates Returned</th>
-                <th style={{ padding: '9px 10px' }}>Net Owed</th>
-                <th style={{ padding: '9px 10px' }}>Deposit / Crate</th>
-                <th style={{ padding: '9px 10px' }}>Deposit Total</th>
-                <th style={{ padding: '9px 10px' }}>Action</th>
+                <th style={{ padding: '9px 10px' }}>{isSw ? 'Msambazaji' : 'Supplier / Distributor'}</th>
+                <th style={{ padding: '9px 10px' }}>{isSw ? 'Kinywaji' : 'Drink Brand'}</th>
+                <th style={{ padding: '9px 10px' }}>{isSw ? 'Zilizopokelewa' : 'Crates Received'}</th>
+                <th style={{ padding: '9px 10px' }}>{isSw ? 'Zilizorudishwa' : 'Crates Returned'}</th>
+                <th style={{ padding: '9px 10px' }}>{isSw ? 'Deni Lililobaki' : 'Net Owed'}</th>
+                <th style={{ padding: '9px 10px' }}>{isSw ? 'Dhamana / Kreti' : 'Deposit / Crate'}</th>
+                <th style={{ padding: '9px 10px' }}>{isSw ? 'Jumla ya Dhamana' : 'Deposit Total'}</th>
+                <th style={{ padding: '9px 10px' }}>{isSw ? 'Hatua' : 'Action'}</th>
               </tr>
             </thead>
             <tbody>
@@ -916,7 +923,7 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
                       background: item.netCratesOwed > 5 ? '#FFE0DE' : '#FFF9ED',
                       color: item.netCratesOwed > 5 ? '#C62828' : '#B45309'
                     }}>
-                      {item.netCratesOwed} crates
+                      {item.netCratesOwed} {isSw ? 'kreti' : 'crates'}
                     </span>
                   </td>
                   <td style={{ padding: '10px', color: 'var(--mut)' }}>
@@ -935,7 +942,7 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
                         setReturnModal(true);
                       }}
                     >
-                      Return
+                      {isSw ? 'Rudisha' : 'Return'}
                     </button>
                   </td>
                 </tr>
@@ -950,12 +957,12 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
         <div className="ov" onClick={() => setReturnModal(false)}>
           <div className="sh" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ margin: 0, fontSize: 16 }}>Return Empty Crates to Supplier</h3>
+              <h3 style={{ margin: 0, fontSize: 16 }}>{isSw ? 'Rudisha Kreti Tupu kwa Msambazaji' : 'Return Empty Crates to Supplier'}</h3>
               <button className="modal-close-btn" onClick={() => setReturnModal(false)}>✕</button>
             </div>
             <form onSubmit={handleReturnSubmit} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700 }}>Supplier:</label>
+                <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Msambazaji:' : 'Supplier:'}</label>
                 <select
                   className="inp"
                   value={selectedSupplierId}
@@ -968,7 +975,7 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
               </div>
 
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700 }}>Empty Crates Handed Over:</label>
+                <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Kreti Tupu Zilizokabidhiwa:' : 'Empty Crates Handed Over:'}</label>
                 <input
                   type="number"
                   min="1"
@@ -980,7 +987,7 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
               </div>
 
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700 }}>Empty Loose Bottles (Optional):</label>
+                <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Chupa Tupu Zisizo na Kreti (Hiari):' : 'Empty Loose Bottles (Optional):'}</label>
                 <input
                   type="number"
                   min="0"
@@ -991,18 +998,18 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
               </div>
 
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700 }}>Delivery Driver / Notes:</label>
+                <label style={{ fontSize: 13, fontWeight: 700 }}>{isSw ? 'Dereva / Maelezo:' : 'Delivery Driver / Notes:'}</label>
                 <input
                   type="text"
                   className="inp"
-                  placeholder="e.g. Returned with Coca-Cola truck driver"
+                  placeholder={isSw ? 'mf. Zimerudishwa na dereva wa Coca-Cola' : 'e.g. Returned with Coca-Cola truck driver'}
                   value={returnNotes}
                   onChange={e => setReturnNotes(e.target.value)}
                 />
               </div>
 
               <button type="submit" className="btn sm o" style={{ marginTop: 8 }}>
-                Confirm Return &amp; Deduct from Owed Balance
+                {isSw ? 'Thibitisha Kurudisha & Punguza Deni' : 'Confirm Return & Deduct from Owed Balance'}
               </button>
             </form>
           </div>
@@ -1014,6 +1021,8 @@ export function ReturnableCratesTracker({ crateLedger = [], suppliers = SUPPLIER
 
 /* ── 4. Stock by Location & Profit Margin Report (Design Requirement 7) ── */
 export function LocationAndProfitReportsView({ stockList = [], menu = [], orders = [] }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   const [reportTab, setReportTab] = useState('locations'); // 'locations' | 'profit' | 'variance'
 
   // Stock by location
@@ -1027,64 +1036,64 @@ export function LocationAndProfitReportsView({ stockList = [], menu = [], orders
       {/* Top Value Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
         <div className="card" style={{ background: '#E5F2EE', border: '1px solid rgba(14,90,71,0.2)' }}>
-          <small style={{ color: 'var(--g)', fontWeight: 600 }}>🏬 Main Store Stock</small>
+          <small style={{ color: 'var(--g)', fontWeight: 600 }}>🏬 {isSw ? 'Stoo ya Stoo Kuu' : 'Main Store Stock'}</small>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--g)', margin: '4px 0' }}>{fmt(totalStoreValue)}</div>
-          <small style={{ color: 'var(--mut)' }}>Central reserve &amp; bulk cases</small>
+          <small style={{ color: 'var(--mut)' }}>{isSw ? 'Akiba kuu & kreti za jumla' : 'Central reserve & bulk cases'}</small>
         </div>
 
         <div className="card" style={{ background: '#FFE9DD', border: '1px solid rgba(255,107,44,0.25)' }}>
-          <small style={{ color: 'var(--o)', fontWeight: 600 }}>🍸 Bar &amp; Counter Fridges</small>
+          <small style={{ color: 'var(--o)', fontWeight: 600 }}>🍸 {isSw ? 'Majokofu ya Baa & Kaunta' : 'Bar & Counter Fridges'}</small>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--o)', margin: '4px 0' }}>{fmt(totalBarValue)}</div>
-          <small style={{ color: 'var(--mut)' }}>Ready for immediate sale</small>
+          <small style={{ color: 'var(--mut)' }}>{isSw ? 'Tayari kwa mauzo ya papo hapo' : 'Ready for immediate sale'}</small>
         </div>
 
         <div className="card" style={{ background: '#F1DDF5', border: '1px solid rgba(142,68,173,0.2)' }}>
-          <small style={{ color: '#8E44AD', fontWeight: 600 }}>👨‍🍳 Kitchen Prep Stock</small>
+          <small style={{ color: '#8E44AD', fontWeight: 600 }}>👨‍🍳 {isSw ? 'Stoo ya Maandalizi Jikoni' : 'Kitchen Prep Stock'}</small>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#8E44AD', margin: '4px 0' }}>{fmt(totalKitchenValue)}</div>
-          <small style={{ color: 'var(--mut)' }}>Active prep &amp; cooking</small>
+          <small style={{ color: 'var(--mut)' }}>{isSw ? 'Maandalizi & mapishi' : 'Active prep & cooking'}</small>
         </div>
 
         <div className="card" style={{ background: 'var(--card)' }}>
-          <small style={{ color: 'var(--mut)', fontWeight: 600 }}>📦 Total Inventory Valuation</small>
+          <small style={{ color: 'var(--mut)', fontWeight: 600 }}>📦 {isSw ? 'Thamani Yote ya Stoo' : 'Total Inventory Valuation'}</small>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tx)', margin: '4px 0' }}>{fmt(totalInventoryValue)}</div>
-          <small style={{ color: 'var(--mut)' }}>Across all 3 locations</small>
+          <small style={{ color: 'var(--mut)' }}>{isSw ? 'Katika maeneo yote 3' : 'Across all 3 locations'}</small>
         </div>
       </div>
 
       {/* Sub Tabs */}
       <div className="seg" style={{ margin: 0 }}>
         <button className={reportTab === 'locations' ? 'on' : ''} onClick={() => setReportTab('locations')}>
-          📍 Stock by Location
+          📍 {isSw ? 'Stoo kwa Eneo' : 'Stock by Location'}
         </button>
         <button className={reportTab === 'profit' ? 'on' : ''} onClick={() => setReportTab('profit')}>
-          💰 Profit Margin per Item
+          💰 {isSw ? 'Faida kwa Kila Bidhaa' : 'Profit Margin per Item'}
         </button>
         <button className={reportTab === 'variance' ? 'on' : ''} onClick={() => setReportTab('variance')}>
-          ⚖️ Sales vs. Stock Variance
+          ⚖️ {isSw ? 'Tofauti ya Mauzo vs Stoo' : 'Sales vs. Stock Variance'}
         </button>
       </div>
 
       {/* TAB 1: Stock by Location */}
       {reportTab === 'locations' && (
         <div className="card">
-          <b style={{ fontSize: 16 }}>Location Breakdown (Main Store vs Bar vs Kitchen)</b>
+          <b style={{ fontSize: 16 }}>{isSw ? 'Mgawanyo wa Stoo (Stoo Kuu vs Baa vs Jiko)' : 'Location Breakdown (Main Store vs Bar vs Kitchen)'}</b>
           <p style={{ fontSize: 12.5, color: 'var(--mut)', margin: '2px 0 12px' }}>
-            All quantities are counted strictly in base units (bottles, cans, kg)
+            {isSw ? 'Idadi zote zinahesabiwa kwa vipimo vya msingi (chupa, kopo, kg)' : 'All quantities are counted strictly in base units (bottles, cans, kg)'}
           </p>
 
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 10px' }}>Item</th>
-                  <th style={{ padding: '8px 10px' }}>Category</th>
-                  <th style={{ padding: '8px 10px' }}>Base Unit</th>
-                  <th style={{ padding: '8px 10px' }}>Main Store</th>
-                  <th style={{ padding: '8px 10px' }}>Bar Fridge</th>
-                  <th style={{ padding: '8px 10px' }}>Kitchen</th>
-                  <th style={{ padding: '8px 10px' }}>Total On Hand</th>
-                  <th style={{ padding: '8px 10px' }}>Unit Cost</th>
-                  <th style={{ padding: '8px 10px' }}>Total Value</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Bidhaa' : 'Item'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Kundi' : 'Category'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Kipimo' : 'Base Unit'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Stoo Kuu' : 'Main Store'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Jokofu la Baa' : 'Bar Fridge'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Jikoni' : 'Kitchen'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Jumla Iliyopo' : 'Total On Hand'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Bei ya Kimoja' : 'Unit Cost'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Thamani Jumla' : 'Total Value'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1107,7 +1116,7 @@ export function LocationAndProfitReportsView({ stockList = [], menu = [], orders
                           padding: isBarLow ? '2px 6px' : 0,
                           borderRadius: 6
                         }}>
-                          {bQ} {isBarLow ? '⚠️ Low' : ''}
+                          {bQ} {isBarLow ? (isSw ? '⚠️ Chini' : '⚠️ Low') : ''}
                         </span>
                       </td>
                       <td style={{ padding: '10px', fontWeight: 600 }}>{item.kitchenQty || 0}</td>
@@ -1128,21 +1137,21 @@ export function LocationAndProfitReportsView({ stockList = [], menu = [], orders
       {/* TAB 2: Profit Margin per Item */}
       {reportTab === 'profit' && (
         <div className="card">
-          <b style={{ fontSize: 16 }}>Profit per Item &amp; Gross Margin Analysis</b>
+          <b style={{ fontSize: 16 }}>{isSw ? 'Faida kwa Kila Bidhaa & Uchambuzi wa Margin' : 'Profit per Item & Gross Margin Analysis'}</b>
           <p style={{ fontSize: 12.5, color: 'var(--mut)', margin: '2px 0 12px' }}>
-            Calculated as Selling Price minus Base Unit Cost
+            {isSw ? 'Inahesabiwa kama Bei ya Kuuzia toa Gharama ya Msingi' : 'Calculated as Selling Price minus Base Unit Cost'}
           </p>
 
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 10px' }}>Menu Item</th>
-                  <th style={{ padding: '8px 10px' }}>Linked Stock Item</th>
-                  <th style={{ padding: '8px 10px' }}>Base Cost</th>
-                  <th style={{ padding: '8px 10px' }}>Selling Price</th>
-                  <th style={{ padding: '8px 10px' }}>Gross Profit</th>
-                  <th style={{ padding: '8px 10px' }}>Margin %</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Chakula / Kinywaji' : 'Menu Item'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Bidhaa ya Stoo' : 'Linked Stock Item'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Gharama' : 'Base Cost'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Bei ya Kuuzia' : 'Selling Price'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Faida Ghafi' : 'Gross Profit'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Asilimia %' : 'Margin %'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1156,7 +1165,7 @@ export function LocationAndProfitReportsView({ stockList = [], menu = [], orders
                   return (
                     <tr key={m.id} style={{ borderBottom: '1px solid var(--line)' }}>
                       <td style={{ padding: '10px' }}>
-                        <b>{m.n}</b> {multiplier > 1 ? <span className="pill placed">Pack of {multiplier}</span> : null}
+                        <b>{m.n}</b> {multiplier > 1 ? <span className="pill placed">{isSw ? `Pakiti ya ${multiplier}` : `Pack of ${multiplier}`}</span> : null}
                       </td>
                       <td style={{ padding: '10px', color: 'var(--mut)' }}>
                         {linkedStock ? linkedStock.name : '—'}
@@ -1194,21 +1203,21 @@ export function LocationAndProfitReportsView({ stockList = [], menu = [], orders
       {/* TAB 3: Sales vs Stock Variance */}
       {reportTab === 'variance' && (
         <div className="card">
-          <b style={{ fontSize: 16 }}>Sales vs. Stock Variance Reconciliation</b>
+          <b style={{ fontSize: 16 }}>{isSw ? 'Ulinganisho wa Mauzo vs Stoo Halisi' : 'Sales vs. Stock Variance Reconciliation'}</b>
           <p style={{ fontSize: 12.5, color: 'var(--mut)', margin: '2px 0 12px' }}>
-            Theoretical Inventory = Opening + Purchases − POS Sales − Logged Spoilage
+            {isSw ? 'Stoo ya Mfumo = Mwanzo + Manunuzi − Mauzo ya POS − Uharibifu' : 'Theoretical Inventory = Opening + Purchases − POS Sales − Logged Spoilage'}
           </p>
 
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 10px' }}>Stock Item</th>
-                  <th style={{ padding: '8px 10px' }}>Base Unit</th>
-                  <th style={{ padding: '8px 10px' }}>Physical On Hand</th>
-                  <th style={{ padding: '8px 10px' }}>Theoretical</th>
-                  <th style={{ padding: '8px 10px' }}>Variance</th>
-                  <th style={{ padding: '8px 10px' }}>Status</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Bidhaa ya Stoo' : 'Stock Item'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Kipimo' : 'Base Unit'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Idadi Halisi' : 'Physical On Hand'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Idadi ya Mfumo' : 'Theoretical'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Tofauti' : 'Variance'}</th>
+                  <th style={{ padding: '8px 10px' }}>{isSw ? 'Hali' : 'Status'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1238,7 +1247,7 @@ export function LocationAndProfitReportsView({ stockList = [], menu = [], orders
                           background: isClean ? '#DDF3E4' : '#FFE0DE',
                           color: isClean ? '#15803D' : '#C62828'
                         }}>
-                          {isClean ? '✓ Balanced' : '⚠️ Discrepancy'}
+                          {isClean ? (isSw ? '✓ Sawa' : '✓ Balanced') : (isSw ? '⚠️ Tofauti' : '⚠️ Discrepancy')}
                         </span>
                       </td>
                     </tr>
@@ -1255,6 +1264,8 @@ export function LocationAndProfitReportsView({ stockList = [], menu = [], orders
 
 /* ── 5. Quick Add Menu Item Modal (On-Site under 10 seconds, marked "needs review") ── */
 export function QuickAddMenuItemModal({ isOpen, onClose, onSave, actor = 'Cashier' }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   if (!isOpen) return null;
 
   const [name, setName] = useState('');
@@ -1284,10 +1295,10 @@ export function QuickAddMenuItemModal({ isOpen, onClose, onSave, actor = 'Cashie
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 20 }}>⚡</span>
-              <h3 style={{ margin: 0, fontSize: 16, color: '#C2410C' }}>Quick Add Menu Item (&lt;10s)</h3>
+              <h3 style={{ margin: 0, fontSize: 16, color: '#C2410C' }}>{isSw ? 'Ongeza Bidhaa Haraka (<10s)' : 'Quick Add Menu Item (<10s)'}</h3>
             </div>
             <small style={{ color: '#9A3412', fontSize: 11.5 }}>
-              Goes live on POS immediately with <b>"Needs Review"</b> badge
+              {isSw ? 'Inaingia kwenye POS mara moja ikiwa na alama ya "Inasubiri Ukaguzi"' : <>Goes live on POS immediately with <b>"Needs Review"</b> badge</>}
             </small>
           </div>
           <button className="modal-close-btn" onClick={onClose}>✕</button>
@@ -1296,13 +1307,13 @@ export function QuickAddMenuItemModal({ isOpen, onClose, onSave, actor = 'Cashie
         <form onSubmit={handleSubmit} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 4 }}>
-              Item Name:
+              {isSw ? 'Jina la Bidhaa:' : 'Item Name:'}
             </label>
             <input
               type="text"
               autoFocus
               className="inp"
-              placeholder="e.g. Castle Lite Draught 500ml"
+              placeholder={isSw ? 'mf. Castle Lite Draught 500ml' : 'e.g. Castle Lite Draught 500ml'}
               value={name}
               onChange={e => setName(e.target.value)}
               required
@@ -1312,7 +1323,7 @@ export function QuickAddMenuItemModal({ isOpen, onClose, onSave, actor = 'Cashie
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
               <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                Selling Price (TSh):
+                {isSw ? 'Bei ya Kuuzia (TSh):' : 'Selling Price (TSh):'}
               </label>
               <input
                 type="number"
@@ -1325,7 +1336,7 @@ export function QuickAddMenuItemModal({ isOpen, onClose, onSave, actor = 'Cashie
             </div>
             <div>
               <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                Category:
+                {isSw ? 'Kundi:' : 'Category:'}
               </label>
               <select
                 className="inp"
@@ -1336,11 +1347,11 @@ export function QuickAddMenuItemModal({ isOpen, onClose, onSave, actor = 'Cashie
                   setStation(cat === 'Drinks' ? 'bar' : 'grill');
                 }}
               >
-                <option value="Drinks">Drinks</option>
-                <option value="Grills">Grills</option>
-                <option value="Burgers">Burgers</option>
-                <option value="Snacks">Snacks</option>
-                <option value="Desserts">Desserts</option>
+                <option value="Drinks">{isSw ? 'Vinywaji' : 'Drinks'}</option>
+                <option value="Grills">{isSw ? 'Nyama Choma' : 'Grills'}</option>
+                <option value="Burgers">{isSw ? 'Baga' : 'Burgers'}</option>
+                <option value="Snacks">{isSw ? 'Vitafunwa' : 'Snacks'}</option>
+                <option value="Desserts">{isSw ? 'Vitamu' : 'Desserts'}</option>
               </select>
             </div>
           </div>
@@ -1348,22 +1359,22 @@ export function QuickAddMenuItemModal({ isOpen, onClose, onSave, actor = 'Cashie
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
               <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                Station:
+                {isSw ? 'Kituo:' : 'Station:'}
               </label>
               <select
                 className="inp"
                 value={station}
                 onChange={e => setStation(e.target.value)}
               >
-                <option value="bar">Bar (Drink Station)</option>
-                <option value="grill">Grill / Kitchen Pass</option>
-                <option value="fry">Fry Station</option>
-                <option value="dessert">Dessert / Cold Pass</option>
+                <option value="bar">{isSw ? 'Baa (Kituo cha Vinywaji)' : 'Bar (Drink Station)'}</option>
+                <option value="grill">{isSw ? 'Jiko la Mkaa / Grill' : 'Grill / Kitchen Pass'}</option>
+                <option value="fry">{isSw ? 'Kituo cha Kukaanga' : 'Fry Station'}</option>
+                <option value="dessert">{isSw ? 'Kituo cha Vitamu' : 'Dessert / Cold Pass'}</option>
               </select>
             </div>
             <div>
               <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 4 }}>
-                Pack Multiplier:
+                {isSw ? 'Idadi kwa Pakiti:' : 'Pack Multiplier:'}
               </label>
               <input
                 type="number"
@@ -1377,11 +1388,11 @@ export function QuickAddMenuItemModal({ isOpen, onClose, onSave, actor = 'Cashie
           </div>
 
           <div style={{ background: '#FFF9ED', border: '1px solid #FFE2A8', borderRadius: 10, padding: 10, fontSize: 12, color: '#92400E' }}>
-            ℹ️ Cashiers can add items to sell immediately. A manager will review and link stock/cost later.
+            ℹ️ {isSw ? 'Keshia anaweza kuongeza bidhaa za kuuza mara moja. Meneja atakagua na kuunganisha na stoo baadaye.' : 'Cashiers can add items to sell immediately. A manager will review and link stock/cost later.'}
           </div>
 
           <button type="submit" className="btn sm o" style={{ marginTop: 4 }}>
-            ⚡ Put Live on POS Immediately
+            ⚡ {isSw ? 'Weka Kwenye POS Mara Moja' : 'Put Live on POS Immediately'}
           </button>
         </form>
       </div>
@@ -1391,6 +1402,8 @@ export function QuickAddMenuItemModal({ isOpen, onClose, onSave, actor = 'Cashie
 
 /* ── 6. Manager Review Drawer for Quick-Added Items ── */
 export function ManagerReviewModal({ isOpen, onClose, unreviewedItems = [], stockList = [], onApproveItem }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
   if (!isOpen) return null;
 
   return (
@@ -1401,11 +1414,11 @@ export function ManagerReviewModal({ isOpen, onClose, unreviewedItems = [], stoc
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 20 }}>⚠️</span>
               <h3 style={{ margin: 0, fontSize: 16, color: '#B45309' }}>
-                Review On-Site Added Items ({unreviewedItems.length})
+                {isSw ? `Kagua Bidhaa Zilizoongezwa Haraka (${unreviewedItems.length})` : `Review On-Site Added Items (${unreviewedItems.length})`}
               </h3>
             </div>
             <small style={{ color: '#92400E', fontSize: 12 }}>
-              Link inventory stock items or recipe costs to maintain control without slowing POS sales
+              {isSw ? 'Unganisha bidhaa na stoo au gharama za mapishi bila kuchelewesha mauzo ya POS' : 'Link inventory stock items or recipe costs to maintain control without slowing POS sales'}
             </small>
           </div>
           <button className="modal-close-btn" onClick={onClose}>✕</button>
@@ -1415,7 +1428,7 @@ export function ManagerReviewModal({ isOpen, onClose, unreviewedItems = [], stoc
           {unreviewedItems.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--mut)' }}>
               <div style={{ fontSize: 36 }}>✓</div>
-              <b>All quick-added items have been reviewed!</b>
+              <b>{isSw ? 'Bidhaa zote zilizoongezwa haraka zimekaguliwa!' : 'All quick-added items have been reviewed!'}</b>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1436,7 +1449,7 @@ export function ManagerReviewModal({ isOpen, onClose, unreviewedItems = [], stoc
                     <div>
                       <b style={{ fontSize: 15, color: 'var(--tx)' }}>{item.n}</b>
                       <div style={{ fontSize: 12, color: 'var(--mut)', marginTop: 2 }}>
-                        Category: <b>{item.c}</b> · Station: <b>{item.station}</b> · Added by: <b>{item.addedBy || 'Staff'}</b>
+                        {isSw ? 'Kundi:' : 'Category:'} <b>{item.c}</b> · {isSw ? 'Kituo:' : 'Station:'} <b>{item.station}</b> · {isSw ? 'Imeongezwa na:' : 'Added by:'} <b>{item.addedBy || (isSw ? 'Mfanyakazi' : 'Staff')}</b>
                       </div>
                     </div>
                     <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--g)' }}>
@@ -1451,10 +1464,10 @@ export function ManagerReviewModal({ isOpen, onClose, unreviewedItems = [], stoc
                       defaultValue={stockList.find(s => s.name.toLowerCase().includes(item.n.toLowerCase()))?.id || ''}
                       style={{ margin: 0, fontSize: 12.5, flex: 2 }}
                     >
-                      <option value="">— Link to Stock Item (or keep unlinked) —</option>
+                      <option value="">{isSw ? '— Unganisha na Bidhaa ya Stoo (au acha wazi) —' : '— Link to Stock Item (or keep unlinked) —'}</option>
                       {stockList.map(s => (
                         <option key={s.id} value={s.id}>
-                          {s.name} ({s.baseUnit || s.uom}, Cost: {fmt(s.unitCost)})
+                          {s.name} ({s.baseUnit || s.uom}, {isSw ? 'Gharama:' : 'Cost:'} {fmt(s.unitCost)})
                         </option>
                       ))}
                     </select>
@@ -1470,7 +1483,7 @@ export function ManagerReviewModal({ isOpen, onClose, unreviewedItems = [], stoc
                         });
                       }}
                     >
-                      ✓ Approve Item
+                      ✓ {isSw ? 'Idhinisha Bidhaa' : 'Approve Item'}
                     </button>
                   </div>
                 </div>

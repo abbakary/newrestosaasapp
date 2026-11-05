@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Sheet } from './ui';
+import { Ctx } from '../store';
 
 /* ── date helpers ── */
 export const dShort  = t => t ? new Date(t).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
@@ -8,40 +9,47 @@ export const daysLeft = t => t ? Math.ceil((t - Date.now()) / 86400000) : null;
 
 /* ── status colour map ── */
 const META = {
-  active:    ['Active',            '#15803d', '#dcfce7'],
-  trial:     ['Free trial',        '#1d4ed8', '#dbeafe'],
-  expired:   ['Trial expired',     '#b45309', '#fef3c7'],
-  pending:   ['Awaiting payment',  '#a16207', '#fef9c3'],
-  past_due:  ['Past due',          '#c2410c', '#ffedd5'],
-  suspended: ['Suspended',         '#b91c1c', '#fee2e2'],
-  cancelled: ['Cancelled',         '#4b5563', '#e5e7eb'],
-  paid:      ['Paid',              '#15803d', '#dcfce7'],
-  unpaid:    ['Unpaid',            '#c2410c', '#ffedd5'],
-  overdue:   ['Overdue',           '#b91c1c', '#fee2e2'],
-  void:      ['Void',              '#4b5563', '#e5e7eb'],
-  refunded:  ['Refunded',          '#7c3aed', '#ede9fe'],
-  confirmed: ['Confirmed',         '#15803d', '#dcfce7'],
-  rejected:  ['Rejected',          '#b91c1c', '#fee2e2'],
-  open:      ['Open',              '#b91c1c', '#fee2e2'],
-  resolved:  ['Resolved',          '#15803d', '#dcfce7'],
-  closed:    ['Closed',            '#4b5563', '#e5e7eb'],
-  high:      ['High',              '#b91c1c', '#fee2e2'],
-  normal:    ['Normal',            '#1d4ed8', '#dbeafe'],
-  low:       ['Low',               '#4b5563', '#e5e7eb'],
+  active:    ['Active',           'Inatumika',          '#15803d', '#dcfce7'],
+  trial:     ['Free trial',       'Jaribio la Bure',    '#1d4ed8', '#dbeafe'],
+  expired:   ['Trial expired',    'Jaribio Limeisha',   '#b45309', '#fef3c7'],
+  pending:   ['Awaiting payment', 'Inasubiri Malipo',   '#a16207', '#fef9c3'],
+  past_due:  ['Past due',         'Imechelewa Kulipwa', '#c2410c', '#ffedd5'],
+  suspended: ['Suspended',        'Imesimamishwa',      '#b91c1c', '#fee2e2'],
+  cancelled: ['Cancelled',        'Imeghairiwa',        '#4b5563', '#e5e7eb'],
+  paid:      ['Paid',             'Imelipwa',           '#15803d', '#dcfce7'],
+  unpaid:    ['Unpaid',           'Haijalipwa',         '#c2410c', '#ffedd5'],
+  overdue:   ['Overdue',          'Imepitiliza Muda',   '#b91c1c', '#fee2e2'],
+  void:      ['Void',             'Batili',             '#4b5563', '#e5e7eb'],
+  refunded:  ['Refunded',         'Imerudishwa',        '#7c3aed', '#ede9fe'],
+  confirmed: ['Confirmed',        'Imethibitishwa',     '#15803d', '#dcfce7'],
+  rejected:  ['Rejected',         'Imekataliwa',        '#b91c1c', '#fee2e2'],
+  open:      ['Open',             'Wazi',               '#b91c1c', '#fee2e2'],
+  resolved:  ['Resolved',         'Imetatuliwa',        '#15803d', '#dcfce7'],
+  closed:    ['Closed',           'Imefungwa',          '#4b5563', '#e5e7eb'],
+  high:      ['High',             'Juu',                '#b91c1c', '#fee2e2'],
+  normal:    ['Normal',           'Kawaida',            '#1d4ed8', '#dbeafe'],
+  low:       ['Low',              'Chini',              '#4b5563', '#e5e7eb'],
 };
 
 export function Badge({ s, label }) {
-  const m = META[s] || [s, '#374151', '#e5e7eb'];
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
+  const m = META[s] || [s, s, '#374151', '#e5e7eb'];
   return (
-    <span className="sa-badge" style={{ color: m[1], background: m[2] }}>
-      {label || m[0]}
+    <span className="sa-badge" style={{ color: m[2], background: m[3] }}>
+      {label || (isSw ? m[1] : m[0])}
     </span>
   );
 }
 
 /** Pending payment shows "Pending confirm" instead of "Awaiting payment" */
-export const PayBadge = ({ s }) =>
-  s === 'pending' ? <Badge s="pending" label="Pending confirm" /> : <Badge s={s} />;
+export const PayBadge = ({ s }) => {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
+  return s === 'pending'
+    ? <Badge s="pending" label={isSw ? 'Inasubiri Uthibitisho' : 'Pending confirm'} />
+    : <Badge s={s} />;
+};
 
 /** Invoice status including overdue */
 export const invStatus = i =>
@@ -77,18 +85,21 @@ export const Empty = ({ icon = '📭', text }) => (
 );
 
 /* ── confirm modal ── */
-export function Confirm({ title, msg, yes = 'Confirm', danger, onYes, onNo }) {
+export function Confirm({ title, msg, yes, danger, onYes, onNo }) {
+  const { lang } = useContext(Ctx) || {};
+  const isSw = (lang || 'sw') === 'sw';
+  const yesLabel = yes || (isSw ? 'Thibitisha' : 'Confirm');
   return (
     <Sheet title={title} onClose={onNo} maxWidth={420}>
       <p style={{ marginTop: 0 }}>{msg}</p>
       <div className="sa-actions">
-        <button className="btn ghost sm" onClick={onNo}>Cancel</button>
+        <button className="btn ghost sm" onClick={onNo}>{isSw ? 'Ghairi' : 'Cancel'}</button>
         <button
           className="btn sm"
           style={danger ? { background: '#dc2626' } : null}
           onClick={onYes}
         >
-          {yes}
+          {yesLabel}
         </button>
       </div>
     </Sheet>

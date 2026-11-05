@@ -1,10 +1,11 @@
 import React, { useState, useContext, useEffect, useMemo } from 'react';
 import { M, fmtTime, fmt, USERS } from '../data';
 import { Ctx } from '../store';
-import { Sheet } from '../components/ui';
+import { Sheet, LanguageToggle } from '../components/ui';
 
 export function KDS({ sess, out, setSess, setV }) {
-  const { S, A } = useContext(Ctx);
+  const { S, A, lang, getMenuName } = useContext(Ctx);
+  const isSw = (lang || 'sw') === 'sw';
 
   // View Mode: 'board' (3-Column Kanban matching reference image) vs 'list'
   const [viewMode, setViewMode] = useState('board');
@@ -99,15 +100,15 @@ export function KDS({ sess, out, setSess, setV }) {
 
   // Station mapping helper
   const getDishStation = (item) => {
-    if (!item) return 'Main Kitchen';
+    if (!item) return isSw ? 'Jiko Kuu' : 'Main Kitchen';
     if (item.station) return item.station;
     const cat = (item.c || '').toLowerCase();
-    if (cat.includes('drink') || cat.includes('bar')) return 'Bar & Drinks';
-    if (cat.includes('salad') || cat.includes('cold')) return 'Cold & Salad';
-    if (cat.includes('pizza') || cat.includes('oven')) return 'Pizza & Oven';
-    if (cat.includes('fry') || cat.includes('side')) return 'Fryer';
-    if (cat.includes('chinese') || cat.includes('noodle')) return 'Chinese';
-    return 'Main Kitchen';
+    if (cat.includes('drink') || cat.includes('bar')) return isSw ? 'Baa & Vinywaji' : 'Bar & Drinks';
+    if (cat.includes('salad') || cat.includes('cold')) return isSw ? 'Saladi & Baridi' : 'Cold & Salad';
+    if (cat.includes('pizza') || cat.includes('oven')) return isSw ? 'Piza & Tanuri' : 'Pizza & Oven';
+    if (cat.includes('fry') || cat.includes('side')) return isSw ? 'Kaango' : 'Fryer';
+    if (cat.includes('chinese') || cat.includes('noodle')) return isSw ? 'Tambi / Kichina' : 'Chinese';
+    return isSw ? 'Jiko Kuu' : 'Main Kitchen';
   };
 
   // Base filter for stations
@@ -390,61 +391,61 @@ export function KDS({ sess, out, setSess, setV }) {
 
 
 
-  // Format Elapsed Time Badge matching photo: "Just now", "12 min ago", "13 min ago"
+  // Format Elapsed Time Badge
   const getElapsedBadge = (order) => {
     const mins = order.elapsedMins !== undefined
       ? order.elapsedMins
       : Math.max(0, Math.round((Date.now() - (order.t || Date.now())) / 60000));
 
     if (mins <= 2) {
-      return { text: 'Just now', cls: 'green' };
+      return { text: isSw ? 'Sasa hivi' : 'Just now', cls: 'green' };
     }
     if (mins > 15) {
-      return { text: `${mins} min ago`, cls: 'red' };
+      return { text: isSw ? `Dakika ${mins} zilizopita` : `${mins} min ago`, cls: 'red' };
     }
-    return { text: `${mins} min ago`, cls: 'orange' };
+    return { text: isSw ? `Dakika ${mins} zilizopita` : `${mins} min ago`, cls: 'orange' };
   };
 
-  // Format KOT Code matching photo: "KOT-154647-2"
+  // Format KOT Code
   const getKotCode = (order, index = 0) => {
     const baseId = order.no ? String(order.no).replace('#', '') : String(order.id).slice(-6);
     return `KOT-${baseId.padStart(6, '1')}-${(index % 2) + 1}`;
   };
 
-  // Format Order & Table subtitle matching photo: "Order 002026"
+  // Format Order & Table subtitle
   const getOrderSubtitle = (order) => {
     const num = order.no ? String(order.no).replace('#', '').padStart(6, '0') : String(order.id).slice(-4).padStart(6, '0');
     const tb = order.tb ? ` · ${order.tb}` : '';
-    return `Order ${num}${tb}`;
+    return `${isSw ? 'Oda' : 'Order'} ${num}${tb}`;
   };
 
   // Status visual label & class helper
   const getStatusBadgeInfo = (st) => {
     switch (st) {
       case 'placed':
-        return { label: '🟡 New / Placed', cls: 'placed' };
+        return { label: isSw ? '🟡 Mpya / Imepokelewa' : '🟡 New / Placed', cls: 'placed' };
       case 'accepted':
-        return { label: '✓ Accepted', cls: 'accepted' };
+        return { label: isSw ? '✓ Imethibitishwa' : '✓ Accepted', cls: 'accepted' };
       case 'preparing':
-        return { label: '🔥 Cooking', cls: 'preparing' };
+        return { label: isSw ? '🔥 Inapikwa' : '🔥 Cooking', cls: 'preparing' };
       case 'ready':
-        return { label: '🟢 Ready at Pass', cls: 'ready' };
+        return { label: isSw ? '🟢 Iko Tayari' : '🟢 Ready at Pass', cls: 'ready' };
       case 'served':
-        return { label: '🍽️ Served to Table', cls: 'served' };
+        return { label: isSw ? '🍽️ Imehudumiwa Mezani' : '🍽️ Served to Table', cls: 'served' };
       case 'billreq':
-        return { label: '📄 Bill Requested', cls: 'billreq' };
+        return { label: isSw ? '📄 Bili Inaombwa' : '📄 Bill Requested', cls: 'billreq' };
       case 'paid':
-        return { label: '💰 Paid & Settled', cls: 'paid' };
+        return { label: isSw ? '💰 Imelipwa Kamili' : '💰 Paid & Settled', cls: 'paid' };
       case 'closed':
-        return { label: '📁 Closed / Archived', cls: 'closed' };
+        return { label: isSw ? '📁 Imefungwa' : '📁 Closed / Archived', cls: 'closed' };
       case 'cancelled':
-        return { label: '✕ Cancelled / Void', cls: 'cancelled' };
+        return { label: isSw ? '✕ Imeghairiwa' : '✕ Cancelled / Void', cls: 'cancelled' };
       default:
         return { label: (st || '').toUpperCase(), cls: 'closed' };
     }
   };
 
-  // Render a Single Ticket Card exactly as in reference image
+  // Render a Single Ticket Card
   const renderCard = (order, lane, index) => {
     const kotCode = getKotCode(order, index);
     const orderSub = getOrderSubtitle(order);
@@ -453,7 +454,7 @@ export function KDS({ sess, out, setSess, setV }) {
 
     // Primary station for this order
     const firstDish = (order.it && order.it[0]) ? M[order.it[0].id] : null;
-    const stationLabel = firstDish ? getDishStation(firstDish) : 'Main Kitchen';
+    const stationLabel = firstDish ? getDishStation(firstDish) : (isSw ? 'Jiko Kuu' : 'Main Kitchen');
 
     return (
       <div
@@ -496,7 +497,7 @@ export function KDS({ sess, out, setSess, setV }) {
                 title="Click to strike-through item"
               >
                 <span className={`fcx-card-item-name ${isDone ? 'done' : ''}`}>
-                  {line.q} x {item.n}
+                  {line.q} x {getMenuName ? getMenuName(item) : item.n}
                   {line.sub && <small style={{ color: '#64748B', marginLeft: 4 }}>({line.sub})</small>}
                 </span>
                 {isDone && <span style={{ color: '#16A34A', fontSize: 11, fontWeight: 800 }}>✓</span>}
@@ -513,10 +514,10 @@ export function KDS({ sess, out, setSess, setV }) {
               <button
                 className="fcx-btn-start"
                 onClick={(e) => { e.stopPropagation(); handleStart(order.id); }}
-                title="Start cooking ticket"
+                title={isSw ? 'Anza kupika tiketi' : 'Start cooking ticket'}
               >
                 <span>▶</span>
-                <span>Start</span>
+                <span>{isSw ? 'Anza' : 'Start'}</span>
               </button>
             )}
 
@@ -525,10 +526,10 @@ export function KDS({ sess, out, setSess, setV }) {
               <button
                 className="fcx-btn-ready"
                 onClick={(e) => { e.stopPropagation(); handleReady(order.id); }}
-                title="Mark ticket ready at pass"
+                title={isSw ? 'Weka tiketi tayari' : 'Mark ticket ready at pass'}
               >
                 <span>✓</span>
-                <span>Ready</span>
+                <span>{isSw ? 'Tayari' : 'Ready'}</span>
               </button>
             )}
 
@@ -537,10 +538,10 @@ export function KDS({ sess, out, setSess, setV }) {
               <button
                 className="fcx-btn-serve"
                 onClick={(e) => { e.stopPropagation(); handleServe(order.id); }}
-                title="Mark ticket served to diner"
+                title={isSw ? 'Weka imehudumiwa mezani' : 'Mark ticket served to diner'}
               >
                 <span>✓</span>
-                <span>Serve</span>
+                <span>{isSw ? 'Hudumia' : 'Serve'}</span>
               </button>
             )}
 
@@ -548,10 +549,10 @@ export function KDS({ sess, out, setSess, setV }) {
             <button
               className="fcx-btn-reprint"
               onClick={(e) => { e.stopPropagation(); setReprintOrder(order); }}
-              title="Reprint kitchen ticket slip"
+              title={isSw ? 'Chapisha tena tiketi ya jikoni' : 'Reprint kitchen ticket slip'}
             >
               <span>🖨️</span>
-              <span>Reprint</span>
+              <span>{isSw ? 'Chapisha' : 'Reprint'}</span>
             </button>
           </div>
 
@@ -580,19 +581,19 @@ export function KDS({ sess, out, setSess, setV }) {
             </div>
           </div>
 
-          {/* Single Station Dropdown (matches "All Stations ▾" in photo) */}
+          {/* Single Station Dropdown */}
           <select
             className="fcx-station-dropdown"
             value={stationFilter}
             onChange={e => setStationFilter(e.target.value)}
           >
-            <option value="all">🍴 All Stations ▾</option>
-            <option value="grill">🥩 Main Kitchen (Grill)</option>
-            <option value="fryer">🍟 Fryers &amp; Sides</option>
-            <option value="cold">🥗 Cold &amp; Salads</option>
-            <option value="bar">🍹 Bar &amp; Drinks</option>
-            <option value="chinese">🍜 Chinese / Noodles</option>
-            <option value="pizza">🍕 Pizza &amp; Oven</option>
+            <option value="all">🍴 {isSw ? 'Sehemu Zote za Jiko ▾' : 'All Stations ▾'}</option>
+            <option value="grill">🥩 {isSw ? 'Jiko Kuu (Choma / Grill)' : 'Main Kitchen (Grill)'}</option>
+            <option value="fryer">🍟 {isSw ? 'Kaango & Vyakula vya Pembeni' : 'Fryers & Sides'}</option>
+            <option value="cold">🥗 {isSw ? 'Saladi & Baridi' : 'Cold & Salads'}</option>
+            <option value="bar">🍹 {isSw ? 'Baa & Vinywaji' : 'Bar & Drinks'}</option>
+            <option value="chinese">🍜 {isSw ? 'Tambi / Kichina' : 'Chinese / Noodles'}</option>
+            <option value="pizza">🍕 {isSw ? 'Piza & Tanuri' : 'Pizza & Oven'}</option>
           </select>
         </div>
 
@@ -602,26 +603,27 @@ export function KDS({ sess, out, setSess, setV }) {
             className={`fcx-toggle-btn ${viewMode === 'board' ? 'active' : ''}`}
             onClick={() => setViewMode('board')}
           >
-            Board
+            {isSw ? 'Ubao' : 'Board'}
           </button>
           <button
             className={`fcx-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
             onClick={() => setViewMode('list')}
           >
-            List
+            {isSw ? 'Orodha' : 'List'}
           </button>
         </div>
 
         {/* Right: Sync countdown, Mute, Order History, Live Clock */}
         <div className="fcx-header-right">
+          <LanguageToggle isLight={true} />
           {/* Sync countdown button */}
           <div
             className="fcx-sync-badge"
             onClick={() => setSyncCountdown(10)}
-            title="Click to force sync now"
+            title={isSw ? 'Bonyeza kusasisha sasa' : 'Click to force sync now'}
           >
             <span>↻</span>
-            <span>Sync ({syncCountdown}s)</span>
+            <span>{isSw ? 'Sasisha' : 'Sync'} ({syncCountdown}s)</span>
           </div>
 
           {/* Sound Mute Toggle */}
@@ -631,24 +633,24 @@ export function KDS({ sess, out, setSess, setV }) {
               setSoundEnabled(!soundEnabled);
               if (!soundEnabled) playKitchenChime('chime');
             }}
-            title={soundEnabled ? 'Click to Mute Audio' : 'Click to Enable Audio'}
+            title={soundEnabled ? (isSw ? 'Zima sauti' : 'Click to Mute Audio') : (isSw ? 'Washa sauti' : 'Click to Enable Audio')}
           >
             <span>{soundEnabled ? '🔊' : '🔇'}</span>
-            <span>{soundEnabled ? 'Mute' : 'Unmuted'}</span>
+            <span>{soundEnabled ? (isSw ? 'Zima Sauti' : 'Mute') : (isSw ? 'Washa Sauti' : 'Unmuted')}</span>
           </button>
 
           {/* Served & All-Status Order History Button */}
           <button
             className="fcx-served-history-btn"
             onClick={() => setShowServedModal(true)}
-            title="View full order history and all statuses"
+            title={isSw ? 'Tazama historia yote ya oda' : 'View full order history and all statuses'}
           >
             <span>🕒</span>
-            <span>Order History</span>
+            <span>{isSw ? 'Historia ya Oda' : 'Order History'}</span>
             <span className="fcx-served-count">{orders.length}</span>
           </button>
 
-          {/* Live Clock: "11:24 AM" */}
+          {/* Live Clock */}
           <div className="fcx-clock">
             {currentTimeStr}
           </div>
@@ -657,7 +659,7 @@ export function KDS({ sess, out, setSess, setV }) {
           <button
             className="fcx-exit-btn"
             onClick={() => setShowRoleModal(true)}
-            title="Switch Workspace / Role"
+            title={isSw ? 'Badili Jukumu / Tawi' : 'Switch Workspace / Role'}
           >
             🔄
           </button>
@@ -666,14 +668,14 @@ export function KDS({ sess, out, setSess, setV }) {
 
       {/* ── MAIN CONTENT AREA ── */}
       {viewMode === 'board' ? (
-        /* 3-Column Board exactly matching Reference Image */
+        /* 3-Column Board */
         <main className="fcx-board-container">
           
           {/* 1. PENDING COLUMN */}
           <div className="fcx-column">
             <div className="fcx-col-header">
               <div className="fcx-col-title-group">
-                <span className="fcx-col-title">PENDING</span>
+                <span className="fcx-col-title">{isSw ? 'ZINAZOSUBIRI' : 'PENDING'}</span>
                 <span className="fcx-col-badge pending">{pendingOrders.length}</span>
               </div>
             </div>
@@ -681,8 +683,8 @@ export function KDS({ sess, out, setSess, setV }) {
             <div className="fcx-col-cards-scroll">
               {pendingOrders.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px 16px', color: '#64748B' }}>
-                  <b style={{ color: '#94A3B8', fontSize: 14 }}>No Pending Tickets</b>
-                  <p style={{ fontSize: 12, margin: '4px 0' }}>New incoming orders will appear here</p>
+                  <b style={{ color: '#94A3B8', fontSize: 14 }}>{isSw ? 'Hakuna Tiketi Zinazosubiri' : 'No Pending Tickets'}</b>
+                  <p style={{ fontSize: 12, margin: '4px 0' }}>{isSw ? 'Oda mpya zinazoingia zitaonekana hapa' : 'New incoming orders will appear here'}</p>
                 </div>
               ) : (
                 pendingOrders.map((o, idx) => renderCard(o, 'pending', idx))
@@ -694,7 +696,7 @@ export function KDS({ sess, out, setSess, setV }) {
           <div className="fcx-column">
             <div className="fcx-col-header">
               <div className="fcx-col-title-group">
-                <span className="fcx-col-title">PREPARING</span>
+                <span className="fcx-col-title">{isSw ? 'ZINAPIKWA' : 'PREPARING'}</span>
                 <span className="fcx-col-badge preparing">{preparingOrders.length}</span>
               </div>
             </div>
@@ -702,8 +704,8 @@ export function KDS({ sess, out, setSess, setV }) {
             <div className="fcx-col-cards-scroll">
               {preparingOrders.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px 16px', color: '#64748B' }}>
-                  <b style={{ color: '#94A3B8', fontSize: 14 }}>No Tickets Cooking</b>
-                  <p style={{ fontSize: 12, margin: '4px 0' }}>Tap Start on a pending order to cook</p>
+                  <b style={{ color: '#94A3B8', fontSize: 14 }}>{isSw ? 'Hakuna Zinazopikwa Sasa' : 'No Tickets Cooking'}</b>
+                  <p style={{ fontSize: 12, margin: '4px 0' }}>{isSw ? 'Bonyeza Anza kwenye oda inayohitaji kupikwa' : 'Tap Start on a pending order to cook'}</p>
                 </div>
               ) : (
                 preparingOrders.map((o, idx) => renderCard(o, 'preparing', idx))
@@ -715,7 +717,7 @@ export function KDS({ sess, out, setSess, setV }) {
           <div className="fcx-column">
             <div className="fcx-col-header">
               <div className="fcx-col-title-group">
-                <span className="fcx-col-title">READY</span>
+                <span className="fcx-col-title">{isSw ? 'ZIKO TAYARI' : 'READY'}</span>
                 <span className="fcx-col-badge ready">{readyOrders.length}</span>
               </div>
             </div>
@@ -723,8 +725,8 @@ export function KDS({ sess, out, setSess, setV }) {
             <div className="fcx-col-cards-scroll">
               {readyOrders.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px 16px', color: '#64748B' }}>
-                  <b style={{ color: '#94A3B8', fontSize: 14 }}>Pass is Clear</b>
-                  <p style={{ fontSize: 12, margin: '4px 0' }}>Plated dishes ready for service appear here</p>
+                  <b style={{ color: '#94A3B8', fontSize: 14 }}>{isSw ? 'Kaunta ya Kutolea Iko Wazi' : 'Pass is Clear'}</b>
+                  <p style={{ fontSize: 12, margin: '4px 0' }}>{isSw ? 'Vyakula vilivyoiva tayari kwa mezani vitaonekana hapa' : 'Plated dishes ready for service appear here'}</p>
                 </div>
               ) : (
                 readyOrders.map((o, idx) => renderCard(o, 'ready', idx))
@@ -739,14 +741,14 @@ export function KDS({ sess, out, setSess, setV }) {
           {/* Quick List Status Filter Row */}
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
             {[
-              { id: 'all', label: `All Orders (${orders.length})` },
-              { id: 'placed', label: `🟡 New (${countsByStatus.placed})` },
-              { id: 'accepted', label: `✓ Accepted (${countsByStatus.accepted})` },
-              { id: 'preparing', label: `🔥 Cooking (${countsByStatus.preparing})` },
-              { id: 'ready', label: `🟢 Ready at Pass (${countsByStatus.ready})` },
-              { id: 'served', label: `🍽️ Served (${countsByStatus.served})` },
-              { id: 'paid', label: `💰 Paid (${countsByStatus.paid})` },
-              { id: 'cancelled', label: `✕ Void (${countsByStatus.cancelled})` },
+              { id: 'all', label: isSw ? `Oda Zote (${orders.length})` : `All Orders (${orders.length})` },
+              { id: 'placed', label: isSw ? `🟡 Mpya (${countsByStatus.placed})` : `🟡 New (${countsByStatus.placed})` },
+              { id: 'accepted', label: isSw ? `✓ Imethibitishwa (${countsByStatus.accepted})` : `✓ Accepted (${countsByStatus.accepted})` },
+              { id: 'preparing', label: isSw ? `🔥 Inapikwa (${countsByStatus.preparing})` : `🔥 Cooking (${countsByStatus.preparing})` },
+              { id: 'ready', label: isSw ? `🟢 Tayari (${countsByStatus.ready})` : `🟢 Ready at Pass (${countsByStatus.ready})` },
+              { id: 'served', label: isSw ? `🍽️ Imehudumiwa (${countsByStatus.served})` : `🍽️ Served (${countsByStatus.served})` },
+              { id: 'paid', label: isSw ? `💰 Imelipwa (${countsByStatus.paid})` : `💰 Paid (${countsByStatus.paid})` },
+              { id: 'cancelled', label: isSw ? `✕ Imeghairiwa (${countsByStatus.cancelled})` : `✕ Void (${countsByStatus.cancelled})` },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -768,13 +770,13 @@ export function KDS({ sess, out, setSess, setV }) {
           <table className="fcx-table">
             <thead>
               <tr>
-                <th>KOT / Ticket</th>
-                <th>Order &amp; Table</th>
-                <th>Items Ordered</th>
-                <th>Station</th>
-                <th>Time Elapsed</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Action</th>
+                <th>{isSw ? 'KOT / Tiketi' : 'KOT / Ticket'}</th>
+                <th>{isSw ? 'Oda & Meza' : 'Order & Table'}</th>
+                <th>{isSw ? 'Vyakula Vilivyoagizwa' : 'Items Ordered'}</th>
+                <th>{isSw ? 'Sehemu' : 'Station'}</th>
+                <th>{isSw ? 'Muda' : 'Time Elapsed'}</th>
+                <th>{isSw ? 'Hali' : 'Status'}</th>
+                <th style={{ textAlign: 'right' }}>{isSw ? 'Hatua' : 'Action'}</th>
               </tr>
             </thead>
             <tbody>
@@ -786,7 +788,7 @@ export function KDS({ sess, out, setSess, setV }) {
                   const orderSub = getOrderSubtitle(o);
                   const timeBadge = getElapsedBadge(o);
                   const firstDish = (o.it && o.it[0]) ? M[o.it[0].id] : null;
-                  const station = firstDish ? getDishStation(firstDish) : 'Main Kitchen';
+                  const station = firstDish ? getDishStation(firstDish) : (isSw ? 'Jiko Kuu' : 'Main Kitchen');
                   const statusInfo = getStatusBadgeInfo(o.st);
 
                   return (
@@ -801,7 +803,7 @@ export function KDS({ sess, out, setSess, setV }) {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                           {(o.it || []).map((l, i) => (
                             <span key={i} style={{ color: '#F1F5F9' }}>
-                              <b>{l.q}x</b> {M[l.id]?.n || 'Dish'}
+                              <b>{l.q}x</b> {getMenuName ? getMenuName(M[l.id]) : (M[l.id]?.n || 'Dish')}
                             </span>
                           ))}
                         </div>
@@ -823,17 +825,17 @@ export function KDS({ sess, out, setSess, setV }) {
                         <div style={{ display: 'inline-flex', gap: 6, justifyContent: 'flex-end' }}>
                           {['placed', 'accepted'].includes(o.st) && (
                             <button className="fcx-btn-start" onClick={() => handleStart(o.id)}>
-                              ▶ Start
+                              ▶ {isSw ? 'Anza' : 'Start'}
                             </button>
                           )}
                           {o.st === 'preparing' && (
                             <button className="fcx-btn-ready" onClick={() => handleReady(o.id)}>
-                              ✓ Ready
+                              ✓ {isSw ? 'Tayari' : 'Ready'}
                             </button>
                           )}
                           {o.st === 'ready' && (
                             <button className="fcx-btn-serve" onClick={() => handleServe(o.id)}>
-                              ✓ Serve
+                              ✓ {isSw ? 'Hudumia' : 'Serve'}
                             </button>
                           )}
                           {['served', 'billreq', 'paid', 'closed', 'cancelled'].includes(o.st) && (
@@ -841,9 +843,9 @@ export function KDS({ sess, out, setSess, setV }) {
                               className="fcx-btn-reprint"
                               style={{ color: '#2563EB', fontWeight: 700 }}
                               onClick={() => handleRecall(o.id)}
-                              title="Recall ticket back to cooking line"
+                              title={isSw ? 'Rudisha tiketi jikoni' : 'Recall ticket back to cooking line'}
                             >
-                              ↺ Recall
+                              ↺ {isSw ? 'Rudisha' : 'Recall'}
                             </button>
                           )}
                           <button className="fcx-btn-reprint" onClick={() => setReprintOrder(o)}>
@@ -867,10 +869,10 @@ export function KDS({ sess, out, setSess, setV }) {
             className="fcx-bump-btn btn-bump"
             onClick={handleBump}
             disabled={!effectiveSelectedOrder}
-            title="[Space / Enter] Advance selected ticket to next stage"
+            title={isSw ? '[Space / Enter] Peleka tiketi iliyochaguliwa hatua inayofuata' : '[Space / Enter] Advance selected ticket to next stage'}
           >
             <span>⚡</span>
-            <span>BUMP</span>
+            <span>{isSw ? 'SONGEZA' : 'BUMP'}</span>
           </button>
 
           {/* 👨‍🍳 COOKING Button (Dark Forest Green) */}
@@ -878,10 +880,10 @@ export function KDS({ sess, out, setSess, setV }) {
             className="fcx-bump-btn btn-cooking"
             onClick={handleCookSelected}
             disabled={!effectiveSelectedOrder}
-            title="[C] Mark selected ticket as Cooking / Preparing"
+            title={isSw ? '[C] Weka tiketi iliyochaguliwa kuwa Inapikwa' : '[C] Mark selected ticket as Cooking / Preparing'}
           >
             <span>👨‍🍳</span>
-            <span>COOKING</span>
+            <span>{isSw ? 'INAPIKWA' : 'COOKING'}</span>
           </button>
 
           {/* ✓ READY Button (Bright Green) */}
@@ -889,10 +891,10 @@ export function KDS({ sess, out, setSess, setV }) {
             className="fcx-bump-btn btn-ready"
             onClick={handleReadySelected}
             disabled={!effectiveSelectedOrder}
-            title="[R] Mark selected ticket Ready at Pass"
+            title={isSw ? '[R] Weka tiketi iliyochaguliwa kuwa Tayari' : '[R] Mark selected ticket Ready at Pass'}
           >
             <span>✓</span>
-            <span>READY</span>
+            <span>{isSw ? 'TAYARI' : 'READY'}</span>
           </button>
 
           {/* 🍽️ SERVE Button (Teal) */}
@@ -900,20 +902,20 @@ export function KDS({ sess, out, setSess, setV }) {
             className="fcx-bump-btn btn-serve"
             onClick={handleServeSelected}
             disabled={!effectiveSelectedOrder}
-            title="[S] Mark selected ticket as Served to table"
+            title={isSw ? '[S] Weka tiketi iliyochaguliwa kuwa Imehudumiwa' : '[S] Mark selected ticket as Served to table'}
           >
             <span>🍽️</span>
-            <span>SERVE</span>
+            <span>{isSw ? 'HUDUMIA' : 'SERVE'}</span>
           </button>
 
           {/* 📊 SUMMARY Button (White) */}
           <button
             className="fcx-bump-btn btn-white"
             onClick={() => setShowSummaryModal(true)}
-            title="Show Expediter & Cooking Line Item Totals"
+            title={isSw ? 'Onyesha Muhtasari wa Vyakula Vinavyopikwa' : 'Show Expediter & Cooking Line Item Totals'}
           >
             <span>📊</span>
-            <span>SUMMARY</span>
+            <span>{isSw ? 'MUHTASARI' : 'SUMMARY'}</span>
           </button>
 
           {/* 🖨️ PRINT Button (White) */}
@@ -921,10 +923,10 @@ export function KDS({ sess, out, setSess, setV }) {
             className="fcx-bump-btn btn-white"
             onClick={handlePrintSelected}
             disabled={!effectiveSelectedOrder}
-            title="[P] Print or Reprint KOT chit for selected ticket"
+            title={isSw ? '[P] Chapisha karatasi ya jikoni (KOT)' : '[P] Print or Reprint KOT chit for selected ticket'}
           >
             <span>🖨️</span>
-            <span>PRINT</span>
+            <span>{isSw ? 'CHAPISHA' : 'PRINT'}</span>
           </button>
 
           {/* 📄 INFO Button (White) */}
@@ -932,20 +934,20 @@ export function KDS({ sess, out, setSess, setV }) {
             className="fcx-bump-btn btn-white"
             onClick={handleInfoSelected}
             disabled={!effectiveSelectedOrder}
-            title="[I] View full ticket notes, allergies and diner details"
+            title={isSw ? '[I] Tazama maelezo kamili ya tiketi na mzio' : '[I] View full ticket notes, allergies and diner details'}
           >
             <span>📄</span>
-            <span>INFO</span>
+            <span>{isSw ? 'MAELEZO' : 'INFO'}</span>
           </button>
 
           {/* ↺ RECALL Button (White) */}
           <button
             className="fcx-bump-btn btn-white"
             onClick={handleRecallLatest}
-            title="[U] Recall last served ticket back to cooking lane"
+            title={isSw ? '[U] Rudisha tiketi ya mwisho jikoni' : '[U] Recall last served ticket back to cooking lane'}
           >
             <span>↺</span>
-            <span>RECALL</span>
+            <span>{isSw ? 'RUDISHA' : 'RECALL'}</span>
           </button>
 
           {/* 🔊 MUTE Button (White) */}
@@ -955,25 +957,25 @@ export function KDS({ sess, out, setSess, setV }) {
               setSoundEnabled(!soundEnabled);
               if (!soundEnabled) playKitchenChime('chime');
             }}
-            title="[M] Mute or Unmute kitchen sound alerts"
+            title={isSw ? '[M] Zima au washa sauti ya jikoni' : '[M] Mute or Unmute kitchen sound alerts'}
           >
             <span>{soundEnabled ? '🔊' : '🔇'}</span>
-            <span>{soundEnabled ? 'MUTE' : 'UNMUTE'}</span>
+            <span>{soundEnabled ? (isSw ? 'NYAMAZISHA' : 'MUTE') : (isSw ? 'WASHA SAUTI' : 'UNMUTE')}</span>
           </button>
         </div>
 
         <div className="fcx-bump-bar-group">
           {/* Selected Ticket Indicator */}
           <div className="fcx-bump-selected-indicator">
-            <span>Ticket:</span>
+            <span>{isSw ? 'Tiketi:' : 'Ticket:'}</span>
             <b>
               {effectiveSelectedOrder
                 ? (effectiveSelectedOrder.no ? `#${String(effectiveSelectedOrder.no).replace('#', '')}` : `#${effectiveSelectedOrder.id}`)
-                : 'None'}
+                : (isSw ? 'Hakuna' : 'None')}
             </b>
             {effectiveSelectedOrder && (
               <span style={{ opacity: 0.85, fontSize: 11, background: 'rgba(255,255,255,0.12)', padding: '2px 5px', borderRadius: 4 }}>
-                {effectiveSelectedOrder.st.toUpperCase()}
+                {getStatusBadgeInfo(effectiveSelectedOrder.st).label}
               </span>
             )}
           </div>
@@ -983,10 +985,10 @@ export function KDS({ sess, out, setSess, setV }) {
             className="fcx-bump-btn btn-nav"
             onClick={handleLeft}
             disabled={activeOrders.length <= 1}
-            title="[← Left Arrow] Select previous active ticket"
+            title={isSw ? '[← Mshale Kushoto] Chagua tiketi iliyopita' : '[← Left Arrow] Select previous active ticket'}
           >
             <span>←</span>
-            <span>LEFT</span>
+            <span>{isSw ? 'KUSHOTO' : 'LEFT'}</span>
           </button>
 
           {/* RIGHT → Button */}
@@ -994,9 +996,9 @@ export function KDS({ sess, out, setSess, setV }) {
             className="fcx-bump-btn btn-nav"
             onClick={handleRight}
             disabled={activeOrders.length <= 1}
-            title="[→ Right Arrow] Select next active ticket"
+            title={isSw ? '[→ Mshale Kulia] Chagua tiketi inayofuata' : '[→ Right Arrow] Select next active ticket'}
           >
-            <span>RIGHT</span>
+            <span>{isSw ? 'KULIA' : 'RIGHT'}</span>
             <span>→</span>
           </button>
         </div>
@@ -1005,7 +1007,7 @@ export function KDS({ sess, out, setSess, setV }) {
 
       {/* ── MODAL: Order History Covering ALL Statuses in Rich Cards ── */}
       {showServedModal && (
-        <Sheet t={`All Orders & Kitchen History (${filteredHistoryOrders.length})`} c={() => setShowServedModal(false)}>
+        <Sheet t={isSw ? `Oda Zote & Historia ya Jikoni (${filteredHistoryOrders.length})` : `All Orders & Kitchen History (${filteredHistoryOrders.length})`} c={() => setShowServedModal(false)}>
           <div className="fcx-history-sheet-body">
             
             {/* Filter Controls Row */}
@@ -1013,16 +1015,16 @@ export function KDS({ sess, out, setSess, setV }) {
               {/* All Status Filter Pills */}
               <div className="fcx-history-status-pills">
                 {[
-                  { id: 'all', label: 'All Orders', count: countsByStatus.all },
-                  { id: 'new', label: '🟡 New / Placed', count: countsByStatus.placed },
-                  { id: 'accepted', label: '✓ Accepted', count: countsByStatus.accepted },
-                  { id: 'preparing', label: '🔥 Cooking', count: countsByStatus.preparing },
-                  { id: 'ready', label: '🟢 Ready at Pass', count: countsByStatus.ready },
-                  { id: 'served', label: '🍽️ Served', count: countsByStatus.served },
-                  { id: 'billreq', label: '📄 Bill Req', count: countsByStatus.billreq },
-                  { id: 'paid', label: '💰 Paid', count: countsByStatus.paid },
-                  { id: 'closed', label: '📁 Archived', count: countsByStatus.closed },
-                  { id: 'cancelled', label: '✕ Cancelled', count: countsByStatus.cancelled },
+                  { id: 'all', label: isSw ? 'Oda Zote' : 'All Orders', count: countsByStatus.all },
+                  { id: 'new', label: isSw ? '🟡 Mpya / Imetumwa' : '🟡 New / Placed', count: countsByStatus.placed },
+                  { id: 'accepted', label: isSw ? '✓ Imekubaliwa' : '✓ Accepted', count: countsByStatus.accepted },
+                  { id: 'preparing', label: isSw ? '🔥 Inapikwa' : '🔥 Cooking', count: countsByStatus.preparing },
+                  { id: 'ready', label: isSw ? '🟢 Tayari Mezani' : '🟢 Ready at Pass', count: countsByStatus.ready },
+                  { id: 'served', label: isSw ? '🍽️ Imehudumiwa' : '🍽️ Served', count: countsByStatus.served },
+                  { id: 'billreq', label: isSw ? '📄 Bili Imeombwa' : '📄 Bill Req', count: countsByStatus.billreq },
+                  { id: 'paid', label: isSw ? '💰 Imelipwa' : '💰 Paid', count: countsByStatus.paid },
+                  { id: 'closed', label: isSw ? '📁 Imefungwa' : '📁 Archived', count: countsByStatus.closed },
+                  { id: 'cancelled', label: isSw ? '✕ Imeghairiwa' : '✕ Cancelled', count: countsByStatus.cancelled },
                 ].map(pill => (
                   <button
                     key={pill.id}
@@ -1042,7 +1044,7 @@ export function KDS({ sess, out, setSess, setV }) {
                   <input
                     type="text"
                     className="fcx-history-search-inp"
-                    placeholder="Search ticket #, table, dish, server..."
+                    placeholder={isSw ? 'Tafuta namba ya tiketi, meza, chakula, mhudumu...' : 'Search ticket #, table, dish, server...'}
                     value={historySearch}
                     onChange={e => setHistorySearch(e.target.value)}
                   />
@@ -1062,11 +1064,11 @@ export function KDS({ sess, out, setSess, setV }) {
                   value={historyChannel}
                   onChange={e => setHistoryChannel(e.target.value)}
                 >
-                  <option value="ALL">All Dining Channels</option>
-                  <option value="Dine In">🍽️ Dine-In</option>
-                  <option value="Takeaway">🥡 Takeaway</option>
-                  <option value="Pickup">📦 Pickup</option>
-                  <option value="Delivery">🛵 Delivery</option>
+                  <option value="ALL">{isSw ? 'Njia Zote za Oda' : 'All Dining Channels'}</option>
+                  <option value="Dine In">{isSw ? '🍽️ Kula Hapa (Dine-In)' : '🍽️ Dine-In'}</option>
+                  <option value="Takeaway">{isSw ? '🥡 Kubeba (Takeaway)' : '🥡 Takeaway'}</option>
+                  <option value="Pickup">{isSw ? '📦 Kuchukua (Pickup)' : '📦 Pickup'}</option>
+                  <option value="Delivery">{isSw ? '🛵 Usafirishaji (Delivery)' : '🛵 Delivery'}</option>
                 </select>
 
                 <select
@@ -1075,10 +1077,10 @@ export function KDS({ sess, out, setSess, setV }) {
                   value={historySort}
                   onChange={e => setHistorySort(e.target.value)}
                 >
-                  <option value="recent">Most Recent First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="value">Highest Total Value</option>
-                  <option value="prep">Longest Prep Time</option>
+                  <option value="recent">{isSw ? 'Mpya Zaidi Kwanza' : 'Most Recent First'}</option>
+                  <option value="oldest">{isSw ? 'Za Zamani Kwanza' : 'Oldest First'}</option>
+                  <option value="value">{isSw ? 'Thamani ya Juu Zaidi' : 'Highest Total Value'}</option>
+                  <option value="prep">{isSw ? 'Muda Mrefu wa Kupika' : 'Longest Prep Time'}</option>
                 </select>
               </div>
             </div>
@@ -1087,14 +1089,14 @@ export function KDS({ sess, out, setSess, setV }) {
             {filteredHistoryOrders.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748B', background: '#F8FAFC', borderRadius: 12 }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>🔍</div>
-                <b style={{ color: '#0F172A', fontSize: 15 }}>No Orders Found</b>
-                <p style={{ fontSize: 13, margin: '4px 0 12px' }}>Try switching the status tab or clearing your search filter</p>
+                <b style={{ color: '#0F172A', fontSize: 15 }}>{isSw ? 'Hakuna Oda Zilizopatikana' : 'No Orders Found'}</b>
+                <p style={{ fontSize: 13, margin: '4px 0 12px' }}>{isSw ? 'Jaribu kubadilisha kichupo cha hali au kufuta utafutaji' : 'Try switching the status tab or clearing your search filter'}</p>
                 <button
                   className="btn sm ghost"
                   style={{ width: 'auto' }}
                   onClick={() => { setHistoryStatusTab('all'); setHistorySearch(''); setHistoryChannel('ALL'); }}
                 >
-                  Reset All Filters
+                  {isSw ? 'Weka Upya Vichujio' : 'Reset All Filters'}
                 </button>
               </div>
             ) : (
@@ -1118,7 +1120,7 @@ export function KDS({ sess, out, setSess, setV }) {
                             #{orderNum.padStart(4, '0')} · {kotCode}
                           </div>
                           <div className="fcx-hcard-sub">
-                            {channelIcon} <b>{o.tb || 'Table'}</b> ({o.orderType || 'Dine-In'})
+                            {channelIcon} <b>{o.tb || (isSw ? 'Meza' : 'Table')}</b> ({o.orderType || (isSw ? 'Kula Hapa' : 'Dine-In')})
                           </div>
                         </div>
 
@@ -1129,40 +1131,40 @@ export function KDS({ sess, out, setSess, setV }) {
 
                       {/* Meta Information Line */}
                       <div className="fcx-hcard-meta">
-                        <span>Server: <b style={{ color: '#0F172A' }}>{o.by || 'Ammie'}</b></span>
+                        <span>{isSw ? 'Mhudumu:' : 'Server:'} <b style={{ color: '#0F172A' }}>{o.by || 'Ammie'}</b></span>
                         <span>·</span>
-                        <span>Guests: {o.guests || 2}</span>
+                        <span>{isSw ? 'Wageni:' : 'Guests:'} {o.guests || 2}</span>
                         <span>·</span>
-                        <span>Placed: {fmtTime(o.t)}</span>
+                        <span>{isSw ? 'Muda:' : 'Placed:'} {fmtTime(o.t)}</span>
                         <span>·</span>
-                        <span>⏱️ {elapsedMins}m elapsed</span>
+                        <span>⏱️ {elapsedMins}{isSw ? 'dk zimepita' : 'm elapsed'}</span>
                       </div>
 
                       {/* Special Note or Cancellation Reason */}
                       {o.note && (
                         <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', padding: '6px 10px', borderRadius: 6, fontSize: 11.5, color: '#B45309', fontWeight: 600 }}>
-                          ⚠️ Note: {o.note}
+                          ⚠️ {isSw ? 'Maelezo:' : 'Note:'} {o.note}
                         </div>
                       )}
                       {o.cancelReason && (
                         <div style={{ background: '#FEF2F2', border: '1px solid #FEE2E2', padding: '6px 10px', borderRadius: 6, fontSize: 11.5, color: '#DC2626', fontWeight: 600 }}>
-                          ✕ Void Reason: {o.cancelReason}
+                          ✕ {isSw ? 'Sababu ya Kufuta:' : 'Void Reason:'} {o.cancelReason}
                         </div>
                       )}
 
                       {/* Dishes Breakdown List */}
                       <div className="fcx-hcard-items-box">
                         {(o.it || []).map((line, iIdx) => {
-                          const item = M[line.id] || { n: `Item #${line.id}`, p: 0 };
+                          const item = M[line.id] || { n: `${isSw ? 'Chakula' : 'Item'} #${line.id}`, p: 0 };
                           const linePrice = item.p * line.q;
 
                           return (
                             <div key={iIdx} className="fcx-hcard-item-row">
                               <div>
-                                <b style={{ color: '#0F172A' }}>{line.q}x</b> {item.n}
+                                <b style={{ color: '#0F172A' }}>{line.q}x</b> {getMenuName ? getMenuName(item) : item.n}
                                 {line.sub && <small style={{ color: '#64748B', marginLeft: 4 }}>({line.sub})</small>}
                                 {line.note && <small style={{ color: '#D97706', marginLeft: 4 }}>★ {line.note}</small>}
-                                {line.voided && <small style={{ color: '#EF4444', marginLeft: 4 }}>[VOIDED]</small>}
+                                {line.voided && <small style={{ color: '#EF4444', marginLeft: 4 }}>[{isSw ? 'IMEFUTWA' : 'VOIDED'}]</small>}
                               </div>
                               <span style={{ fontWeight: 600, color: '#475569' }}>
                                 {fmt(linePrice)}
@@ -1176,10 +1178,10 @@ export function KDS({ sess, out, setSess, setV }) {
                       <div className="fcx-hcard-foot">
                         <div>
                           <div className="fcx-hcard-total">
-                            Total: {fmt(totalVal)}
+                            {isSw ? 'Jumla:' : 'Total:'} {fmt(totalVal)}
                           </div>
                           <small style={{ color: '#64748B', fontSize: 11 }}>
-                            Payment: {o.paid ? '✓ Paid' : 'Pending'} ({o.pm ? o.pm.toUpperCase() : 'CASH'})
+                            {isSw ? 'Malipo:' : 'Payment:'} {o.paid ? (isSw ? '✓ Imelipwa' : '✓ Paid') : (isSw ? 'Inasubiri' : 'Pending')} ({o.pm ? o.pm.toUpperCase() : (isSw ? 'TASLIMU' : 'CASH')})
                           </small>
                         </div>
 
@@ -1194,9 +1196,9 @@ export function KDS({ sess, out, setSess, setV }) {
                                 setShowServedModal(false);
                                 setViewMode('board');
                               }}
-                              title="Recall ticket back to cooking line on KDS board"
+                              title={isSw ? 'Rudisha tiketi jikoni kwenye ubao wa KDS' : 'Recall ticket back to cooking line on KDS board'}
                             >
-                              ↺ Recall to Line
+                              ↺ {isSw ? 'Rudisha Jikoni' : 'Recall to Line'}
                             </button>
                           )}
 
@@ -1210,9 +1212,9 @@ export function KDS({ sess, out, setSess, setV }) {
                                 setShowServedModal(false);
                                 setViewMode('board');
                               }}
-                              title="Focus ticket on active kitchen board"
+                              title={isSw ? 'Tazama tiketi kwenye ubao wa jikoni' : 'Focus ticket on active kitchen board'}
                             >
-                              👁️ View on Board
+                              👁️ {isSw ? 'Tazama Ubaoni' : 'View on Board'}
                             </button>
                           )}
 
@@ -1220,9 +1222,9 @@ export function KDS({ sess, out, setSess, setV }) {
                           <button
                             className="fcx-btn-reprint"
                             onClick={() => setReprintOrder(o)}
-                            title="Print thermal kitchen order slip"
+                            title={isSw ? 'Chapisha karatasi ya jikoni' : 'Print thermal kitchen order slip'}
                           >
-                            <span>🖨️ Slip</span>
+                            <span>🖨️ {isSw ? 'Karatasi' : 'Slip'}</span>
                           </button>
                         </div>
                       </div>
@@ -1238,27 +1240,27 @@ export function KDS({ sess, out, setSess, setV }) {
 
       {/* ── MODAL: Thermal Reprint KOT Slip ── */}
       {reprintOrder && (
-        <Sheet t={`Kitchen Slip #${String(reprintOrder.no || reprintOrder.id).replace('#', '')}`} c={() => setReprintOrder(null)}>
+        <Sheet t={isSw ? `Karatasi ya Jikoni #${String(reprintOrder.no || reprintOrder.id).replace('#', '')}` : `Kitchen Slip #${String(reprintOrder.no || reprintOrder.id).replace('#', '')}`} c={() => setReprintOrder(null)}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div className="thermal-receipt-container" style={{ width: '100%', maxWidth: 340 }}>
               <div className="kot-header">
-                <span className="kot-badge">*** KITCHEN ORDER TICKET (KOT) ***</span>
-                <h2 className="kot-table-giant">{reprintOrder.tb || 'DINE-IN'}</h2>
-                <span className="kot-type-tag">{reprintOrder.orderType || 'Dine-In'} · Server: {reprintOrder.by || 'Ammie'}</span>
+                <span className="kot-badge">{isSw ? '*** TIKETI YA ODA YA JIKONI (KOT) ***' : '*** KITCHEN ORDER TICKET (KOT) ***'}</span>
+                <h2 className="kot-table-giant">{reprintOrder.tb || (isSw ? 'KULA HAPA' : 'DINE-IN')}</h2>
+                <span className="kot-type-tag">{reprintOrder.orderType || (isSw ? 'Kula Hapa' : 'Dine-In')} · {isSw ? 'Mhudumu:' : 'Server:'} {reprintOrder.by || 'Ammie'}</span>
               </div>
 
               <div style={{ borderBottom: '1px dashed #000', margin: '10px 0' }} />
 
               <div className="kot-meta-grid">
-                <div>Ticket: <b>#{String(reprintOrder.no || reprintOrder.id).replace('#', '')}</b></div>
-                <div style={{ textAlign: 'right' }}>Time: <b>{fmtTime(reprintOrder.t)}</b></div>
-                <div>Guests: <b>{reprintOrder.guests || 2}</b></div>
-                <div style={{ textAlign: 'right' }}>Status: <b>{reprintOrder.st.toUpperCase()}</b></div>
+                <div>{isSw ? 'Tiketi:' : 'Ticket:'} <b>#{String(reprintOrder.no || reprintOrder.id).replace('#', '')}</b></div>
+                <div style={{ textAlign: 'right' }}>{isSw ? 'Muda:' : 'Time:'} <b>{fmtTime(reprintOrder.t)}</b></div>
+                <div>{isSw ? 'Wageni:' : 'Guests:'} <b>{reprintOrder.guests || 2}</b></div>
+                <div style={{ textAlign: 'right' }}>{isSw ? 'Hali:' : 'Status:'} <b>{getStatusBadgeInfo(reprintOrder.st).label}</b></div>
               </div>
 
               {reprintOrder.note && (
                 <div style={{ margin: '8px 0', padding: 6, background: '#FFE4E6', border: '1px solid #FDA4AF', borderRadius: 4, fontWeight: 800, fontSize: 12 }}>
-                  ⚠️ NOTE: {reprintOrder.note}
+                  ⚠️ {isSw ? 'MAELEZO:' : 'NOTE:'} {reprintOrder.note}
                 </div>
               )}
 
@@ -1266,14 +1268,14 @@ export function KDS({ sess, out, setSess, setV }) {
 
               <div>
                 {(reprintOrder.it || []).map((l, i) => {
-                  const dish = M[l.id] || { n: `Item #${l.id}` };
+                  const dish = M[l.id] || { n: `${isSw ? 'Chakula' : 'Item'} #${l.id}` };
                   return (
                     <div key={i} className="kot-item-row">
                       <span className="kot-qty"><b>{l.q}x</b></span>
                       <div className="kot-item-details">
-                        <span className="kot-item-title">{dish.n}</span>
+                        <span className="kot-item-title">{getMenuName ? getMenuName(dish) : dish.n}</span>
                         {l.sub && <div style={{ fontSize: 11, color: '#555' }}>({l.sub})</div>}
-                        {l.mods && l.mods.length > 0 && <div style={{ fontSize: 11, color: '#555' }}>Mods: {l.mods.join(', ')}</div>}
+                        {l.mods && l.mods.length > 0 && <div style={{ fontSize: 11, color: '#555' }}>{isSw ? 'Nyongeza:' : 'Mods:'} {l.mods.join(', ')}</div>}
                         {l.note && <div className="kot-special-note">★ {l.note}</div>}
                       </div>
                     </div>
@@ -1283,7 +1285,7 @@ export function KDS({ sess, out, setSess, setV }) {
 
               <div style={{ borderBottom: '1px dashed #000', margin: '10px 0' }} />
               <div style={{ textAlign: 'center', fontSize: 11, color: '#666' }}>
-                Safari Grill &amp; Lounge · Powered by RestoERP
+                Safari Grill &amp; Lounge · {isSw ? 'Inaendeshwa na RestoERP' : 'Powered by RestoERP'}
               </div>
             </div>
 
@@ -1293,10 +1295,10 @@ export function KDS({ sess, out, setSess, setV }) {
                 style={{ background: '#2563EB', flex: 1 }}
                 onClick={() => window.print()}
               >
-                🖨️ Print KOT Slip
+                🖨️ {isSw ? 'Chapisha KOT' : 'Print KOT Slip'}
               </button>
               <button className="btn ghost" style={{ flex: 1 }} onClick={() => setReprintOrder(null)}>
-                Close
+                {isSw ? 'Funga' : 'Close'}
               </button>
             </div>
           </div>
@@ -1305,20 +1307,20 @@ export function KDS({ sess, out, setSess, setV }) {
 
       {/* ── MODAL: Kitchen Expediter Summary (📊 SUMMARY Bump Bar) ── */}
       {showSummaryModal && (
-        <Sheet t="Kitchen Expediter & Active Dishes Summary" c={() => setShowSummaryModal(false)}>
+        <Sheet t={isSw ? 'Muhtasari wa Jikoni & Vyakula Vinavyopikwa' : 'Kitchen Expediter & Active Dishes Summary'} c={() => setShowSummaryModal(false)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Quick Lane Counts */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
               <div style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-                <span style={{ fontSize: 11, color: '#C2410C', fontWeight: 800 }}>PENDING</span>
+                <span style={{ fontSize: 11, color: '#C2410C', fontWeight: 800 }}>{isSw ? 'INASUBIRI' : 'PENDING'}</span>
                 <b style={{ fontSize: 24, display: 'block', color: '#9A3412' }}>{pendingOrders.length}</b>
               </div>
               <div style={{ background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-                <span style={{ fontSize: 11, color: '#B45309', fontWeight: 800 }}>COOKING</span>
+                <span style={{ fontSize: 11, color: '#B45309', fontWeight: 800 }}>{isSw ? 'INAPIKWA' : 'COOKING'}</span>
                 <b style={{ fontSize: 24, display: 'block', color: '#78350F' }}>{preparingOrders.length}</b>
               </div>
               <div style={{ background: '#DCFCE7', border: '1px solid #BBF7D0', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-                <span style={{ fontSize: 11, color: '#15803D', fontWeight: 800 }}>READY AT PASS</span>
+                <span style={{ fontSize: 11, color: '#15803D', fontWeight: 800 }}>{isSw ? 'TAYARI MEZANI' : 'READY AT PASS'}</span>
                 <b style={{ fontSize: 24, display: 'block', color: '#166534' }}>{readyOrders.length}</b>
               </div>
             </div>
@@ -1326,34 +1328,38 @@ export function KDS({ sess, out, setSess, setV }) {
             {/* Aggregated Item Breakdown Table */}
             <div>
               <b style={{ fontSize: 14, color: '#0F172A', display: 'block', marginBottom: 8 }}>
-                🍳 Total Dishes Cooking &amp; In Queue ({summaryAggregates.reduce((a, b) => a + b.total, 0)} items):
+                🍳 {isSw ? `Jumla ya Vyakula Vinavyopikwa & Foleni (${summaryAggregates.reduce((a, b) => a + b.total, 0)} vyakula):` : `Total Dishes Cooking & In Queue (${summaryAggregates.reduce((a, b) => a + b.total, 0)} items):`}
               </b>
               {summaryAggregates.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--mut)', fontSize: 13 }}>
-                  No active dishes queued right now!
+                  {isSw ? 'Hakuna vyakula vinavyopikwa kwa sasa!' : 'No active dishes queued right now!'}
                 </div>
               ) : (
                 <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
                       <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--line)', textAlign: 'left', color: '#64748B' }}>
-                        <th style={{ padding: '8px 12px' }}>Dish Name</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>Pending</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>Cooking</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>Ready</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'right' }}>Total</th>
+                        <th style={{ padding: '8px 12px' }}>{isSw ? 'Jina la Chakula' : 'Dish Name'}</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>{isSw ? 'Inasubiri' : 'Pending'}</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>{isSw ? 'Inapikwa' : 'Cooking'}</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'center' }}>{isSw ? 'Tayari' : 'Ready'}</th>
+                        <th style={{ padding: '8px 12px', textAlign: 'right' }}>{isSw ? 'Jumla' : 'Total'}</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {summaryAggregates.map(row => (
-                        <tr key={row.id} style={{ borderBottom: '1px solid var(--line)' }}>
-                          <td style={{ padding: '8px 12px', fontWeight: 700 }}>{row.name}</td>
-                          <td style={{ padding: '8px 12px', textAlign: 'center', color: '#C2410C', fontWeight: 700 }}>{row.pending || '-'}</td>
-                          <td style={{ padding: '8px 12px', textAlign: 'center', color: '#B45309', fontWeight: 700 }}>{row.preparing || '-'}</td>
-                          <td style={{ padding: '8px 12px', textAlign: 'center', color: '#15803D', fontWeight: 700 }}>{row.ready || '-'}</td>
-                          <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 900, fontSize: 14 }}>{row.total}</td>
-                        </tr>
-                      ))}
+                      {summaryAggregates.map(row => {
+                        const dishObj = M[row.id];
+                        const dishLabel = dishObj && getMenuName ? getMenuName(dishObj) : row.name;
+                        return (
+                          <tr key={row.id} style={{ borderBottom: '1px solid var(--line)' }}>
+                            <td style={{ padding: '8px 12px', fontWeight: 700 }}>{dishLabel}</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'center', color: '#C2410C', fontWeight: 700 }}>{row.pending || '-'}</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'center', color: '#B45309', fontWeight: 700 }}>{row.preparing || '-'}</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'center', color: '#15803D', fontWeight: 700 }}>{row.ready || '-'}</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 900, fontSize: 14 }}>{row.total}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1361,7 +1367,7 @@ export function KDS({ sess, out, setSess, setV }) {
             </div>
 
             <button className="btn ghost sm" onClick={() => setShowSummaryModal(false)}>
-              Close Summary
+              {isSw ? 'Funga Muhtasari' : 'Close Summary'}
             </button>
           </div>
         </Sheet>
@@ -1369,39 +1375,39 @@ export function KDS({ sess, out, setSess, setV }) {
 
       {/* ── MODAL: Ticket Details & Special Notes (📄 INFO Bump Bar) ── */}
       {showInfoModal && (
-        <Sheet t={`Ticket Details #${String(showInfoModal.no || showInfoModal.id).replace('#', '')}`} c={() => setShowInfoModal(null)}>
+        <Sheet t={isSw ? `Maelezo ya Tiketi #${String(showInfoModal.no || showInfoModal.id).replace('#', '')}` : `Ticket Details #${String(showInfoModal.no || showInfoModal.id).replace('#', '')}`} c={() => setShowInfoModal(null)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <b style={{ fontSize: 18, color: '#0F172A' }}>{showInfoModal.tb || 'Dine-In Table'}</b>
-                <span className={`fcx-status-tag ${showInfoModal.st}`}>{showInfoModal.st.toUpperCase()}</span>
+                <b style={{ fontSize: 18, color: '#0F172A' }}>{showInfoModal.tb || (isSw ? 'Meza ya Kula Hapa' : 'Dine-In Table')}</b>
+                <span className={`fcx-status-tag ${showInfoModal.st}`}>{getStatusBadgeInfo(showInfoModal.st).label}</span>
               </div>
               <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
-                Server: <b>{showInfoModal.by || 'Staff'}</b> · Guests: <b>{showInfoModal.guests || 2}</b> · Type: <b>{showInfoModal.orderType || 'Dine-In'}</b> · Placed: <b>{fmtTime(showInfoModal.t)}</b>
+                {isSw ? 'Mhudumu:' : 'Server:'} <b>{showInfoModal.by || (isSw ? 'Mhudumu' : 'Staff')}</b> · {isSw ? 'Wageni:' : 'Guests:'} <b>{showInfoModal.guests || 2}</b> · {isSw ? 'Aina:' : 'Type:'} <b>{showInfoModal.orderType || (isSw ? 'Kula Hapa' : 'Dine-In')}</b> · {isSw ? 'Muda:' : 'Placed:'} <b>{fmtTime(showInfoModal.t)}</b>
               </div>
             </div>
 
             {showInfoModal.note && (
               <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 10, padding: 12 }}>
-                <b style={{ color: '#B91C1C', fontSize: 13, display: 'block', marginBottom: 2 }}>⚠️ Special Kitchen Instructions / Allergies:</b>
+                <b style={{ color: '#B91C1C', fontSize: 13, display: 'block', marginBottom: 2 }}>⚠️ {isSw ? 'Maelekezo Maalum ya Jikoni / Mzio:' : 'Special Kitchen Instructions / Allergies:'}</b>
                 <span style={{ fontSize: 13, color: '#7F1D1D' }}>{showInfoModal.note}</span>
               </div>
             )}
 
             <div>
-              <b style={{ fontSize: 13, color: '#475569', display: 'block', marginBottom: 6 }}>Dishes in Ticket:</b>
+              <b style={{ fontSize: 13, color: '#475569', display: 'block', marginBottom: 6 }}>{isSw ? 'Vyakula Kwenye Tiketi:' : 'Dishes in Ticket:'}</b>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {(showInfoModal.it || []).map((line, idx) => {
-                  const dish = M[line.id] || { n: `Item #${line.id}` };
+                  const dish = M[line.id] || { n: `${isSw ? 'Chakula' : 'Item'} #${line.id}` };
                   return (
                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 8, padding: '8px 12px' }}>
                       <div>
-                        <b style={{ fontSize: 13 }}>{line.q}x {dish.n}</b>
-                        {line.sub && <div style={{ fontSize: 11, color: 'var(--mut)' }}>Option: {line.sub}</div>}
+                        <b style={{ fontSize: 13 }}>{line.q}x {getMenuName ? getMenuName(dish) : dish.n}</b>
+                        {line.sub && <div style={{ fontSize: 11, color: 'var(--mut)' }}>{isSw ? 'Chaguo:' : 'Option:'} {line.sub}</div>}
                         {line.note && <div style={{ fontSize: 11, color: '#C2410C' }}>★ {line.note}</div>}
                       </div>
                       <span style={{ fontSize: 12, color: line.done ? '#16A34A' : '#94A3B8', fontWeight: 700 }}>
-                        {line.done ? '✓ Done' : 'Cooking'}
+                        {line.done ? (isSw ? '✓ Tayari' : '✓ Done') : (isSw ? 'Inapikwa' : 'Cooking')}
                       </span>
                     </div>
                   );
@@ -1418,10 +1424,10 @@ export function KDS({ sess, out, setSess, setV }) {
                   setShowInfoModal(null);
                 }}
               >
-                🖨️ Print Slip
+                🖨️ {isSw ? 'Chapisha Karatasi' : 'Print Slip'}
               </button>
               <button className="btn sm ghost" style={{ flex: 1 }} onClick={() => setShowInfoModal(null)}>
-                Close
+                {isSw ? 'Funga' : 'Close'}
               </button>
             </div>
           </div>
@@ -1430,24 +1436,24 @@ export function KDS({ sess, out, setSess, setV }) {
 
       {/* ── MODAL: Role & Site Switcher ── */}
       {showRoleModal && (
-        <Sheet t="RestoERP Workspace & Role Switcher" c={() => setShowRoleModal(false)}>
+        <Sheet t={isSw ? 'Badili Nafasi ya Kazi (RestoERP)' : 'RestoERP Workspace & Role Switcher'} c={() => setShowRoleModal(false)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 12 }}>
-              <div style={{ fontSize: 13, color: 'var(--mut)' }}>Current Station &amp; User</div>
+              <div style={{ fontSize: 13, color: 'var(--mut)' }}>{isSw ? 'Kituo & Mtumiaji wa Sasa' : 'Current Station & User'}</div>
               <b style={{ fontSize: 16, color: '#0F172A' }}>{sess?.name || 'Chef Ammie'} · {sess?.r?.toUpperCase() || 'CHEF'}</b>
-              <div style={{ fontSize: 12, color: 'var(--mut)', marginTop: 2 }}>Branch: Safari Grill &amp; Lounge</div>
+              <div style={{ fontSize: 12, color: 'var(--mut)', marginTop: 2 }}>{isSw ? 'Tawi:' : 'Branch:'} Safari Grill &amp; Lounge</div>
             </div>
 
             <div>
-              <b style={{ fontSize: 14 }}>Switch ERP Viewport:</b>
+              <b style={{ fontSize: 14 }}>{isSw ? 'Chagua Sehemu ya ERP:' : 'Switch ERP Viewport:'}</b>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginTop: 8 }}>
                 {[
-                  { r: 'chef', icon: '👨‍🍳', label: 'Kitchen (KDS)', desc: 'Expo & Line Prep' },
-                  { r: 'cashier', icon: '💳', label: 'Cashier (POS)', desc: 'Billing & Payments' },
-                  { r: 'waiter', icon: '🧑‍🍳', label: 'Waiters', desc: 'Floor Tables & Orders' },
-                  { r: 'storekeeper', icon: '📦', label: 'Inventory', desc: 'Stock & Batches' },
-                  { r: 'manager', icon: '👔', label: 'Manager', desc: 'P&L, Reports & Staff' },
-                  { r: 'customer', icon: '🍽️', label: 'Customer Menu', desc: 'Guest Dine-In Ordering' }
+                  { r: 'chef', icon: '👨‍🍳', label: isSw ? 'Jikoni (KDS)' : 'Kitchen (KDS)', desc: isSw ? 'Ubao wa Mapishi' : 'Expo & Line Prep' },
+                  { r: 'cashier', icon: '💳', label: isSw ? 'Keshia (POS)' : 'Cashier (POS)', desc: isSw ? 'Bili & Malipo' : 'Billing & Payments' },
+                  { r: 'waiter', icon: '🧑‍🍳', label: isSw ? 'Wahudumu' : 'Waiters', desc: isSw ? 'Meza & Oda' : 'Floor Tables & Orders' },
+                  { r: 'storekeeper', icon: '📦', label: isSw ? 'Stooni (Stoo)' : 'Inventory', desc: isSw ? 'Mzigo & Shehena' : 'Stock & Batches' },
+                  { r: 'manager', icon: '👔', label: isSw ? 'Meneja' : 'Manager', desc: isSw ? 'Ripoti & Wafanyakazi' : 'P&L, Reports & Staff' },
+                  { r: 'customer', icon: '🍽️', label: isSw ? 'Menyu ya Mteja' : 'Customer Menu', desc: isSw ? 'Kuagiza Mezani' : 'Guest Dine-In Ordering' }
                 ].map(item => (
                   <button
                     key={item.r}
@@ -1486,10 +1492,10 @@ export function KDS({ sess, out, setSess, setV }) {
                   out && out();
                 }}
               >
-                Sign Out / Exit
+                {isSw ? 'Ondoka / Toka' : 'Sign Out / Exit'}
               </button>
               <button className="btn sm ghost" style={{ flex: 1 }} onClick={() => setShowRoleModal(false)}>
-                Stay on KDS
+                {isSw ? 'Baki Kwenye KDS' : 'Stay on KDS'}
               </button>
             </div>
           </div>

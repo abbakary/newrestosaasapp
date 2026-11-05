@@ -40,7 +40,8 @@ export const getItemLocations = (item) => {
 };
 
 export function Inventory({ sess, out, setSess, setV }) {
-  const { S, A } = useContext(Ctx);
+  const { S, A, lang } = useContext(Ctx);
+  const isSw = (lang || 'sw') === 'sw';
   const [tab, setTab] = useState('stock');
   const [catFilter, setCatFilter] = useState('All');
   const [q, setQ] = useState('');
@@ -323,10 +324,10 @@ export function Inventory({ sess, out, setSess, setV }) {
             <span style={{ fontSize: 20 }}>⚠️</span>
             <div>
               <b style={{ color: '#B45309', fontSize: 14 }}>
-                {unreviewedItems.length} Menu Items Quick-Added on Site
+                {isSw ? `Bidhaa ${unreviewedItems.length} za Menyu Zimeongezwa Haraka` : `${unreviewedItems.length} Menu Items Quick-Added on Site`}
               </b>
               <div style={{ fontSize: 12, color: '#92400E' }}>
-                These items are currently live on POS. Please link inventory stock items or cost structures.
+                {isSw ? 'Bidhaa hizi ziko hewani kwenye POS. Tafadhali ziunganishe na stoo au gharama.' : 'These items are currently live on POS. Please link inventory stock items or cost structures.'}
               </div>
             </div>
           </div>
@@ -335,14 +336,14 @@ export function Inventory({ sess, out, setSess, setV }) {
             style={{ fontSize: 12, padding: '6px 12px', background: '#D97706' }}
             onClick={() => setManagerReviewModal(true)}
           >
-            Review &amp; Link Stock Now ({unreviewedItems.length})
+            {isSw ? `Kagua & Unganisha Stoo (${unreviewedItems.length})` : `Review & Link Stock Now (${unreviewedItems.length})`}
           </button>
         </div>
       )}
 
       <Hd
-        s={`Store & Warehouse Management · ${sess?.name || 'Hamisi Bakari'}`}
-        t="Inventory & Procurement"
+        s={`${isSw ? 'Usimamizi wa Stoo & Bohari' : 'Store & Warehouse Management'} · ${sess?.name || 'Hamisi Bakari'}`}
+        t={isSw ? 'Stoo & Manunuzi' : 'Inventory & Procurement'}
         r={
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             {/* ⚡ Fast Drink Purchase Button */}
@@ -351,7 +352,7 @@ export function Inventory({ sess, out, setSess, setV }) {
               style={{ background: 'linear-gradient(135deg, #093B2F, #0E5A47)', border: 0, fontWeight: 700 }}
               onClick={() => setFastPurchaseModal(true)}
             >
-              ⚡ Fast Drink Purchase
+              ⚡ {isSw ? 'Manunuzi ya Haraka ya Vinywaji' : 'Fast Drink Purchase'}
             </button>
 
             {/* 📝 Bulk Item Registry & Grid */}
@@ -359,7 +360,7 @@ export function Inventory({ sess, out, setSess, setV }) {
               className="btn sm o"
               onClick={() => setFastRegistryModal(true)}
             >
-              📝 Bulk Registry &amp; Grid
+              📝 {isSw ? 'Usajili wa Haraka (Jedwali)' : 'Bulk Registry & Grid'}
             </button>
 
             {/* Kitchen Tracking Mode: Option A (Simple Issue) vs Option B (Recipe BOM) */}
@@ -371,21 +372,23 @@ export function Inventory({ sess, out, setSess, setV }) {
                 borderColor: S.kitchenTrackingMode === 'recipe' ? '#8E44AD' : 'var(--g)',
                 fontSize: 12
               }}
-              title="Click to toggle Option A (Simple Issue) vs Option B (Recipe BOM)"
+              title={isSw ? 'Bonyeza kubadili Chaguo A (Utoaji Rahisi) au Chaguo B (Mapishi BOM)' : 'Click to toggle Option A (Simple Issue) vs Option B (Recipe BOM)'}
               onClick={() => {
                 const nextMode = S.kitchenTrackingMode === 'recipe' ? 'simple' : 'recipe';
                 A.setKitchenTrackingMode(nextMode, sess?.name || 'Storekeeper');
               }}
             >
-              {S.kitchenTrackingMode === 'recipe' ? '🍳 Mode: Option B (Recipe BOM)' : '🍳 Mode: Option A (Simple Issue)'}
+              {S.kitchenTrackingMode === 'recipe'
+                ? (isSw ? '🍳 Hali: Chaguo B (Mapishi BOM)' : '🍳 Mode: Option B (Recipe BOM)')
+                : (isSw ? '🍳 Hali: Chaguo A (Utoaji Rahisi)' : '🍳 Mode: Option A (Simple Issue)')}
             </button>
 
             <button className="btn sm ghost" onClick={() => setTransferModal(true)}>
-              ⇄ Stock Transfer
+              ⇄ {isSw ? 'Hamisha Stoo' : 'Stock Transfer'}
             </button>
 
             <button className="btn sm ghost" onClick={out}>
-              Exit
+              {isSw ? 'Toka' : 'Exit'}
             </button>
           </div>
         }
@@ -394,18 +397,18 @@ export function Inventory({ sess, out, setSess, setV }) {
       {/* Sub-Navigation in one single horizontal line without overflow */}
       <div className="inv-subnav">
         {[
-          ['retail', '🥤 Drinks & Direct Resale', '', (S.stock || []).filter(s => s.itemType === 'direct_resale' || s.cat === 'Drinks').length],
-          ['stock', '🥩 Raw Ingredients', '', (S.stock || []).filter(s => s.itemType !== 'direct_resale' && s.cat !== 'Drinks').length],
-          ['menu', '🍽️ Menu & Dish Catalog', '', (S.menu || []).length],
-          ['crates', '🍾 Returnable Crates & Empties', '', totalCratesOwed],
-          ['reports', '📈 Location & Profit Reports', '', 0],
-          ['transfers', '⇄ Transfers', '', (S.transfers || []).length],
-          ['finished', '🍱 Finished Goods', '', (S.finishedGoods || []).length],
-          ['receiving', '📥 PO Receiving', '', (S.purchaseOrders || []).filter(p => p.status !== 'received').length],
-          ['rfq', '📋 RFQ & Bidding', '', (S.rfqs || []).filter(r => r.status === 'bidding').length],
-          ['count', '📊 Physical Count', '', 0],
-          ['procurement', '🤝 Suppliers Master', '', (S.purchaseOrders || []).length],
-          ['waste', '🗑️ Waste & Adjustments', '', (S.wasteLog || []).length]
+          ['retail', isSw ? '🥤 Vinywaji & Mauzo ya Moja kwa Moja' : '🥤 Drinks & Direct Resale', '', (S.stock || []).filter(s => s.itemType === 'direct_resale' || s.cat === 'Drinks').length],
+          ['stock', isSw ? '🥩 Viungo Ghafi' : '🥩 Raw Ingredients', '', (S.stock || []).filter(s => s.itemType !== 'direct_resale' && s.cat !== 'Drinks').length],
+          ['menu', isSw ? '🍽️ Menyu & Orodha ya Vyakula' : '🍽️ Menu & Dish Catalog', '', (S.menu || []).length],
+          ['crates', isSw ? '🍾 Kreti & Chupa Tupu' : '🍾 Returnable Crates & Empties', '', totalCratesOwed],
+          ['reports', isSw ? '📈 Ripoti za Stoo & Faida' : '📈 Location & Profit Reports', '', 0],
+          ['transfers', isSw ? '⇄ Uhamisho' : '⇄ Transfers', '', (S.transfers || []).length],
+          ['finished', isSw ? '🍱 Bidhaa Tayari' : '🍱 Finished Goods', '', (S.finishedGoods || []).length],
+          ['receiving', isSw ? '📥 Kupokea Mizigo (PO)' : '📥 PO Receiving', '', (S.purchaseOrders || []).filter(p => p.status !== 'received').length],
+          ['rfq', isSw ? '📋 Zabuni (RFQ)' : '📋 RFQ & Bidding', '', (S.rfqs || []).filter(r => r.status === 'bidding').length],
+          ['count', isSw ? '📊 Hesabu ya Stoo' : '📊 Physical Count', '', 0],
+          ['procurement', isSw ? '🤝 Wasambazaji' : '🤝 Suppliers Master', '', (S.purchaseOrders || []).length],
+          ['waste', isSw ? '🗑️ Uharibifu & Marekebisho' : '🗑️ Waste & Adjustments', '', (S.wasteLog || []).length]
         ].map(([k, l, icon, count]) => (
           <button
             key={k}
@@ -429,12 +432,14 @@ export function Inventory({ sess, out, setSess, setV }) {
             <div className="row">
               <div>
                 <b style={{ fontSize: 16 }}>
-                  {tab === 'stock' ? '🥩 Raw Materials Stock & Kitchen Issuing' : '🥤 Direct Resale Goods (Retail Menu Items)'}
+                  {tab === 'stock'
+                    ? (isSw ? '🥩 Stoo ya Viungo Ghafi & Utoaji Jikoni' : '🥩 Raw Materials Stock & Kitchen Issuing')
+                    : (isSw ? '🥤 Bidhaa za Kuuza Moja kwa Moja (Vinywaji n.k.)' : '🥤 Direct Resale Goods (Retail Menu Items)')}
                 </b>
                 <p style={{ fontSize: 13, margin: '4px 0 0', color: 'rgba(255,255,255,0.85)' }}>
                   {tab === 'stock'
-                    ? 'Raw ingredients are purchased from approved suppliers, received into Main Store, and transferred to the Kitchen before BOM production.'
-                    : 'Direct resale goods are purchased with set cost and sales prices, and automatically linked to the customer & waiter sales menu without kitchen cooking.'}
+                    ? (isSw ? 'Viungo ghafi hununuliwa kutoka kwa wasambazaji, kupokelewa Stoo Kuu, na kuhamishiwa Jikoni kabla ya mapishi.' : 'Raw ingredients are purchased from approved suppliers, received into Main Store, and transferred to the Kitchen before BOM production.')
+                    : (isSw ? 'Bidhaa za kuuza moja kwa moja zina bei ya ununuzi na kuuzia, na huunganishwa moja kwa moja na menyu ya wateja na wahudumu.' : 'Direct resale goods are purchased with set cost and sales prices, and automatically linked to the customer & waiter sales menu without kitchen cooking.')}
                 </p>
               </div>
               <button
@@ -442,7 +447,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                 style={{ background: '#fff', color: tab === 'stock' ? 'var(--g)' : 'var(--o)', border: 0, fontWeight: 700 }}
                 onClick={() => setTransferModal(true)}
               >
-                ⇄ Issue / Transfer
+                ⇄ {isSw ? 'Toa / Hamisha' : 'Issue / Transfer'}
               </button>
             </div>
           </div>
@@ -450,7 +455,7 @@ export function Inventory({ sess, out, setSess, setV }) {
           <div className="search" style={{ marginBottom: 10 }}>
             <span>🔍</span>
             <input
-              placeholder={`Search ${tab === 'stock' ? 'ingredients' : 'retail items'}, storage bins, codes...`}
+              placeholder={isSw ? `Tafuta ${tab === 'stock' ? 'viungo' : 'vinywaji'}, sehemu ya kuhifadhi, kodi...` : `Search ${tab === 'stock' ? 'ingredients' : 'retail items'}, storage bins, codes...`}
               value={q}
               onChange={e => setQ(e.target.value)}
             />
@@ -463,7 +468,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                 className={catFilter === c ? 'on' : ''}
                 onClick={() => setCatFilter(c)}
               >
-                {c}
+                {c === 'All' ? (isSw ? 'Vyote' : 'All') : c}
               </button>
             ))}
           </div>
@@ -472,18 +477,18 @@ export function Inventory({ sess, out, setSess, setV }) {
             <table>
               <thead>
                 <tr>
-                  <th>Stock Item</th>
-                  <th>Type & Loc</th>
-                  <th>Store Qty</th>
-                  <th>Kitchen Qty</th>
-                  <th>Bar Qty</th>
-                  <th>Total Physical</th>
-                  <th>Theoretical</th>
-                  <th>Unit Cost</th>
-                  {tab === 'retail' && <th>Sell Price</th>}
-                  <th>Total Value</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th>{isSw ? 'Bidhaa' : 'Stock Item'}</th>
+                  <th>{isSw ? 'Aina & Mahali' : 'Type & Loc'}</th>
+                  <th>{isSw ? 'Stoo Kuu' : 'Store Qty'}</th>
+                  <th>{isSw ? 'Jikoni' : 'Kitchen Qty'}</th>
+                  <th>{isSw ? 'Baa' : 'Bar Qty'}</th>
+                  <th>{isSw ? 'Jumla Halisi' : 'Total Physical'}</th>
+                  <th>{isSw ? 'Ya Mfumo' : 'Theoretical'}</th>
+                  <th>{isSw ? 'Bei ya Kimoja' : 'Unit Cost'}</th>
+                  {tab === 'retail' && <th>{isSw ? 'Bei ya Kuuzia' : 'Sell Price'}</th>}
+                  <th>{isSw ? 'Thamani Jumla' : 'Total Value'}</th>
+                  <th>{isSw ? 'Hali' : 'Status'}</th>
+                  <th style={{ textAlign: 'right' }}>{isSw ? 'Hatua' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -500,7 +505,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                       </td>
                       <td>
                         <span className="chip" style={{ fontSize: 11, padding: '2px 6px', margin: 0, background: item.itemType === 'direct_resale' ? '#FFE9DD' : '#E5F2EE', color: item.itemType === 'direct_resale' ? '#C2410C' : 'var(--g)' }}>
-                          {item.itemType === 'direct_resale' ? 'Direct Resale' : 'Raw Ingredient'}
+                          {item.itemType === 'direct_resale' ? (isSw ? 'Mauzo ya Moja kwa Moja' : 'Direct Resale') : (isSw ? 'Kiungo Ghafi' : 'Raw Ingredient')}
                         </span>
                         <div style={{ fontSize: 11, color: 'var(--mut)', marginTop: 2 }}>{item.loc}</div>
                       </td>
@@ -528,7 +533,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                             color: isCritical ? '#C62828' : isLow ? '#C2410C' : '#15803D'
                           }}
                         >
-                          {isCritical ? 'Critical' : isLow ? 'Low' : 'Optimal'}
+                          {isCritical ? (isSw ? 'Hatari / Chini Sana' : 'Critical') : isLow ? (isSw ? 'Chini' : 'Low') : (isSw ? 'Nzuri' : 'Optimal')}
                         </span>
                       </td>
                       <td style={{ textAlign: 'right' }}>
@@ -537,25 +542,25 @@ export function Inventory({ sess, out, setSess, setV }) {
                             <button
                               className="action-btn settle"
                               style={{ fontWeight: 700, color: 'var(--g)', background: '#E5F2EE', borderColor: 'var(--g)' }}
-                              title="Fast Drink Purchase (One-tap units & direct store receiving)"
+                              title={isSw ? 'Manunuzi ya Haraka ya Vinywaji' : 'Fast Drink Purchase (One-tap units & direct store receiving)'}
                               onClick={() => {
                                 setSelectedStockId(item.id);
                                 setFastPurchaseModal(true);
                               }}
                             >
-                              ⚡ Buy
+                              ⚡ {isSw ? 'Nunua' : 'Buy'}
                             </button>
                           )}
                           <button
                             className="action-btn view"
-                            title="Duplicate Item Structure"
+                            title={isSw ? 'Nakili Muundo wa Bidhaa' : 'Duplicate Item Structure'}
                             onClick={() => setFastRegistryModal(true)}
                           >
-                            📋 Duplicate
+                            📋 {isSw ? 'Nakili' : 'Duplicate'}
                           </button>
                           <button
                             className="action-btn transfer"
-                            title="Transfer Stock to Kitchen or Bar"
+                            title={isSw ? 'Hamisha Stoo Kwenda Jikoni au Baa' : 'Transfer Stock to Kitchen or Bar'}
                             onClick={() => {
                               setTransferForm({
                                 fromLoc: 'Main Store',
@@ -569,11 +574,11 @@ export function Inventory({ sess, out, setSess, setV }) {
                               setTransferModal(true);
                             }}
                           >
-                            ⇄ Transfer
+                            ⇄ {isSw ? 'Hamisha' : 'Transfer'}
                           </button>
                           <button
                             className="action-btn danger"
-                            title="Log Breakage, Expiry, or Complimentary Adjustment"
+                            title={isSw ? 'Rekodi Kuvunjika, Kuisha Muda au Uharibifu' : 'Log Breakage, Expiry, or Complimentary Adjustment'}
                             onClick={() => {
                               setAdjustmentForm({
                                 stockId: item.id,
@@ -585,14 +590,14 @@ export function Inventory({ sess, out, setSess, setV }) {
                               setAdjustmentModal(true);
                             }}
                           >
-                            ⚠️ Adjust
+                            ⚠️ {isSw ? 'Rekebisha' : 'Adjust'}
                           </button>
                           <button
                             className="action-btn edit"
-                            title="Edit PAR & Pricing"
+                            title={isSw ? 'Hariri Kiwango & Bei' : 'Edit PAR & Pricing'}
                             onClick={() => setEditItem({ ...item })}
                           >
-                            ✏️ Edit
+                            ✏️ {isSw ? 'Hariri' : 'Edit'}
                           </button>
                         </div>
                       </td>
@@ -611,9 +616,11 @@ export function Inventory({ sess, out, setSess, setV }) {
           <div className="card" style={{ marginBottom: 12, background: 'linear-gradient(135deg, #093B2F, #14795f)', color: '#fff' }}>
             <div className="row">
               <div>
-                <b style={{ fontSize: 16 }}>🍱 Finished Goods & Central Kitchen Batches (SRS CK-02)</b>
+                <b style={{ fontSize: 16 }}>🍱 {isSw ? 'Bidhaa Tayari & Awamu za Jiko Kuu (SRS CK-02)' : 'Finished Goods & Central Kitchen Batches (SRS CK-02)'}</b>
                 <p style={{ fontSize: 13, margin: '4px 0 0', color: '#cfe8df' }}>
-                  Finished goods produced via Bill of Materials (BOM) work orders. Once production completes, finished goods are automatically linked and available on the sales menu.
+                  {isSw
+                    ? 'Bidhaa tayari zinazozalishwa kupitia oda za mapishi (BOM). Uzalishaji ukikamilika, huunganishwa moja kwa moja na menyu ya mauzo.'
+                    : 'Finished goods produced via Bill of Materials (BOM) work orders. Once production completes, finished goods are automatically linked and available on the sales menu.'}
                 </p>
               </div>
               <button
@@ -621,7 +628,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                 style={{ background: '#fff', color: 'var(--g)', border: 0, fontWeight: 700 }}
                 onClick={() => setV ? setV('production') : null}
               >
-                🏭 Open Central Kitchen
+                🏭 {isSw ? 'Fungua Jiko Kuu' : 'Open Central Kitchen'}
               </button>
             </div>
           </div>
@@ -630,16 +637,16 @@ export function Inventory({ sess, out, setSess, setV }) {
             <table>
               <thead>
                 <tr>
-                  <th>Finished Product</th>
-                  <th>Category</th>
-                  <th>Current Stock</th>
-                  <th>PAR Level</th>
-                  <th>Unit Cost</th>
-                  <th>Active Batch No</th>
-                  <th>HACCP Expiry</th>
-                  <th>Allergens</th>
-                  <th>Storage Location</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th>{isSw ? 'Bidhaa Tayari' : 'Finished Product'}</th>
+                  <th>{isSw ? 'Kundi' : 'Category'}</th>
+                  <th>{isSw ? 'Stoo Iliyopo' : 'Current Stock'}</th>
+                  <th>{isSw ? 'Kiwango (PAR)' : 'PAR Level'}</th>
+                  <th>{isSw ? 'Bei ya Kimoja' : 'Unit Cost'}</th>
+                  <th>{isSw ? 'Namba ya Awamu' : 'Active Batch No'}</th>
+                  <th>{isSw ? 'Mwisho wa Matumizi' : 'HACCP Expiry'}</th>
+                  <th>{isSw ? 'Mzio (Allergens)' : 'Allergens'}</th>
+                  <th>{isSw ? 'Mahali' : 'Storage Location'}</th>
+                  <th style={{ textAlign: 'right' }}>{isSw ? 'Hatua' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -649,7 +656,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                       <b>{fg.name}</b>
                       {fg.menuId && (
                         <div style={{ fontSize: 11, color: 'var(--g)', fontWeight: 600 }}>
-                          ✓ Synced to Sales Menu #{fg.menuId}
+                          ✓ {isSw ? `Imeunganishwa na Menyu #${fg.menuId}` : `Synced to Sales Menu #${fg.menuId}`}
                         </div>
                       )}
                     </td>
@@ -663,7 +670,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                       {(fg.allergens || []).length > 0 ? (
                         fg.allergens.map(a => <span key={a} className="allergen-tag">{a}</span>)
                       ) : (
-                        <small style={{ color: 'var(--mut)' }}>None</small>
+                        <small style={{ color: 'var(--mut)' }}>{isSw ? 'Hakuna' : 'None'}</small>
                       )}
                     </td>
                     <td><small>{fg.loc}</small></td>
@@ -673,7 +680,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                           className="action-btn view"
                           onClick={() => setViewItem({ ...fg, isFinished: true })}
                         >
-                          👁️ Details
+                          👁️ {isSw ? 'Maelezo' : 'Details'}
                         </button>
                       </div>
                     </td>
@@ -721,9 +728,9 @@ export function Inventory({ sess, out, setSess, setV }) {
       {tab === 'transfers' && (
         <div>
           <div className="row" style={{ marginBottom: 12 }}>
-            <p className="sec" style={{ margin: 0 }}>Inter-Location Stock Transfers (Store → Kitchen / Bar)</p>
+            <p className="sec" style={{ margin: 0 }}>{isSw ? 'Uhamisho wa Stoo Kati ya Maeneo (Stoo → Jiko / Baa)' : 'Inter-Location Stock Transfers (Store → Kitchen / Bar)'}</p>
             <button className="btn sm o" onClick={() => setTransferModal(true)}>
-              + Create New Transfer
+              {isSw ? '+ Unda Uhamisho Mpya' : '+ Create New Transfer'}
             </button>
           </div>
 
@@ -731,15 +738,15 @@ export function Inventory({ sess, out, setSess, setV }) {
             <table>
               <thead>
                 <tr>
-                  <th>Transfer ID</th>
-                  <th>Date & Time</th>
-                  <th>From (Source)</th>
-                  <th>To (Destination)</th>
-                  <th>Transferred Items</th>
-                  <th>Storekeeper</th>
-                  <th>Receiver</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th>{isSw ? 'Namba' : 'Transfer ID'}</th>
+                  <th>{isSw ? 'Tarehe & Muda' : 'Date & Time'}</th>
+                  <th>{isSw ? 'Kutoka' : 'From (Source)'}</th>
+                  <th>{isSw ? 'Kwenda' : 'To (Destination)'}</th>
+                  <th>{isSw ? 'Bidhaa Zilizohamishwa' : 'Transferred Items'}</th>
+                  <th>{isSw ? 'Mtunza Stoo' : 'Storekeeper'}</th>
+                  <th>{isSw ? 'Mpokeaji' : 'Receiver'}</th>
+                  <th>{isSw ? 'Hali' : 'Status'}</th>
+                  <th style={{ textAlign: 'right' }}>{isSw ? 'Hatua' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -768,7 +775,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                         className="action-btn view"
                         onClick={() => setViewTransferManifest(tr)}
                       >
-                        👁️ Manifest
+                        👁️ {isSw ? 'Orodha' : 'Manifest'}
                       </button>
                     </td>
                   </tr>
@@ -782,19 +789,19 @@ export function Inventory({ sess, out, setSess, setV }) {
       {/* PO RECEIVING & 3-WAY MATCH */}
       {tab === 'receiving' && (
         <div>
-          <p className="sec">Goods Receiving Inspection & 3-Way Match (SRS INV-03, PRC-02)</p>
+          <p className="sec">{isSw ? 'Ukaguzi wa Kupokea Mizigo & Ulinganisho wa Hatua 3' : 'Goods Receiving Inspection & 3-Way Match (SRS INV-03, PRC-02)'}</p>
           <div className="card" style={{ overflowX: 'auto' }}>
             <table>
               <thead>
                 <tr>
-                  <th>PO Number</th>
-                  <th>Supplier</th>
-                  <th>Created Date</th>
-                  <th>Total Amount</th>
-                  <th>Items Ordered</th>
-                  <th>Cold Chain Temp</th>
-                  <th>Receiving Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th>{isSw ? 'Namba ya PO' : 'PO Number'}</th>
+                  <th>{isSw ? 'Msambazaji' : 'Supplier'}</th>
+                  <th>{isSw ? 'Tarehe' : 'Created Date'}</th>
+                  <th>{isSw ? 'Jumla' : 'Total Amount'}</th>
+                  <th>{isSw ? 'Bidhaa Zilizoagizwa' : 'Items Ordered'}</th>
+                  <th>{isSw ? 'Joto la Jokofu' : 'Cold Chain Temp'}</th>
+                  <th>{isSw ? 'Hali ya Upokeaji' : 'Receiving Status'}</th>
+                  <th style={{ textAlign: 'right' }}>{isSw ? 'Hatua' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -819,7 +826,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                             🌡️ {po.tempLog}
                           </span>
                         ) : (
-                          <small style={{ color: 'var(--mut)' }}>Pending Check</small>
+                          <small style={{ color: 'var(--mut)' }}>{isSw ? 'Inasubiri Ukaguzi' : 'Pending Check'}</small>
                         )}
                       </td>
                       <td>
@@ -830,7 +837,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                             color: isPaid ? '#15803D' : isReceived ? 'var(--g)' : '#C2410C'
                           }}
                         >
-                          {isPaid ? 'Paid & Settled' : isReceived ? 'Goods Received' : 'Awaiting Delivery'}
+                          {isPaid ? (isSw ? 'Imelipwa' : 'Paid & Settled') : isReceived ? (isSw ? 'Imepokelewa' : 'Goods Received') : (isSw ? 'Inasubiri Mzigo' : 'Awaiting Delivery')}
                         </span>
                       </td>
                       <td style={{ textAlign: 'right' }}>
@@ -839,14 +846,14 @@ export function Inventory({ sess, out, setSess, setV }) {
                             className="action-btn view"
                             onClick={() => setViewPOModal(po)}
                           >
-                            👁️ PO Sheet
+                            👁️ {isSw ? 'Karatasi ya PO' : 'PO Sheet'}
                           </button>
                           {!isReceived && (
                             <button
                               className="action-btn settle"
                               onClick={() => { setReceivingPO(po); setReceivingTemp('3.2°C'); }}
                             >
-                              📥 Receive Goods
+                              📥 {isSw ? 'Pokea Mzigo' : 'Receive Goods'}
                             </button>
                           )}
                           {isReceived && !isPaid && (
@@ -854,7 +861,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                               className="action-btn edit"
                               onClick={() => { setSettlingPO(po); setSettleRef(`INV-${po.id}`); }}
                             >
-                              💵 Pay Invoice
+                              💵 {isSw ? 'Lipa Ankara' : 'Pay Invoice'}
                             </button>
                           )}
                         </div>
@@ -873,11 +880,11 @@ export function Inventory({ sess, out, setSess, setV }) {
         <div>
           <div className="row" style={{ marginBottom: 12 }}>
             <div>
-              <p className="sec" style={{ margin: 0 }}>Requests for Quotation (RFQ) & Supplier Bidding</p>
-              <small style={{ color: 'var(--mut)' }}>Step 1: Solicit quotes from approved vendors before issuing purchase orders.</small>
+              <p className="sec" style={{ margin: 0 }}>{isSw ? 'Maombi ya Bei (RFQ) & Zabuni za Wasambazaji' : 'Requests for Quotation (RFQ) & Supplier Bidding'}</p>
+              <small style={{ color: 'var(--mut)' }}>{isSw ? 'Hatua ya 1: Omba bei kutoka kwa wasambazaji kabla ya kutoa oda ya ununuzi.' : 'Step 1: Solicit quotes from approved vendors before issuing purchase orders.'}</small>
             </div>
             <button className="btn sm o" onClick={() => setNewRFQModal(true)}>
-              + Create RFQ
+              {isSw ? '+ Unda RFQ' : '+ Create RFQ'}
             </button>
           </div>
 
@@ -885,13 +892,13 @@ export function Inventory({ sess, out, setSess, setV }) {
             <table>
               <thead>
                 <tr>
-                  <th>RFQ ID</th>
-                  <th>Title & Description</th>
-                  <th>Created Date</th>
-                  <th>Required Items</th>
-                  <th>Bids Received</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th>{isSw ? 'Namba' : 'RFQ ID'}</th>
+                  <th>{isSw ? 'Kichwa & Maelezo' : 'Title & Description'}</th>
+                  <th>{isSw ? 'Tarehe' : 'Created Date'}</th>
+                  <th>{isSw ? 'Bidhaa Zinazohitajika' : 'Required Items'}</th>
+                  <th>{isSw ? 'Bei Zilizopokelewa' : 'Bids Received'}</th>
+                  <th>{isSw ? 'Hali' : 'Status'}</th>
+                  <th style={{ textAlign: 'right' }}>{isSw ? 'Hatua' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -911,12 +918,12 @@ export function Inventory({ sess, out, setSess, setV }) {
                     <td>
                       <div style={{ fontSize: 12 }}>
                         {(rfq.bids || []).length === 0 ? (
-                          <span style={{ color: 'var(--mut)' }}>No bids yet</span>
+                          <span style={{ color: 'var(--mut)' }}>{isSw ? 'Hakuna zabuni bado' : 'No bids yet'}</span>
                         ) : (
                           rfq.bids.map((b, i) => (
                             <div key={i} style={{ padding: '2px 0' }}>
                               <b>{b.supplierName}:</b> {fmt(b.quoteAmount)} ({b.leadDays}d)
-                              {b.selected && <span style={{ color: 'var(--g)', fontWeight: 700, marginLeft: 4 }}>✓ Awarded</span>}
+                              {b.selected && <span style={{ color: 'var(--g)', fontWeight: 700, marginLeft: 4 }}>✓ {isSw ? 'Imeshinda' : 'Awarded'}</span>}
                             </div>
                           ))
                         )}
@@ -930,7 +937,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                           color: rfq.status === 'converted_to_po' ? '#15803D' : '#C2410C'
                         }}
                       >
-                        {rfq.status === 'converted_to_po' ? `PO Issued (${rfq.poId})` : 'Active Bidding'}
+                        {rfq.status === 'converted_to_po' ? (isSw ? `PO Imetolewa (${rfq.poId})` : `PO Issued (${rfq.poId})`) : (isSw ? 'Zabuni Inaendelea' : 'Active Bidding')}
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
@@ -944,14 +951,14 @@ export function Inventory({ sess, out, setSess, setV }) {
                                 setBidForm({ supplierId: 'sup_1', quoteAmount: 250000, leadDays: 1 });
                               }}
                             >
-                              ➕ Add Bid
+                              ➕ {isSw ? 'Ongeza Bei' : 'Add Bid'}
                             </button>
                             {(rfq.bids || []).length > 0 && (
                               <button
                                 className="action-btn settle"
                                 onClick={() => handleConvertRFQ(rfq, rfq.bids[0])}
                               >
-                                🔄 Convert to PO
+                                🔄 {isSw ? 'Badili Kuwa PO' : 'Convert to PO'}
                               </button>
                             )}
                           </>
@@ -972,18 +979,18 @@ export function Inventory({ sess, out, setSess, setV }) {
           <div className="card" style={{ marginBottom: 12 }}>
             <div className="row">
               <div>
-                <b>Physical Cycle Count (SRS Section 4.5, INV-05)</b>
+                <b>{isSw ? 'Hesabu ya Stoo Halisi (SRS Section 4.5, INV-05)' : 'Physical Cycle Count (SRS Section 4.5, INV-05)'}</b>
                 <p style={{ fontSize: 13, color: 'var(--mut)', margin: '4px 0 0' }}>
-                  Perform blind cycle count against theoretical depletion. Negative variance logs shrinkage or kitchen over-portioning.
+                  {isSw ? 'Fanya hesabu ya stoo halisi dhidi ya kumbukumbu za mfumo. Upungufu unarekodiwa kama upotevu.' : 'Perform blind cycle count against theoretical depletion. Negative variance logs shrinkage or kitchen over-portioning.'}
                 </p>
               </div>
               <button className="btn sm o" onClick={handleApplyStockCount}>
-                ✓ Submit & Reconcile Count
+                ✓ {isSw ? 'Wasilisha & Linganisha Hesabu' : 'Submit & Reconcile Count'}
               </button>
             </div>
             {countSubmitted && (
               <div style={{ marginTop: 10, padding: 8, background: '#DDF3E4', color: '#15803D', borderRadius: 8, fontWeight: 600, fontSize: 13 }}>
-                ✓ Physical stock count saved. Variance adjustments logged to tamper-evident audit ledger.
+                ✓ {isSw ? 'Hesabu ya stoo imehifadhiwa na kurekodiwa kwenye daftari la ukaguzi.' : 'Physical stock count saved. Variance adjustments logged to tamper-evident audit ledger.'}
               </div>
             )}
           </div>
@@ -992,12 +999,12 @@ export function Inventory({ sess, out, setSess, setV }) {
             <table>
               <thead>
                 <tr>
-                  <th>Stock Item</th>
-                  <th>UOM</th>
-                  <th>Theoretical (System)</th>
-                  <th>Physical Actual Count</th>
-                  <th>Variance</th>
-                  <th>Status</th>
+                  <th>{isSw ? 'Bidhaa' : 'Stock Item'}</th>
+                  <th>{isSw ? 'Kipimo' : 'UOM'}</th>
+                  <th>{isSw ? 'Idadi ya Mfumo' : 'Theoretical (System)'}</th>
+                  <th>{isSw ? 'Idadi Halisi' : 'Physical Actual Count'}</th>
+                  <th>{isSw ? 'Tofauti' : 'Variance'}</th>
+                  <th>{isSw ? 'Hali' : 'Status'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1026,7 +1033,7 @@ export function Inventory({ sess, out, setSess, setV }) {
                       </td>
                       <td>
                         <span className="pill" style={{ background: variance < 0 ? '#FFE0DE' : '#DDF3E4', color: variance < 0 ? '#C62828' : '#15803D' }}>
-                          {variance === 0 ? 'Balanced' : variance < 0 ? 'Shrinkage' : 'Surplus'}
+                          {variance === 0 ? (isSw ? 'Sawa' : 'Balanced') : variance < 0 ? (isSw ? 'Upungufu' : 'Shrinkage') : (isSw ? 'Ziada' : 'Surplus')}
                         </span>
                       </td>
                     </tr>
@@ -1042,9 +1049,9 @@ export function Inventory({ sess, out, setSess, setV }) {
       {tab === 'procurement' && (
         <div>
           <div className="row" style={{ marginBottom: 12 }}>
-            <p className="sec" style={{ margin: 0 }}>Approved Suppliers Directory (SRS PRC-01)</p>
+            <p className="sec" style={{ margin: 0 }}>{isSw ? 'Orodha ya Wasambazaji Walioidhinishwa (SRS PRC-01)' : 'Approved Suppliers Directory (SRS PRC-01)'}</p>
             <button className="btn sm o" onClick={() => setNewPOModal(true)}>
-              + Issue Purchase Order
+              {isSw ? '+ Toa Oda ya Ununuzi (PO)' : '+ Issue Purchase Order'}
             </button>
           </div>
 
@@ -1056,10 +1063,10 @@ export function Inventory({ sess, out, setSess, setV }) {
                   <span className="chip" style={{ background: '#E5F2EE', color: 'var(--g)', margin: 0 }}>★ {sup.rating}</span>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--mut)', margin: '6px 0' }}>
-                  Contact: {sup.contact} · {sup.phone}
+                  {isSw ? 'Mawasiliano:' : 'Contact:'} {sup.contact} · {sup.phone}
                 </div>
                 <div style={{ fontSize: 13 }}>
-                  Payment Terms: <b>{sup.terms}</b> · Lead Time: <b>{sup.leadDays} day(s)</b>
+                  {isSw ? 'Masharti ya Malipo:' : 'Payment Terms:'} <b>{sup.terms}</b> · {isSw ? 'Muda wa Uwasilishaji:' : 'Lead Time:'} <b>{sup.leadDays} {isSw ? 'siku' : 'day(s)'}</b>
                 </div>
                 <div style={{ marginTop: 8, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                   {sup.cats.map(cat => (
@@ -1070,18 +1077,18 @@ export function Inventory({ sess, out, setSess, setV }) {
             ))}
           </div>
 
-          <p className="sec" style={{ marginTop: 14 }}>All Purchase Orders History (PO Master)</p>
+          <p className="sec" style={{ marginTop: 14 }}>{isSw ? 'Historia ya Oda Zote za Ununuzi (PO Master)' : 'All Purchase Orders History (PO Master)'}</p>
           <div className="card" style={{ overflowX: 'auto' }}>
             <table>
               <thead>
                 <tr>
-                  <th>PO Number</th>
-                  <th>Supplier</th>
-                  <th>Issued Date</th>
-                  <th>Status</th>
-                  <th>Total</th>
-                  <th>Received Date</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th>{isSw ? 'Namba ya PO' : 'PO Number'}</th>
+                  <th>{isSw ? 'Msambazaji' : 'Supplier'}</th>
+                  <th>{isSw ? 'Tarehe' : 'Issued Date'}</th>
+                  <th>{isSw ? 'Hali' : 'Status'}</th>
+                  <th>{isSw ? 'Jumla' : 'Total'}</th>
+                  <th>{isSw ? 'Tarehe ya Kupokea' : 'Received Date'}</th>
+                  <th style={{ textAlign: 'right' }}>{isSw ? 'Hatua' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1096,10 +1103,10 @@ export function Inventory({ sess, out, setSess, setV }) {
                       </span>
                     </td>
                     <td><b>{fmt(p.total)}</b></td>
-                    <td><small>{p.receivedAt ? fmtDateTime(p.receivedAt) : 'Pending'}</small></td>
+                    <td><small>{p.receivedAt ? fmtDateTime(p.receivedAt) : (isSw ? 'Inasubiri' : 'Pending')}</small></td>
                     <td style={{ textAlign: 'right' }}>
                       <button className="action-btn view" onClick={() => setViewPOModal(p)}>
-                        👁️ View
+                        👁️ {isSw ? 'Tazama' : 'View'}
                       </button>
                     </td>
                   </tr>
@@ -1114,9 +1121,9 @@ export function Inventory({ sess, out, setSess, setV }) {
       {tab === 'waste' && (
         <div>
           <div className="row" style={{ marginBottom: 12 }}>
-            <p className="sec" style={{ margin: 0 }}>Waste & Spoilage Audit Log (SRS INV-08)</p>
+            <p className="sec" style={{ margin: 0 }}>{isSw ? 'Daftari la Uharibifu & Upotevu (SRS INV-08)' : 'Waste & Spoilage Audit Log (SRS INV-08)'}</p>
             <button className="btn sm o" onClick={() => setWasteModal(true)}>
-              + Log Waste / Spoilage
+              {isSw ? '+ Rekodi Uharibifu' : '+ Log Waste / Spoilage'}
             </button>
           </div>
 
@@ -1124,12 +1131,12 @@ export function Inventory({ sess, out, setSess, setV }) {
             <table>
               <thead>
                 <tr>
-                  <th>Logged Date/Time</th>
-                  <th>Stock Item</th>
-                  <th>Quantity</th>
-                  <th>Estimated Cost</th>
-                  <th>Reason Code</th>
-                  <th>Logged By</th>
+                  <th>{isSw ? 'Tarehe & Muda' : 'Logged Date/Time'}</th>
+                  <th>{isSw ? 'Bidhaa' : 'Stock Item'}</th>
+                  <th>{isSw ? 'Kiasi' : 'Quantity'}</th>
+                  <th>{isSw ? 'Hasara (TSh)' : 'Estimated Cost'}</th>
+                  <th>{isSw ? 'Sababu' : 'Reason Code'}</th>
+                  <th>{isSw ? 'Aliyerekodi' : 'Logged By'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -2776,13 +2783,13 @@ export function Inventory({ sess, out, setSess, setV }) {
         cur={tab}
         set={setTab}
         tabs={[
-          ['stock', 'Raw Stock', '📦', 0],
-          ['retail', 'Direct Resale', '🥤', 0],
-          ['finished', 'Finished Goods', '🍱', (S.finishedGoods || []).filter(fg => fg.onHand < fg.reorder).length],
-          ['transfers', 'Transfers', '⇄', 0],
-          ['receiving', 'Receiving', '📥', (S.purchaseOrders || []).filter(p => p.status !== 'received').length],
-          ['procurement', 'Suppliers', '🤝', 0],
-          ['waste', 'Waste Log', '🗑️', 0]
+          ['stock', isSw ? 'Viungo Ghafi' : 'Raw Stock', '📦', 0],
+          ['retail', isSw ? 'Mauzo ya Moja kwa Moja' : 'Direct Resale', '🥤', 0],
+          ['finished', isSw ? 'Bidhaa Tayari' : 'Finished Goods', '🍱', (S.finishedGoods || []).filter(fg => fg.onHand < fg.reorder).length],
+          ['transfers', isSw ? 'Uhamisho' : 'Transfers', '⇄', 0],
+          ['receiving', isSw ? 'Kupokea' : 'Receiving', '📥', (S.purchaseOrders || []).filter(p => p.status !== 'received').length],
+          ['procurement', isSw ? 'Wasambazaji' : 'Suppliers', '🤝', 0],
+          ['waste', isSw ? 'Uharibifu' : 'Waste Log', '🗑️', 0]
         ]}
       />
     </div>
